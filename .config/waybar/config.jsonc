@@ -1,0 +1,123 @@
+{
+  "height": 44,
+  "position": "top",
+  "layer": "top",
+  "modules-left": [
+    "custom/span",
+    "hyprland/workspaces",
+    "custom/span",
+    "custom/addEmpty"
+  ],
+  "modules-center": [],
+  "modules-right": [
+    "tray",
+    "wireplumber",
+    "battery",
+    "custom/fast-control-menu",
+    "clock",
+    "bluetooth",
+    "custom/lock",
+    "custom/power-menu",
+    "custom/span"
+  ],
+  "hyprland/workspaces": {
+    "on-click": "activate",
+    "format": "{icon}",
+    "format-icons": {
+      "active": "",
+      "default": ""
+    },
+    "persistent-workspaces": {
+      "*": 2 
+    }
+  },
+  "custom/notify": {
+    "format": "󰂚 ",
+    "tooltip": false,
+    "on-click": "sleep 0.5 && swaync-client --open-panel"
+  },
+  "hyprland/window": {
+    "format": "{}",
+    "tooltip": false
+  },
+  "tray": {
+    "spacing": 10
+  },
+  "clock": {
+    "format": "{:%I:%M %p}",
+    "format-alt": "{:%b %d %Y}",
+    "tooltip": false
+  },
+  "wireplumber": {
+    "format": "  {icon} {volume}%",
+    "format-muted": " Muted",
+    "scroll-step": 1,
+    "on-click": "sleep 0.5 && ~/.config/scripts/audio.py",
+    "format-icons": {
+      "headphone": "",
+      "hands-free": "",
+      "headset": "",
+      "phone": "",
+      "portable": "",
+      "car": "",
+      "default": [
+        "󰕿",
+        "󰖀",
+        "󰕾"
+      ]
+    }
+  },
+  "battery": {
+    "states": {
+      "good": 95,
+      "warning": 30,
+      "critical": 20
+    },
+    "format": "{icon} {capacity}%",
+    "format-charging": " {capacity}%",
+    "format-plugged": " {capacity}%",
+    "format-alt": "{time} {icon}",
+    "format-icons": [
+      "󰂎",
+      "󰁺",
+      "󰁻",
+      "󰁼",
+      "󰁽",
+      "󰁾",
+      "󰁿",
+      "󰂀",
+      "󰂁",
+      "󰂂",
+      "󰁹"
+    ],
+    "on-click": "sleep 0.5 && ~/.config/scripts/profile.sh"
+  },
+  "custom/fast-control-menu": {
+    "format": " ",
+    "tooltip-format": "",
+    "tooltip": false,
+    "on-click": "sleep 0.5 && ~/.config/scripts/idle.sh"
+  },
+  "custom/lock": {
+    "format": "",
+    "tooltip": false,
+    "on-click": "sleep 0.5; swaylock"
+  },
+  "custom/power-menu": {
+    "format": "⏻ ",
+    "tooltip": false,
+    "on-click": "sleep 0.5 && ~/.config/scripts/power.sh"
+  },
+  "custom/span": {
+    "format": " "
+  },
+  "custom/addEmpty": {
+    "format": "+",
+    "tooltip": false,
+    "on-click": "hyprctl dispatch workspace empty"
+  
+  },
+  "bluetooth":{
+    "on-click": "sleep 0.5 && ~/.config/scripts/bluetooth.sh"
+  }
+}
