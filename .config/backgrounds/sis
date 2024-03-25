@@ -5,7 +5,7 @@ counter=1
 for file in *.{jpg,jpeg,png,gif}; do
     if [ -f "$file" ]; then
         extension="${file##*.}"
-        new_name="i$(printf "%03d" "$counter").$extension"
+        new_name="bg$(printf "%03d" "$counter").$extension"
         mv "$file" "$new_name"
         ((counter++))
     fi

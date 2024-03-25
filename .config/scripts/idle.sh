@@ -1,10 +1,10 @@
 #!/bin/bash
 
-output=$(killall swayidle 2>&1)
+output=$(killall hypridle 2>&1)
 
-if [[ $output == *"swayidle: no process found"* ]]; then
-    notify-send "Starting swayidle" "Swayidle is not running. Starting it."
-    scripts/autosuspend
+if [[ $output == *"hypridle: no process found"* ]]; then
+	notify-send "Starting hypridle" "Hypridle is not running. Starting it."
+	exec hypridle
 else
-    notify-send "Killing swayidle" "Swayidle was running. Killed all instances."
+	notify-send "Killing hypridle" "hypridle was running. Killed all instances."
 fi

@@ -1,123 +1,127 @@
 {
-  "height": 44,
-  "position": "top",
-  "layer": "top",
-  "modules-left": [
-    "custom/span",
-    "hyprland/workspaces",
-    "custom/span",
-    "custom/addEmpty"
-  ],
-  "modules-center": [],
-  "modules-right": [
-    "tray",
-    "wireplumber",
-    "battery",
-    "custom/fast-control-menu",
-    "clock",
-    "bluetooth",
-    "custom/lock",
-    "custom/power-menu",
-    "custom/span"
-  ],
-  "hyprland/workspaces": {
-    "on-click": "activate",
-    "format": "{icon}",
-    "format-icons": {
-      "active": "",
-      "default": ""
+    "margin-top": 0,
+    // "margin-left": 120,
+    "margin-bottom": 0,
+    // "margin-right": 120,
+    "height": 47, 
+    "layer": "top",
+    "position": "top",
+    "spacing": 15,
+    "modules-left": ["idle_inhibitor", "clock#date", "clock", ],
+    "modules-center": ["hyprland/workspaces"],
+    "modules-right": ["wireplumber", "tray", "battery", "custom/lock"],
+  
+    "hyprland/workspaces": {
+        "disable-scroll": true,
+        "all-outputs": true,
+        "on-click": "activate",
+        "on-scroll-up": "hyprctl dispatch workspace e+1",
+        "on-scroll-down": "hyprctl dispatch workspace e-1",
+        "persistent_workspaces": {
+            "1": [],
+            "2": [],
+            "3": []
+        }
     },
-    "persistent-workspaces": {
-      "*": 2 
-    }
+    
+    "idle_inhibitor": {
+      "format": "{icon}",
+          "format-icons": {
+              "activated": "",
+              "deactivated": ""
+      },
+      "tooltip-format": "",
+      "tooltip": false,
+      "on-click": "sleep 0.5 && ~/.config/scripts/idle.sh"
+    },
+  
+    //   "backlight": {
+    //     "device": "nvidia_0",
+    //     "max-length": "4",
+    //     "format": "{icon}",
+    //     "tooltip-format": "{percent}%",
+    //     "format-icons": ["","","","", "", "", ""],
+    //     "on-click": "",
+    //     "on-scroll-up": "brightnessctl set 10%-",
+    //     "on-scroll-down": "brightnessctl set +10%"
+    // },
+  
+    "memory": {
+      "interval": 30,
+      "format": "  {}%",
+      "format-alt":" {used:0.1f}G",
+      "max-length": 10
   },
-  "custom/notify": {
-    "format": "󰂚 ",
-    "tooltip": false,
-    "on-click": "sleep 0.5 && swaync-client --open-panel"
-  },
-  "hyprland/window": {
-    "format": "{}",
-    "tooltip": false
-  },
-  "tray": {
-    "spacing": 10
-  },
-  "clock": {
-    "format": "{:%I:%M %p}",
-    "format-alt": "{:%b %d %Y}",
-    "tooltip": false
-  },
-  "wireplumber": {
-    "format": "  {icon} {volume}%",
-    "format-muted": " Muted",
-    "scroll-step": 1,
-    "on-click": "sleep 0.5 && ~/.config/scripts/audio.py",
-    "format-icons": {
-      "headphone": "",
-      "hands-free": "",
-      "headset": "",
-      "phone": "",
-      "portable": "",
-      "car": "",
-      "default": [
-        "󰕿",
-        "󰖀",
-        "󰕾"
-      ]
-    }
-  },
+  
+  
+    "wireplumber": {
+        "format": "{icon} {volume}%",
+        "format-bluetooth": "{icon}  {volume}%",
+        "format-bluetooth-muted": "婢  muted",
+        "format-muted": "婢 muted",
+        "format-icons": {
+            "headphone": "",
+            "hands-free": "",
+            "headset": "",
+            "phone": "",
+            "portable": "",
+            "car": "",
+            "default": ["", "", ""]
+        },
+        "on-click": "sleep 0.5 && ~/.config/scripts/audio.py",
+        "on-click-right": "~/.config/scripts/bluetooth.sh"
+    },
+  
+  // "network": {
+  //       "format-wifi": " {signalStrength}%",
+  //       "format-ethernet": " {signalStrength}%",
+  //       "format-disconnected": "󰤭",
+  //       "on-click": "sh ~/.config/wofi/scripts/wifimenu.sh"
+  // },
+  
   "battery": {
-    "states": {
-      "good": 95,
-      "warning": 30,
-      "critical": 20
-    },
-    "format": "{icon} {capacity}%",
-    "format-charging": " {capacity}%",
-    "format-plugged": " {capacity}%",
-    "format-alt": "{time} {icon}",
-    "format-icons": [
-      "󰂎",
-      "󰁺",
-      "󰁻",
-      "󰁼",
-      "󰁽",
-      "󰁾",
-      "󰁿",
-      "󰂀",
-      "󰂁",
-      "󰂂",
-      "󰁹"
-    ],
-    "on-click": "sleep 0.5 && ~/.config/scripts/profile.sh"
+      "bat": "BAT0",
+      "adapter": "ADP0",
+      "interval": 60,
+      "states": {
+          "warning": 30,
+          "critical": 15
+      },
+      "max-length": 10,
+      "format": "{icon} {capacity}%",
+      "format-warning": "{icon} {capacity}%",
+      "format-critical": "{icon} {capacity}%",
+      "format-plugged": " {capacity}%",
+      "format-alt": "{icon} {capacity}%",
+      "format-full": " 100%",
+      "format-charging": " {capacity}%",
+      "format-icons": [
+        "󰂎",
+        "󰁺",
+        "󰁻",
+        "󰁼",
+        "󰁽",
+        "󰁾",
+        "󰁿",
+        "󰂀",
+        "󰂁",
+        "󰂂",
+        "󰁹"
+      ],
+      "on-click":"sleep 0.5 && ~/.config/scripts/profile.sh"
   },
-  "custom/fast-control-menu": {
-    "format": " ",
-    "tooltip-format": "",
-    "tooltip": false,
-    "on-click": "sleep 0.5 && ~/.config/scripts/idle.sh"
+  
+  "clock": {
+      "format": " {:%H:%M}"
   },
+  
+  "clock#date": {
+    "format": " {:%A, %B %d, %Y}"
+  },
+  
   "custom/lock": {
     "format": "",
     "tooltip": false,
-    "on-click": "sleep 0.5; swaylock"
-  },
-  "custom/power-menu": {
-    "format": "⏻ ",
-    "tooltip": false,
-    "on-click": "sleep 0.5 && ~/.config/scripts/power.sh"
-  },
-  "custom/span": {
-    "format": " "
-  },
-  "custom/addEmpty": {
-    "format": "+",
-    "tooltip": false,
-    "on-click": "hyprctl dispatch workspace empty"
-  
-  },
-  "bluetooth":{
-    "on-click": "sleep 0.5 && ~/.config/scripts/bluetooth.sh"
+    "on-click": "sleep 0.5; hyprlock"
   }
-}
+  }

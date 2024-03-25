@@ -1,143 +1,80 @@
+
 * {
-  /* `otf-font-awesome` is required to be installed for icons */
-  font-family: Caskaydia Cove Nerd Font;
+  font-family: JetBrainsMono Nerd Font, FontAwesome;
   font-size: 16px;
+  font-weight: bold;
 }
 
 window#waybar {
-  background-color: rgba(0, 36, 90, 0.3);
-  color: #ffffff;
+  background-color: #081425;
+  color: #2d353b;
   transition-property: background-color;
   transition-duration: 0.5s;
-  border-bottom: 1px solid rgba(0, 36, 90, 0.4);
+  border-radius: 0px 0px 15px 15px;
+  transition-duration: .5s;
+
+  border-bottom-width: 1px;
+  border-bottom-color: #23424c;
+  border-bottom-style: solid;
 }
 
-window#waybar.hidden {
-  opacity: 0.1;
-}
-
-#window {
-  color: #64727d;
-}
-
+#custom-launcher,
 #clock,
-#custom-media,
-#tray,
-#mode,
-#custom-lock,
+#clock-date,
 #workspaces,
-#idle_inhibitor,
-#custom-power-menu,
-#battery,
-#pulseaudio,
+#wireplumber,
 #network,
-#language,
-#bluetooth{
-  color: #ffffff;
-  margin-top: 5px;
-  margin-bottom: 5px;
-  padding-left: 20px;
-}
+#battery,
+#custom-lock,
+#idle_inhibitor,
+#tray{
+  background-color: #0f1c35;
+  color: #e9e9e9;
 
-#custom-notify{
-    padding-left: 25px;
-}
+  padding-left: 10px;
+  padding-right: 10px;
+  margin-top: 7px;
+  margin-bottom: 12px;
+	border-radius: 10px;
 
-#custom-lock {
-    padding-left: 25px;
-    padding-right: 8px;
-}
-
-#custom-fast-control-menu{
-    padding-left: 25px;
-}
-#tray {
-  padding-right: 8px;
-  margin-top: 5px;
-  margin-bottom: 5px;
-  font-size: 30px;
-
-}
-
-#tray > .passive {
-  -gtk-icon-effect: dim;
-}
-
-#tray > .needs-attention {
-  -gtk-icon-effect: highlight;
-  background-color: #eb4d4b;
+  /* border-bottom-width: 5px;
+  border-bottom-color: #161a1d;
+  border-bottom-style: solid; */
 }
 
 #workspaces {
-  padding: 5px 2px;
-  border-radius: 12px;
-  font-weight: normal;
-  font-style: normal;
-  background-color: rgba(69, 69, 69, 0.39);
-  border: 1px solid rgba(105, 105, 105, 0.4);
-}
-
-#workspaces button {
-  padding: 0px 15px;
-  margin: 0px 3px;
-  border-radius: 12px;
-  background-color: rgba(255, 255, 255, 0.5);
-  transition: all 0.3s ease-in-out;
-  opacity: 0.4;
+  padding: 0px;
 }
 
 #workspaces button.active {
-  background-color: rgba(255, 255, 255, 0.5);
-  border-radius: 10px;
-  min-width: 40px;
-  background-size: 400% 400%;
-  transition: all 0.3s ease-in-out;
-  opacity:1.0;
+  background-color: #7fbbb3;
+  color: #2d353b;
+
+	border-radius: 10px;
+
+  /* margin-bottom: -5px; */
+/* 
+  border-bottom-width: 5px;
+  border-bottom-color: #366660;
+  border-bottom-style: solid; */
 }
 
-#workspaces button:hover {
-  border-radius: 10px;
-  min-width: 40px;
-  background-size: 400% 400%;
+#idle_inhibitor {
+  /* background-color: #a7c080;
+  color: #2d353b;
+  border-bottom-color: #556a35; */
+
+  margin-left: 15px;
+  padding-left: 20px;
+  padding-right: 26px;
 }
 
+#custom-lock {
+  /* background-color: #e67e80; */
+  /* color: #2d353b; */
+  /* border-bottom-color: #951c1f; */
 
-
-#network.disconnected {
-  color: #fff;
-}
-
-#battery {
-  color: #ffffff;
-
-}
-
-#battery.critical,
-#battery.warning,
-#battery.full,
-#battery.plugged {
-  color: #ffffff;
-
-}
-
-@keyframes blink {
-  to {
-    background-color: rgba(30, 34, 42, 0.5);
-    color: #abb2bf;
-  }
-}
-
-#battery.warning {
-  color: #ecd3a0;
-}
-
-#battery.critical:not(.charging) {
-  color: #fb958b;
-}
-
-#clock {
-  font-family: Caskaydia Cove Nerd Font;
-  font-weight: bold;      
-  font-size: 14px;
-  padding-top: 2px;
+  margin-right: 15px;
+  padding-left: 20px;
+  padding-right: 23px;
 }
