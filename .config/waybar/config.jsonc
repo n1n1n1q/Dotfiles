@@ -1,127 +1,123 @@
 {
-    "margin-top": 0,
-    // "margin-left": 120,
-    "margin-bottom": 0,
-    // "margin-right": 120,
-    "height": 47, 
-    "layer": "top",
-    "position": "top",
-    "spacing": 15,
-    "modules-left": ["idle_inhibitor", "clock#date", "clock", ],
-    "modules-center": ["hyprland/workspaces"],
-    "modules-right": ["wireplumber", "tray", "battery", "custom/lock"],
+
+  "layer": "top",
+  "position": "top", 
+  "height": 10,
   
-    "hyprland/workspaces": {
-        "disable-scroll": true,
-        "all-outputs": true,
-        "on-click": "activate",
-        "on-scroll-up": "hyprctl dispatch workspace e+1",
-        "on-scroll-down": "hyprctl dispatch workspace e-1",
-        "persistent_workspaces": {
-            "1": [],
-            "2": [],
-            "3": []
-        }
-    },
-    
-    "idle_inhibitor": {
-      "format": "{icon}",
-          "format-icons": {
-              "activated": "",
-              "deactivated": ""
-      },
-      "tooltip-format": "",
-      "tooltip": false,
-      "on-click": "sleep 0.5 && ~/.config/scripts/idle.sh"
-    },
-  
-    //   "backlight": {
-    //     "device": "nvidia_0",
-    //     "max-length": "4",
-    //     "format": "{icon}",
-    //     "tooltip-format": "{percent}%",
-    //     "format-icons": ["","","","", "", "", ""],
-    //     "on-click": "",
-    //     "on-scroll-up": "brightnessctl set 10%-",
-    //     "on-scroll-down": "brightnessctl set +10%"
+  "modules-left":   ["hyprland/workspaces"],
+  "modules-center": ["clock"],
+  "modules-right":  ["tray", "network", "bluetooth", "backlight", "wireplumber","battery","custom/notification", "custom/power"],
+
+  "hyprland/workspaces": {
+    "disable-scroll": true,
+    "all-outputs": true,
+    "on-click": "activate",
+    "format": "{icon}",
+    // "persistent_workspaces": {
+    //   "1": [],
+    //   "2": [],
+    //   "3": [],
+    //   "4": [],
+    //   "5": [],
+    //   "6": [],
+    //   "7": [],
+    //   "8": [],
+    //   "9": [],
+    //   "10": []
     // },
-  
-    "memory": {
-      "interval": 30,
-      "format": "  {}%",
-      "format-alt":" {used:0.1f}G",
-      "max-length": 10
+    "format-icons": {
+      "1": "",
+      "2": "",
+      "3": "",
+      "4": "",
+      "5": "",
+      "6": "",
+      "7": "",
+      "8": "",
+      "9": "",
+      "10": "",
+      "default": "",
+      "active": ""
+    }
   },
-  
-  
-    "wireplumber": {
-        "format": "{icon} {volume}%",
-        "format-bluetooth": "{icon}  {volume}%",
-        "format-bluetooth-muted": "婢  muted",
-        "format-muted": "婢 muted",
-        "format-icons": {
-            "headphone": "",
-            "hands-free": "",
-            "headset": "",
-            "phone": "",
-            "portable": "",
-            "car": "",
-            "default": ["", "", ""]
-        },
-        "on-click": "sleep 0.5 && ~/.config/scripts/audio.py",
-        "on-click-right": "~/.config/scripts/bluetooth.sh"
-    },
-  
-  // "network": {
-  //       "format-wifi": " {signalStrength}%",
-  //       "format-ethernet": " {signalStrength}%",
-  //       "format-disconnected": "󰤭",
-  //       "on-click": "sh ~/.config/wofi/scripts/wifimenu.sh"
-  // },
-  
+  "tray": {
+    "icon-size": 13,
+    "spacing": 10
+  },
+  "backlight":{
+    "device": "intel_backlight",
+    "format": "{icon} {percent}%",
+    "format-icons": ["󰃞","󰃟","󰃠"],
+    "on-scroll-up": "brightnessctl set 1%+",
+    "on-scroll-down": "brightnessctl set 1%-",
+    "min-length": 6 
+  },
   "battery": {
-      "bat": "BAT0",
-      "adapter": "ADP0",
-      "interval": 60,
-      "states": {
-          "warning": 30,
-          "critical": 15
-      },
-      "max-length": 10,
-      "format": "{icon} {capacity}%",
-      "format-warning": "{icon} {capacity}%",
-      "format-critical": "{icon} {capacity}%",
-      "format-plugged": " {capacity}%",
-      "format-alt": "{icon} {capacity}%",
-      "format-full": " 100%",
-      "format-charging": " {capacity}%",
-      "format-icons": [
-        "󰂎",
-        "󰁺",
-        "󰁻",
-        "󰁼",
-        "󰁽",
-        "󰁾",
-        "󰁿",
-        "󰂀",
-        "󰂁",
-        "󰂂",
-        "󰁹"
-      ],
-      "on-click":"sleep 0.5 && ~/.config/scripts/profile.sh"
+    "states": {
+      "good": 95,
+      "warning": 30,
+      "critical": 20
+    },
+    "format": "{icon} {capacity}%",
+    "format-charging": " {capacity}%",
+    "format-plugged": " {capacity}%",
+    "format-alt": "{time} {icon}",
+    "format-icons": ["󰂎", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
+    "on-click": "sleep 0.1 && ~/scripts/rofi/profile.sh"
   },
-  
+  "bluetooth": { 
+    "format-icons": {
+    "enabled": "",
+    "disabled": "!"
+    },
+    "on-click": "sleep 0.2 && ~/scripts/rofi/bluetooth.sh"
+  },
   "clock": {
-      "format": " {:%H:%M}"
+   "format": "{: %I:%M %p   %d/%m}",
+    "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>"
   },
-  
-  "clock#date": {
-    "format": " {:%A, %B %d, %Y}"
+  "network": {
+    "format-wifi": "󰖩 {essid}",
+    "format-ethernet": " {essid}",
+    "format-linked": "{ifname} (No IP) ",
+    "format-disconnected": " Disconnected",
+    "tooltip-format-wifi": "Signal Strenght: {signalStrength}% | Down Speed: {bandwidthDownBits}, Up Speed: {bandwidthUpBits}",
+    "on-click": "sleep 0.1 && ~/scripts/rofi/wifi.sh"
   },
-  
-  "custom/lock": {
-    "format": "",
+  "wireplumber": {
+    "format": "{icon} {volume}%",
+    "format-muted": " Muted",
+    "scroll-step": 1,
+    "on-click": "sleep 0.2 && ~/scripts/rofi/rofi-mixer",
+    "format-icons": {
+      "headphone": "",
+      "hands-free": "",
+      "headset": "",
+      "phone": "",
+      "portable": "",
+      "car": "",
+      "default": ["", "", "󰕾", ""]
+    }
+  },
+  "custom/notification": {
     "tooltip": false,
-    "on-click": "sleep 0.5; hyprlock"
+    "format": "{icon}",
+    "format-icons": {
+      "notification": "<span foreground='red'><sup></sup></span>",
+      "none": "",
+      "dnd-notification": "<span foreground='red'><sup></sup></span>",
+      "dnd-none": ""
+    },
+    "return-type": "json",
+    "exec-if": "which swaync-client",
+    "exec": "sleep 0.1 && swaync-client -swb",
+    "on-click": "sleep 0.1 && swaync-client -t -sw",
+    "on-click-right": "sleep 0.1 && swaync-client -d -sw",
+    "escape": true
+  }, 
+  "custom/power": {
+    "format": "⏻",
+    "on-click": "sleep 0.2 && ~/scripts/rofi/power.sh"
   }
-  }
+}
+
