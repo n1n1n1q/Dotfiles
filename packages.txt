@@ -1,10 +1,10 @@
 hyprland
+hyprpaper
 hypridle
 hyprlock
 dunst
 hyprshot
 hyprshot-gui-git
-swww
 waybar
 wofi
 pipewire
