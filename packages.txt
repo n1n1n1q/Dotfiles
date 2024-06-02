@@ -18,16 +18,11 @@ qt5-wayland
 qt6-wayland
 xdg-desktop-portal-hyprland
 zsh
-neofetch
 neovim
 sheldon
 ttf-material-design-icons-extended
 noto-fonts-emoji
 nerd-fonts
-telegram-desktop
-firefox
-discord
-visual-studio-code-bin
 ntfs-3g
 polkit-gnome
 thunar
@@ -38,3 +33,5 @@ swappy
 brightness-ctl
 kitty
 python-pillow
+acpi
+auto-cpufreq

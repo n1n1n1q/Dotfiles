@@ -1,19 +1,19 @@
 window {
     background-color: transparent;
-    font-family: "CaskaydiaCove Nerd Font";
+    font-family: "Ubuntu Nerd Font";
     font-size: 18px;
 }
 
 #outer-box {
     border-radius: 10px;
     padding: 0 5px;
-    background-color: rgba(18, 20, 20, 0.3);
+    background-color: rgba(18, 20, 20, 0.8);
 }
 
 #input {
     margin-top:10px;
     color: #d6d6d6;
-    font-size: 24px;
+    font-size: 28px;
     background-color: rgba(0, 0, 0, 0);
     border-radius: 30px;
 

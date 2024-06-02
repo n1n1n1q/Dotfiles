@@ -1,0 +1,7 @@
+telegram-desktop
+firefox
+discord
+nwg-look
+neofetch
+zed
+visual-studio-code-bin

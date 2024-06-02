@@ -1,15 +1,13 @@
 {
     "margin-top": 0,
-    // "margin-left": 120,
     "margin-bottom": 0,
-    // "margin-right": 120,
-    "height": 47, 
+    "height": 42, 
     "layer": "top",
     "position": "top",
     "spacing": 15,
-    "modules-left": ["idle_inhibitor", "clock#date", "clock", ],
-    "modules-center": ["hyprland/workspaces"],
-    "modules-right": ["wireplumber", "tray", "battery", "custom/lock"],
+    "modules-left": ["hyprland/workspaces", "clock#date", "clock"],
+    "modules-center": [],
+    "modules-right": ["wireplumber", "battery", "tray", "idle_inhibitor","custom/lock"],
   
     "hyprland/workspaces": {
         "disable-scroll": true,
@@ -45,7 +43,10 @@
     //     "on-scroll-up": "brightnessctl set 10%-",
     //     "on-scroll-down": "brightnessctl set +10%"
     // },
-  
+    "tray": {
+    "spacing": 14
+    },
+
     "memory": {
       "interval": 30,
       "format": "  {}%",

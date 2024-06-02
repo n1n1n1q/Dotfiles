@@ -1,5 +1,4 @@
 width=490
-height=450
 location=center
 show=drun
 prompt=
@@ -11,5 +10,5 @@ orientation=vertical
 content_halign=start
 insensitive=true
 allow_images=true
-image_size=45
+image_size=25
 gtk_dark=true
