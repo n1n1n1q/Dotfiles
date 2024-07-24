@@ -19,45 +19,54 @@
   };
 
   home.packages = [
-    pkgs.zsh
-    pkgs.discord
     pkgs.kitty
+    pkgs.fastfetch
     pkgs.firefox
     pkgs.neovim
-    pkgs.telegram-desktop
-    pkgs.zed-editor
-    pkgs.neofetch
-    pkgs.vscode
+    pkgs.telegram-desktop pkgs.discord
+    pkgs.zed-editor pkgs.vscode
+    pkgs.grim pkgs.slurp pkgs.swappy
+    pkgs.cliphist
+    pkgs.brightnessctl
+    pkgs.dunst
+    pkgs.wev
+    pkgs.spotify
+    pkgs.wl-clipboard
+    pkgs.xdg-utils
+    pkgs.xdg-desktop-portal
+    pkgs.xdg-desktop-portal-gtk
+    pkgs.xdg-desktop-portal-hyprland
   ];
 
-  # Home Manager is pretty good at managing dotfiles. The primary way to manage
-  # plain files is through 'home.file'.
-  home.file = {
-    # # Building this configuration will create a copy of 'dotfiles/screenrc' in
-    # # the Nix store. Activating the configuration will then make '~/.screenrc' a
-    # # symlink to the Nix store copy.
-    # ".screenrc".source = dotfiles/screenrc;
+ home.file = {
+"TEST" = {
+text = ''
+DUUUDE~!
+'';
+executable = false;
+};
+}; 
 
-    # # You can also set the file content immediately.
-    # ".gradle/gradle.properties".text = ''
-    #   org.gradle.console=verbose
-    #   org.gradle.daemon.idletimeout=3600000
-    # '';
-  };
 
   home.sessionVariables = {
     EDITOR = "nvim";
+    XCURSOR_SIZE = "24";
+    HYPRSHOT_DIR = "~/Pictures/Screenshots/";
+    WLR_NO_HARDWARE_CURSORS = "1";
+    LIBVA_DRIVER_NAME = "nvidia";
+    __GLX_VENDOR_LIBRARY_NAME = "nvidia";
+    CLUTTER_BACKEND = "wayland";
+    GDK_BACKEND = "wayland,x11";
+    QT_AUTO_SCREEN_SCALE_FACTOR = "1";
+    QT_QPA_PLATFORM = "wayland;xcb";
+    # QT_QPA_PLATFORMTHEME = "qt5ct";
+    QT_SCALE_FACTOR = "1";
+    QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
+    XDG_CURRENT_DESKTOP = "Hyprland";
+    XDG_SESSION_DESKTOP = "Hyprland";
+    XDG_SESSION_TYPE = "wayland";
+    BROWSER = "firefox";
   };
-
-  qt.enable = true;
-  qt.platformTheme.name = "adwaita";
-  qt.style.package = pkgs.adwaita-qt;
-  qt.style.name = "adwaita-dark";
-
-
-  gtk.enable = true;
-  gtk.theme.package = pkgs.gnome-themes-extra;
-  gtk.theme.name = "Adwaita-dark";
 
   programs.home-manager.enable = true;
 }

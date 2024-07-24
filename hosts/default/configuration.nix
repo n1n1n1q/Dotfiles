@@ -29,6 +29,17 @@
 
   # Enable networking
   networking.networkmanager.enable = true;
+  systemd.services.wpa_supplicant.environment.OPENSSL_CONF = pkgs.writeText"openssl.cnf"''
+openssl_conf = openssl_init
+[openssl_init]
+ssl_conf = ssl_sect
+[ssl_sect]
+system_default = system_default_sect
+[system_default_sect]
+Options = UnsafeLegacyRenegotiation
+[system_default_sect]
+CipherString = Default:@SECLEVEL=0
+'';
 
   # Set your time zone.
   time.timeZone = "Europe/Kyiv";
@@ -54,11 +65,6 @@
     xkb.variant = "";
   };
 
-  # # Global users configuration
-  # users = {
-  #   defaultUserShell = pkgs.zsh;
-  # };
-
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.oleh = {
     isNormalUser = true;
@@ -75,11 +81,16 @@
     };
   };
 
+  nix.settings = {
+    substituters = ["https://hyprland.cachix.org"];
+    trusted-public-keys = ["hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="];
+  };
+
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
     git zsh
-    hyprpaper hypridle
+    hyprpaper hypridle hyprlock
     waybar wofi
     polkit
     polkit_gnome
@@ -90,10 +101,8 @@
   programs.hyprland = {
     enable = true;
     xwayland.enable = true;
+    # package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
   };
-
-  # ZSH
-  # programs.zsh.enable = true;
 
   # Fonts
   fonts.packages = with pkgs; [
@@ -104,7 +113,6 @@
   ];
 
   home-manager = {
-    # also pass inputs to home-manager modules
     extraSpecialArgs = {inherit inputs;};
     users = {
       "oleh" = import ./home.nix;
