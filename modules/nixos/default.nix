@@ -6,5 +6,7 @@
       ./polkit-agent.nix
       ./tlp.nix
       ./zsh.nix
+      ./gdm.nix
+      ./bluetooth.nix
     ];
 }

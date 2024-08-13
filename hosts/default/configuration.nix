@@ -60,10 +60,10 @@ CipherString = Default:@SECLEVEL=0
   };
 
   # Configure keymap in X11
-  services.xserver = {
-    xkb.layout = "us";
-    xkb.variant = "";
-  };
+  # services.xserver = {
+  #   xkb.layout = "us";
+  #   xkb.variant = "";
+  # };
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.oleh = {
@@ -90,7 +90,7 @@ CipherString = Default:@SECLEVEL=0
   # $ nix search wget
   environment.systemPackages = with pkgs; [
     git zsh
-    hyprpaper hypridle hyprlock
+    hyprpaper hypridle hyprlock hyprcursor
     waybar wofi
     polkit
     polkit_gnome
@@ -101,7 +101,7 @@ CipherString = Default:@SECLEVEL=0
   programs.hyprland = {
     enable = true;
     xwayland.enable = true;
-    # package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
+    package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
   };
 
   # Fonts
@@ -117,6 +117,39 @@ CipherString = Default:@SECLEVEL=0
     users = {
       "oleh" = import ./home.nix;
     };
+  };
+  stylix = {
+    enable = false;
+    image = /home/oleh/.config/backgrounds/bg016.png;
+    cursor.package = pkgs.bibata-cursors;
+    cursor.name = "Bibata-Modern-Ice";
+    fonts = {
+      monospace = {
+        package = pkgs.nerdfonts.override {fonts = ["JetBrainsMono"];};
+        name = "CaskaydiaCove Nerd Font Mono";
+      };
+      sansSerif = {
+        package = pkgs.nerdfonts.override {fonts = ["UbuntuSans"];};
+        name = "Ubuntu Sans Nerd Font";
+      };
+      serif = {
+        package = pkgs.nerdfonts.override {fonts = ["Ubuntu"];};
+        name = "Ubuntu Nerd Font";
+      };
+      sizes = {
+        applications = 14;
+        terminal = 17;
+        desktop = 13;
+        popups = 15;
+      };
+    };
+        opacity = {
+        applications = 0.9;
+        terminal = 0.9;
+        desktop = 0.6;
+        popups = 1.0;
+      };
+    polarity = "dark";
   };
   system.stateVersion = "24.05"; # Did you read the comment?
 

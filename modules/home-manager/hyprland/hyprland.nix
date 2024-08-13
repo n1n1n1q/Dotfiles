@@ -11,18 +11,23 @@
       ${pkgs.wl-clipboard}/bin/wl-paste --type text --watch cliphist store &
       ${pkgs.wl-clipboard}/bin/wl-paste --type image --watch cliphist store &
       nm-applet &
+      dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP &
       systemctl start --user polkit-gnome-authentication-agent-1
+    '';
+    backlight = pkgs.pkgs.writeShellScriptBin "backlight" ''
+
     '';
 in
 {
   wayland.windowManager.hyprland = {
     systemd.enableXdgAutostart = true;
     enable = true;
+    xwayland.enable = true;
     settings = {
       "$mod" = "SUPER";
       "$terminal" = "kitty";
       "$fileManager" = "thunar";
-      "$menu" = "wofi --show drun --allow-images --prompt='Search apps'";
+      "$menu" = "rofi -show drun";
       monitor = 
         [
           "eDP-1,1920x1080@144,0x0,1"
@@ -120,7 +125,7 @@ in
           "$mod, M, exec, wlogout"
           "$mod, E, exec, thunar"
           "$mod, space, togglefloating"
-          "$mod, C, exec, wofi --show drun --allow-images --prompt='Search apps'"
+          "$mod, C, exec, $menu"
           "$mod, P, pseudo"
           "$mod, left, movefocus, l"
           "$mod, right, movefocus, r"
@@ -171,6 +176,8 @@ in
           ",XF86AudioLowerVolume, exec, wpctl set-volume -l 2 @DEFAULT_AUDIO_SINK@ 5%-"
           ",XF86MonBrightnessDown, exec, brightnessctl set 5%-"
           ",XF86MonBrightnessUp, exec, brightnessctl set +5%"
+          ",XF86KbdBrightnessDown, exec, brightnessctl -d asus::kbd_backlight s 1-"
+          ",XF86KbdBrightnessUp, exec, brightnessctl -d asus::kbd_backlight s +1"
       ];
     };
   };

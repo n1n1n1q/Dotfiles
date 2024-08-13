@@ -9,7 +9,7 @@
                 "eDP-1,/home/oleh/.config/backgrounds/bg016.png"
                 "HDMI-A-1,/home/oleh/.config/backgrounds/bg016.png"
             ];
-            ipc = "off";
+            ipc = "on";
             splash = true;
         };
     };

@@ -57,6 +57,6 @@
 }
             '';
             executable = false;
-        }
-    }; 
+        };
+    };
 }
