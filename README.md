@@ -1,2 +1,3 @@
 # .dotfiles
 nixos-config
+test
