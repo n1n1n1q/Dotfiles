@@ -4,7 +4,22 @@
     home.file = {
         ".config/rofi/config.rasi" = {
             text = ''
-            @import ".cache/wal/rofi.rasi"
+            * {
+                active-background: #3f4b65;
+                urgent-background: #6299AF;
+
+                background: #3f4b65;
+                foreground: #e2e0df;
+
+                bg: @background;
+                fg: @foreground;
+                bgt: #3f4b6595;
+                active: @active-background;
+                urgent: @urgent-background;
+                selected-bg: @bg;
+                selected-fg: @fg;
+                t: transparent;
+            }
             configuration{
                 modes: "window,drun,run,ssh";
                 font: "JetBrainsMono NF 18";

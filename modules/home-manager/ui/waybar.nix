@@ -21,14 +21,21 @@ in
             mainBar = {
                 margin-top = 0;
                 margin-bottom = 0;
-                height = 42;
+                # height = 42;
                 layer= "top";
                 position= "top";
-                spacing = 15;
-                modules-left = ["hyprland/workspaces" "clock#date" "clock"];
+                # spacing = 15;
+                modules-left = ["hyprland/workspaces" "clock#date" "clock" "custom/right-arrow"];
                 modules-center= [];
-                modules-right= ["wireplumber" "battery" "tray" "idle_inhibitor" "custom/lock"];
-
+                modules-right= ["custom/left-arrow" "tray" "wireplumber" "battery" "idle_inhibitor" "custom/lock"];
+                "custom/right-arrow" =  {
+                    "format" = "";
+                    "tooltip" = false;
+                };
+                "custom/left-arrow"= {
+                    "format"= "";
+                    "tooltip"= false;
+                };
                 "hyprland/workspaces" = {
                     disable-scroll = true;
                     all-outputs = true;
@@ -54,7 +61,8 @@ in
                 };
             
                 tray= {
-                    spacing= 14;
+                    spacing = 14;
+                    "icon-size" = 20;
                 };
             
                 wireplumber = {
@@ -123,71 +131,64 @@ in
             };
         };
         style = ''
-            * {
-                font-family: Ubuntu Nerd Font;
-                font-size: 16px;
-                font-weight: bold;
-            }
+* {
+    font-family: Ubuntu Nerd Font;
+    font-size: 20px;
+    background-color: transparent;
+}
 
-            window#waybar {
-                background-color: rgba(8, 20, 37, 0.6);
-                color: #2d353b;
-                transition-property: background-color;
-                transition-duration: 0.5s;
-                transition-duration: .5s;
-            }
+window#waybar {
+    background-color: rgba(63, 75, 101, 0.75);
+    color: #2d353b;
+    transition-property: background-color;
+    transition-duration: 0.5s;
+    transition-duration: .5s;
+}
+#custom-right-arrow,
+#custom-left-arrow {
+	color: rgba(63, 75, 101, 0.9);
+    font-size: 29px;
+}
+#custom-launcher,
+#clock,
+#clock-date,
+#workspaces,
+#wireplumber,
+#network,
+#battery,
+#custom-lock,
+#idle_inhibitor,
+#tray{
+    background-color: rgba(63, 75, 101, 0.9);
+    color: #e9e9e9;
 
-            #idle_inhibitor,
-            #tray,
-            #custom-lock{
-                margin-left: -15px;
-            }
-            #battery{
-                margin-right: 15px;
-            }
-            #custom-launcher,
-            #clock,
-            #clock-date,
-            #workspaces,
-            #wireplumber,
-            #network,
-            #battery,
-            #custom-lock,
-            #idle_inhibitor,
-            #tray{
-                background-color: #3F4B65;
-                color: #e9e9e9;
+    padding-left: 10px;
+    padding-right: 10px;
+}
 
-                padding-left: 10px;
-                padding-right: 10px;
-                margin-top: 4px;
-                margin-bottom: 7px;
-                border-radius: 10px;
-            }
+#clock,
+#pulseaudio,
+#memory,
+#cpu,
+#battery,
+#disk {
+	padding: 0 10px;
+}
+#workspaces button:hover {
+	background: #1a1a1a;
+	border: #1a1a1a;
+	padding: 0 3px;
+}
+#workspaces button {
+	padding: 0 2px;
+    background-color: rgba(63, 75, 101, 0.70);
+    border-radius: 0;
+}
+#workspaces button.active {
+    background-color: rgba(127, 187, 179, 0.9);
+    color: #2d353b;
+}
 
-            #workspaces {
-                padding: 0px;
-                margin-left: 15px;
-
-            }
-
-            #workspaces button.active {
-                background-color: #7fbbb3;
-                color: #2d353b;
-                border-radius: 10px;
-
-            }
-
-            #idle_inhibitor {
-                border-radius: 0;
-            }
-            #tray{
-                border-radius: 10px 0px 0px 10px;
-            }
-            #custom-lock {
-                margin-right: 15px;
-                border-radius: 0px 10px 10px 0px;
-            }
         '';
     };
 }

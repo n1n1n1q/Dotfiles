@@ -7,7 +7,11 @@
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
     initExtraFirst = " (cat ~/.cache/wal/sequences &)";
-    initExtra = "autoload -U colors && colors && PS1=\"%B%{$fg[red]%}[%{$fg[yellow]%}%n%{$fg[green]%}@%{$fg[blue]%}%M %{$fg[magenta]%}%~%{$fg[red]%}]%{$reset_color%}$%b \"";
+    initExtra = "autoload -U colors\n
+colors && PS1=\"%B%{$fg[red]%}[%{$fg[yellow]%}%n%{$fg[green]%}@%{$fg[blue]%}%M %{$fg[magenta]%}%~%{$fg[red]%}]%{$reset_color%}$%b \" \n
+    unset GIT_ASKPASS
+    unset SSH_ASKPASS
+";
     shellAliases = {
       ll = "ls -l";
       update = "sudo nixos-rebuild switch --flake /home/oleh/.nixos/#default";

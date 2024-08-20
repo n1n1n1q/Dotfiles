@@ -143,13 +143,41 @@ CipherString = Default:@SECLEVEL=0
         popups = 15;
       };
     };
-        opacity = {
+    base16Scheme = {
+    base00 = "131f27";
+    base01 = "6299AF";
+    base02 = "949097";
+    base03 = "9C9CA5";
+    base04 = "ADAAAF";
+    base05 = "DFB4A9";
+    base06 = "C7C0C0";
+    base07 = "e2e0df";
+    base08 = "9e9c9c";
+    base09 = "6299AF";
+    base0A = "949097";
+    base0B = "9C9CA5";
+    base0C = "ADAAAF";
+    base0D = "DFB4A9";
+    base0E = "C7C0C0";
+    base0F = "e2e0df";
+};
+    opacity = {
         applications = 0.9;
         terminal = 0.9;
         desktop = 0.6;
         popups = 1.0;
       };
     polarity = "dark";
+  };
+  # home-manager.sharedModules = [{
+  #   stylix.targets.waybar.enable = false;
+  #   stylix.targets.rofi.enable = false;
+  #   stylix.targets.hyprland.enable = false;
+  #   stylix.targets.dunst.enable = false;
+  # }];
+  programs.gnupg.agent = {
+    enable = true;
+    enableSSHSupport = true;
   };
   system.stateVersion = "24.05"; # Did you read the comment?
 
