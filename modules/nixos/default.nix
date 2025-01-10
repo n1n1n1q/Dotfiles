@@ -1,12 +1,8 @@
 {
   imports =
     [
-      ./nvidia.nix
-      ./pipewire.nix
-      ./polkit-agent.nix
-      ./tlp.nix
-      ./zsh.nix
-      ./gdm.nix
-      ./bluetooth.nix
+        ./service/default.nix
+        ./gpg.nix
+        ./fonts.nix
     ];
 }

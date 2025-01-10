@@ -21,13 +21,6 @@
   # Networking.
   networking.hostName = "nixos"; # Define your hostname.
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
-  # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
-
-  # Configure network proxy if necessary
-  # networking.proxy.default = "http://user:password@proxy:port/";
-  # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
-
-  # Enable networking
   networking.networkmanager.enable = true;
   systemd.services.wpa_supplicant.environment.OPENSSL_CONF = pkgs.writeText"openssl.cnf"''
 openssl_conf = openssl_init
@@ -58,12 +51,6 @@ CipherString = Default:@SECLEVEL=0
     LC_TELEPHONE = "uk_UA.UTF-8";
     LC_TIME = "uk_UA.UTF-8";
   };
-
-  # Configure keymap in X11
-  # services.xserver = {
-  #   xkb.layout = "us";
-  #   xkb.variant = "";
-  # };
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.oleh = {
@@ -107,10 +94,10 @@ CipherString = Default:@SECLEVEL=0
   # Fonts
   fonts.packages = with pkgs; [
     noto-fonts
-    noto-fonts-cjk
+    noto-fonts-cjk-sans
     noto-fonts-emoji
-    nerdfonts
-  ];
+  ] ++ builtins.filter lib.attrsets.isDerivation (builtins.attrValues pkgs.nerd-fonts);
+  
 
   home-manager = {
     extraSpecialArgs = {inherit inputs;};
@@ -169,12 +156,7 @@ CipherString = Default:@SECLEVEL=0
       };
     polarity = "dark";
   };
-  # home-manager.sharedModules = [{
-  #   stylix.targets.waybar.enable = false;
-  #   stylix.targets.rofi.enable = false;
-  #   stylix.targets.hyprland.enable = false;
-  #   stylix.targets.dunst.enable = false;
-  # }];
+
   programs.gnupg.agent = {
     enable = true;
     enableSSHSupport = true;

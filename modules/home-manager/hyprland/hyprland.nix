@@ -70,7 +70,6 @@ in
             passes = "3";
             new_optimizations = "on";
         };
-        drop_shadow = "false";
         active_opacity = "0.9";
         inactive_opacity = "0.8";
         fullscreen_opacity = "1";
@@ -95,7 +94,6 @@ in
           pseudotile = "yes"; 
           preserve_split = "yes";
           force_split = "2";
-          no_gaps_when_only = "0";
       };
 
       master = {
