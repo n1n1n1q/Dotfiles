@@ -1,4 +1,9 @@
-{ config, pkgs, imports, ... }:
+{
+  config,
+  pkgs,
+  imports,
+  ...
+}:
 
 {
   home.username = "oleh";
@@ -6,8 +11,7 @@
 
   home.stateVersion = "23.11";
 
-  imports = 
-  [
+  imports = [
     ../../modules/home-manager/default.nix
   ];
 
@@ -23,18 +27,28 @@
     pkgs.fastfetch
     pkgs.firefox
     pkgs.neovim
-    pkgs.telegram-desktop pkgs.discord
-    pkgs.zed-editor pkgs.vscode pkgs.jetbrains.clion
-    pkgs.grim pkgs.slurp pkgs.swappy
+    pkgs.telegram-desktop
+    pkgs.discord
+    pkgs.zed-editor
+    pkgs.vscode
+    pkgs.jetbrains.clion
+    pkgs.grim
+    pkgs.slurp
+    pkgs.swappy
     pkgs.cliphist
     pkgs.brightnessctl
     pkgs.wev
     pkgs.spotify
     pkgs.wl-clipboard
-    pkgs.xdg-utils pkgs.xdg-desktop-portal pkgs.xdg-desktop-portal-gtk pkgs.xdg-desktop-portal-hyprland
+    pkgs.xdg-utils
+    pkgs.xdg-desktop-portal
+    pkgs.xdg-desktop-portal-gtk
+    pkgs.xdg-desktop-portal-hyprland
     pkgs.obs-studio
-    pkgs.libsForQt5.qt5.qtwayland pkgs.libsForQt5.qt5ct
-    pkgs.bluez pkgs.pavucontrol
+    pkgs.libsForQt5.qt5.qtwayland
+    pkgs.libsForQt5.qt5ct
+    pkgs.bluez
+    pkgs.pavucontrol
     pkgs.xfce.thunar
     pkgs.pywal
     pkgs.rofi-wayland

@@ -1,9 +1,8 @@
 {
-  imports =
-    [
-      ./hyprland.nix
-      ./hyprlock.nix
-      ./hyprpaper.nix
-      ./hypridle.nix
-    ];
+  imports = [
+    ./hyprland.nix
+    ./hyprlock.nix
+    ./hyprpaper.nix
+    ./hypridle.nix
+  ];
 }

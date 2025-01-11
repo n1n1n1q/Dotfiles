@@ -8,17 +8,18 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
-    stylix.url = "github:danth/stylix";
   };
 
-  outputs = { self, nixpkgs, ... }@inputs: {
-    nixosConfigurations.default = nixpkgs.lib.nixosSystem {
-      specialArgs = {inherit inputs;};
-      modules = [
-        ./hosts/default/configuration.nix
-        inputs.home-manager.nixosModules.default
-        inputs.stylix.nixosModules.stylix
-      ];
+  outputs =
+    { self, nixpkgs, ... }@inputs:
+    {
+      formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixfmt-rfc-style;
+      nixosConfigurations.default = nixpkgs.lib.nixosSystem {
+        specialArgs = { inherit inputs; };
+        modules = [
+          ./hosts/default/configuration.nix
+          inputs.home-manager.nixosModules.default
+        ];
+      };
     };
-  };
 }

@@ -1,4 +1,4 @@
-{pkgs, ...}:
+{ pkgs, ... }:
 
 {
   # GTK
@@ -13,7 +13,7 @@
     cursorTheme.name = "Bibata-Modern-Ice";
   };
   # home.pointerCursor.gtk.enable = true;
-  
+
   # QT
   qt = {
     enable = true;
