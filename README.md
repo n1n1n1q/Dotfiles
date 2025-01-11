@@ -1,3 +1,2 @@
 # .dotfiles
-nixos-config
-test
+My NixOS configuration files
