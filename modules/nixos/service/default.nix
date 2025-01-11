@@ -1,3 +1,5 @@
+{ lib, ... }:
+
 {
   imports = [
     ./nvidia.nix
@@ -6,5 +8,7 @@
     ./power.nix
     ./gdm.nix
     ./bluetooth.nix
+    ./networking.nix
   ];
+  nvidiasett.enable = lib.mkDefault true;
 }

@@ -52,6 +52,7 @@
     pkgs.xfce.thunar
     pkgs.pywal
     pkgs.rofi-wayland
+    pkgs.nixd
   ];
 
   home.sessionVariables = {

@@ -1,18 +1,25 @@
-{ config, ... }:
+{ lib, config, ... }:
 
 {
-  hardware = {
-    graphics.enable = true;
+  options = {
+    nvidiasett.enable = lib.mkEnableOption "Enable nvidia settings";
+    default = true;
   };
 
-  services.xserver.videoDrivers = [ "nvidia" ];
+  config = lib.mkIf config.nvidiasett.enable {
+    hardware = {
+      graphics.enable = true;
+    };
 
-  hardware.nvidia = {
-    modesetting.enable = true;
-    # powerManagement.enable = true;
-    # powerManagement.finegrained = true;
-    open = false;
-    nvidiaSettings = true;
-    package = config.boot.kernelPackages.nvidiaPackages.stable;
+    services.xserver.videoDrivers = [ "nvidia" ];
+
+    hardware.nvidia = {
+      modesetting.enable = true;
+      # powerManagement.enable = true;
+      # powerManagement.finegrained = true;
+      open = false;
+      nvidiaSettings = true;
+      package = config.boot.kernelPackages.nvidiaPackages.stable;
+    };
   };
 }
