@@ -18,9 +18,9 @@ let
     dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP &
     systemctl start --user polkit-gnome-authentication-agent-1
   '';
-  backlight = pkgs.pkgs.writeShellScriptBin "backlight" ''
+  # backlight = pkgs.pkgs.writeShellScriptBin "backlight" ''
 
-  '';
+  # '';
 in
 {
   wayland.windowManager.hyprland = {
@@ -38,10 +38,7 @@ in
       ];
       input = {
         kb_layout = "us,ua";
-        # kb_variant =
-        # kb_model =
         kb_options = "grp:alt_shift_toggle";
-        # kb_rules =
         follow_mouse = "1";
         touchpad = {
           natural_scroll = "yes";
@@ -50,12 +47,12 @@ in
       };
 
       general = {
-        gaps_in = "23";
-        gaps_out = "50";
+        gaps_in = "10";
+        gaps_out = "10";
 
-        border_size = "5";
-        "col.active_border" = "rgba(48a0ff4d)";
-        "col.inactive_border" = "rgba(595959aa)";
+        border_size = "3";
+        "col.active_border" = "rgb(48a0ff)"; #4d
+        "col.inactive_border" = "rgb(595959)"; #aa
         layout = "dwindle";
         allow_tearing = "false";
       };
@@ -71,6 +68,9 @@ in
           size = "8";
           passes = "3";
           new_optimizations = "on";
+        };
+        shadow = {
+          enabled = "false";
         };
         active_opacity = "0.9";
         inactive_opacity = "0.8";

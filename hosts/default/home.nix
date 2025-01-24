@@ -1,19 +1,20 @@
 {
   config,
   pkgs,
-  imports,
+  inputs,
   ...
 }:
 
 {
   home.username = "oleh";
   home.homeDirectory = "/home/oleh";
-
   home.stateVersion = "23.11";
 
   imports = [
     ../../modules/home-manager/default.nix
+    inputs.bbrShell.homeManagerModules.bbrShell
   ];
+  programs.bbrShell.enable = true;
 
   nixpkgs = {
     config = {
@@ -53,6 +54,9 @@
     pkgs.pywal
     pkgs.rofi-wayland
     pkgs.nixd
+    pkgs.cava
+    pkgs.nitch
+    pkgs.hyprpicker
   ];
 
   home.sessionVariables = {

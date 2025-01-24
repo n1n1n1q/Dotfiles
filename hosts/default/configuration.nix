@@ -17,6 +17,7 @@
     ./hardware-configuration.nix
     ../../modules/nixos/default.nix
     inputs.home-manager.nixosModules.default
+    # inputs.bbrShell.homeManagerModules.bbrShell
   ];
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
@@ -30,6 +31,7 @@
 
   # Set your time zone.
   time.timeZone = "Europe/Kyiv";
+  time.hardwareClockInLocalTime = true;
 
   # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
