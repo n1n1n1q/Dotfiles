@@ -6,21 +6,15 @@
 }:
 
 let
-  #  ${pkgs.wl-paste}/bin/wl-paste --type text --watch cliphist store &
-  # ${pkgs.wl-paste}/bin/wl-paste --type image --watch cliphist store &
   startupScript = pkgs.pkgs.writeShellScriptBin "start" ''
-    ${pkgs.waybar}/bin/waybar &
+    ${pkgs.bbrShell}/bin/bbrShell &
     ${pkgs.hypridle}/bin/hypridle &
     ${pkgs.hyprpaper}/bin/hyprpaper &
     ${pkgs.wl-clipboard}/bin/wl-paste --type text --watch cliphist store &
     ${pkgs.wl-clipboard}/bin/wl-paste --type image --watch cliphist store &
-    nm-applet &
     dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP &
     systemctl start --user polkit-gnome-authentication-agent-1
   '';
-  # backlight = pkgs.pkgs.writeShellScriptBin "backlight" ''
-
-  # '';
 in
 {
   wayland.windowManager.hyprland = {
@@ -51,8 +45,8 @@ in
         gaps_out = "10";
 
         border_size = "3";
-        "col.active_border" = "rgb(48a0ff)"; #4d
-        "col.inactive_border" = "rgb(595959)"; #aa
+        "col.active_border" = "rgb(48a0ff)"; # 4d
+        "col.inactive_border" = "rgb(595959)"; # aa
         layout = "dwindle";
         allow_tearing = "false";
       };
@@ -118,6 +112,7 @@ in
       exec-once = ''${startupScript}/bin/start'';
 
       bind = [
+        "$mod, P, exec, ${startupScript}/bin/start"
         "$mod, R, exec, kitty"
         "$mod, Q, killactive"
         "$mod, M, exec, wlogout"

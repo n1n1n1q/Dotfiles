@@ -17,7 +17,6 @@
     ./hardware-configuration.nix
     ../../modules/nixos/default.nix
     inputs.home-manager.nixosModules.default
-    # inputs.bbrShell.homeManagerModules.bbrShell
   ];
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
@@ -86,6 +85,7 @@
     polkit
     polkit_gnome
     networkmanagerapplet
+    bbrShell
   ];
 
   # Hyprland

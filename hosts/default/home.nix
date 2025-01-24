@@ -14,8 +14,9 @@
     ../../modules/home-manager/default.nix
     inputs.bbrShell.homeManagerModules.bbrShell
   ];
-  programs.bbrShell.enable = true;
-
+  nixpkgs.overlays = [
+    inputs.bbrShell.overlay
+  ];
   nixpkgs = {
     config = {
       allowUnfree = true;
@@ -57,6 +58,8 @@
     pkgs.cava
     pkgs.nitch
     pkgs.hyprpicker
+    pkgs.bbrShell
+    pkgs.killall
   ];
 
   home.sessionVariables = {
