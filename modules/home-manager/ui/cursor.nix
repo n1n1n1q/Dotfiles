@@ -5,7 +5,7 @@
     gtk.enable = true;
     x11.enable = true;
     name = "Bibata-Modern-Ice";
-    # size = 52;
+    size = 24;
     package = pkgs.bibata-cursors;
   };
 }

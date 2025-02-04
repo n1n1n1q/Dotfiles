@@ -105,6 +105,7 @@ in
         "opacity 0.8 0.8,^(rofi)$"
         "opacity 0.8 0.7,^(kitty)$"
         "idleinhibit fullscreen,^(firefox)$"
+        "idleinhibit fullscreen,^(zen)$"
         "idleinhibit always,^(spotify)$"
 
       ];

@@ -5,11 +5,11 @@
     enable = true;
     settings = {
       preload = [
-        "/home/oleh/.config/backgrounds/bg016.png"
+        "/home/oleh/.cache/background"
       ];
       wallpaper = [
-        "eDP-1,/home/oleh/.config/backgrounds/bg016.png"
-        "HDMI-A-1,/home/oleh/.config/backgrounds/bg016.png"
+        "eDP-1,/home/oleh/.cache/background"
+        "HDMI-A-1,/home/oleh/.cache/background"
       ];
       ipc = "off";
       # splash = true;

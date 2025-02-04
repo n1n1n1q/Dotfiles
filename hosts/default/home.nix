@@ -51,7 +51,8 @@
     pkgs.libsForQt5.qt5ct
     pkgs.bluez
     pkgs.pavucontrol
-    pkgs.xfce.thunar
+    # pkgs.xfce.thunar
+    pkgs.dolphin
     pkgs.pywal
     pkgs.rofi-wayland
     pkgs.nixd
@@ -60,6 +61,10 @@
     pkgs.hyprpicker
     pkgs.bbrShell
     pkgs.killall
+    pkgs.gnome-control-center
+    inputs.zen-browser.packages.x86_64-linux.default
+    pkgs.libnotify
+    pkgs.glib
   ];
 
   home.sessionVariables = {
