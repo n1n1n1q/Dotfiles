@@ -52,7 +52,7 @@
     pkgs.bluez
     pkgs.pavucontrol
     # pkgs.xfce.thunar
-    pkgs.dolphin
+    pkgs.kdePackages.dolphin
     pkgs.pywal
     pkgs.rofi-wayland
     pkgs.nixd

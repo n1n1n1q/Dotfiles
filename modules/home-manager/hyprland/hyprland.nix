@@ -101,15 +101,6 @@ in
         workspace_swipe_fingers = "3";
       };
 
-      windowrule = [
-        "opacity 0.8 0.8,^(rofi)$"
-        "opacity 0.8 0.7,^(kitty)$"
-        "idleinhibit fullscreen,^(firefox)$"
-        "idleinhibit fullscreen,^(zen)$"
-        "idleinhibit always,^(spotify)$"
-
-      ];
-
       exec-once = ''${startupScript}/bin/start'';
 
       bind = [
