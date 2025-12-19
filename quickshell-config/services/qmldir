@@ -1,0 +1,10 @@
+module qs.services
+singleton Audio 1.0 Audio.qml
+singleton Battery 1.0 Battery.qml
+singleton Bluetooth 1.0 Bluetooth.qml
+singleton Brightness 1.0 Brightness.qml
+singleton Time 1.0 Time.qml
+singleton Media 1.0 Media.qml
+singleton Notifications 1.0 Notifications.qml
+singleton System 1.0 System.qml
+singleton WiFi 1.0 WiFi.qml
