@@ -23,7 +23,7 @@ Rectangle {
         
         Text {
             text: "\udb81\udd7e Output Devices"
-            font.family: "Symbols Nerd Font"
+            font.family: Theme.font.icon
             font.pointSize: Theme.fontSize.normal
             font.bold: true
             color: Theme.colors.accent
@@ -56,7 +56,7 @@ Rectangle {
                     
                     Text {
                         text: parent.parent.isActive ? "\uf00c" : "\uf111"
-                        font.family: "Symbols Nerd Font"
+                        font.family: Theme.font.icon
                         color: parent.parent.isActive ? Theme.colors.base : Theme.colors.accent
                         font.pointSize: Theme.fontSize.xlarge
                         font.bold: true

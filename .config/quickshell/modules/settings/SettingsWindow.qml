@@ -26,6 +26,9 @@ FloatingWindow {
     readonly property var navGroups: [
         [ { slug: "welcome", icon: "󰋜", title: "Welcome", subtitle: "Overview", search: "" } ],
         [
+            { slug: "general", icon: "󰒓", title: "General", subtitle: "Profile, colours, fonts", search: "appearance theme wallpaper" }
+        ],
+        [
             { slug: "wifi",      icon: "󰤨", title: "Wi‑Fi",     subtitle: "Wireless networking", search: "system network" },
             { slug: "bluetooth", icon: "󰂯", title: "Bluetooth", subtitle: "Devices & pairing",   search: "system" },
             { slug: "sound",     icon: "󰕾", title: "Sound",     subtitle: "Output & input",       search: "system audio volume" }
@@ -170,6 +173,7 @@ FloatingWindow {
                     WelcomePage {
                         onNavigate: slug => SettingsController.section = slug
                     }
+                    GeneralPage {}
                     WiFiPage {}
                     BluetoothPage {}
                     SoundPage {}

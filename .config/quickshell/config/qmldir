@@ -1,2 +1,4 @@
 module qs.config
 singleton Theme 1.0 Theme.qml
+singleton Appearance 1.0 Appearance.qml
+singleton BarConfig 1.0 BarConfig.qml

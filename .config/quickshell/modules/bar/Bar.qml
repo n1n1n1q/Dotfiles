@@ -1,11 +1,12 @@
 import QtQuick
-import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import qs.config
-import qs.services
-import qs.widgets
 
+// The top bar. Its content is entirely data-driven from BarConfig (three
+// anchored sections of groups); the pieces here are just the window, the frame
+// edge and the section anchors. Edit the layout in Settings > Bar or in
+// ~/.config/quickshell/bar.json.
 Scope {
     Variants {
         model: Quickshell.screens
@@ -27,12 +28,9 @@ Scope {
             Rectangle {
                 anchors.fill: parent
                 color: Theme.bar.background
-                radius: 0
 
                 // The bar's own bottom edge doubles as the top run of the
-                // screen frame (ScreenFrame.qml) - same color, same
-                // thickness - so there's no separate strip glued on below
-                // the bar and no seam/gap between the two.
+                // screen frame (ScreenFrame.qml) - same color, same thickness.
                 Rectangle {
                     anchors {
                         left: parent.left
@@ -46,63 +44,25 @@ Scope {
                 Item {
                     anchors.fill: parent
 
-                    // Left: focused-window title, doubles as the dashboard toggle.
-                    WindowTitle {
-                        anchors {
-                            left: parent.left
-                            leftMargin: Theme.spacing.medium
-                            verticalCenter: parent.verticalCenter
-                        }
-                        parentWindow: barWindow
-                        barHeight: barWindow.implicitHeight
+                    BarSection {
+                        align: "left"
+                        groups: BarConfig.left
+                        panelWindow: barWindow
+                        screenName: barWindow.modelData.name
                     }
 
-                    // Centre: workspaces sit dead-centre of the bar, always -
-                    // independent of the flanking clusters' widths.
-                    WorkspaceIndicator {
-                        id: workspaces
-                        anchors.centerIn: parent
-                        outputName: barWindow.modelData.name
+                    BarSection {
+                        align: "center"
+                        groups: BarConfig.center
+                        panelWindow: barWindow
+                        screenName: barWindow.modelData.name
                     }
 
-                    // Left cluster: system stats + now-playing, merged onto one
-                    // capsule, ending just left of the workspaces.
-                    BarPill {
-                        anchors {
-                            right: workspaces.left
-                            rightMargin: Theme.spacing.medium
-                            verticalCenter: parent.verticalCenter
-                        }
-                        spacing: 0
-
-                        SystemStats {}
-                        MediaWidget {}
-                    }
-
-                    // Right cluster: clock + battery, merged onto one capsule,
-                    // starting just right of the workspaces.
-                    BarPill {
-                        anchors {
-                            left: workspaces.right
-                            leftMargin: Theme.spacing.medium
-                            verticalCenter: parent.verticalCenter
-                        }
-                        spacing: 0
-
-                        TimeWidget {}
-                        // VolumeWidget {}  // hidden for now (component kept)
-                        BatteryWidget {}
-                    }
-
-                    // Right: system tray (no background). Its right edge sits
-                    // the same distance in as WindowTitle's text does on the
-                    // left: the left anchor margin plus WindowTitle's own hPad.
-                    Tray {
-                        anchors {
-                            right: parent.right
-                            rightMargin: Theme.spacing.medium + Theme.spacing.normal
-                            verticalCenter: parent.verticalCenter
-                        }
+                    BarSection {
+                        align: "right"
+                        groups: BarConfig.right
+                        panelWindow: barWindow
+                        screenName: barWindow.modelData.name
                     }
                 }
             }

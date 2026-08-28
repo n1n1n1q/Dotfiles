@@ -54,7 +54,7 @@ GroupBox {
                     
                     Text {
                         text: expandable.expanded ? "\uf077" : "\uf078"
-                        font.family: "Symbols Nerd Font"
+                        font.family: Theme.font.icon
                         font.pointSize: Theme.fontSize.normal
                         color: Theme.colors.accent
                     }

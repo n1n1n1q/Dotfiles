@@ -6,36 +6,40 @@ import Quickshell
 Singleton {
     id: theme
 
+    // Live colour scheme — every value comes from the active scheme file via
+    // Appearance (default: Catppuccin Mocha). Fallbacks keep the shell readable
+    // if a scheme is missing a key.
+    readonly property var _p: Appearance.palette
     readonly property QtObject palette: QtObject {
-        readonly property color base: "#1e1e2e"
-        readonly property color mantle: "#181825"
-        readonly property color crust: "#11111b"
-        
-        readonly property color surface0: "#313244"
-        readonly property color surface1: "#45475a"
-        readonly property color surface2: "#585b70"
-        
-        readonly property color overlay0: "#6c7086"
-        readonly property color overlay1: "#7f849c"
-        readonly property color overlay2: "#9399b2"
-        readonly property color subtext0: "#a6adc8"
-        readonly property color subtext1: "#bac2de"
-        readonly property color text: "#cdd6f4"
-        
-        readonly property color rosewater: "#f5e0dc"
-        readonly property color flamingo: "#f2cdcd"
-        readonly property color pink: "#f5c2e7"
-        readonly property color mauve: "#cba6f7"
-        readonly property color red: "#f38ba8"
-        readonly property color maroon: "#eba0ac"
-        readonly property color peach: "#fab387"
-        readonly property color yellow: "#f9e2af"
-        readonly property color green: "#a6e3a1"
-        readonly property color teal: "#94e2d5"
-        readonly property color sky: "#89dceb"
-        readonly property color sapphire: "#74c7ec"
-        readonly property color blue: "#89b4fa"
-        readonly property color lavender: "#b4befe"
+        readonly property color base: theme._p.base ?? "#1e1e2e"
+        readonly property color mantle: theme._p.mantle ?? "#181825"
+        readonly property color crust: theme._p.crust ?? "#11111b"
+
+        readonly property color surface0: theme._p.surface0 ?? "#313244"
+        readonly property color surface1: theme._p.surface1 ?? "#45475a"
+        readonly property color surface2: theme._p.surface2 ?? "#585b70"
+
+        readonly property color overlay0: theme._p.overlay0 ?? "#6c7086"
+        readonly property color overlay1: theme._p.overlay1 ?? "#7f849c"
+        readonly property color overlay2: theme._p.overlay2 ?? "#9399b2"
+        readonly property color subtext0: theme._p.subtext0 ?? "#a6adc8"
+        readonly property color subtext1: theme._p.subtext1 ?? "#bac2de"
+        readonly property color text: theme._p.text ?? "#cdd6f4"
+
+        readonly property color rosewater: theme._p.rosewater ?? "#f5e0dc"
+        readonly property color flamingo: theme._p.flamingo ?? "#f2cdcd"
+        readonly property color pink: theme._p.pink ?? "#f5c2e7"
+        readonly property color mauve: theme._p.mauve ?? "#cba6f7"
+        readonly property color red: theme._p.red ?? "#f38ba8"
+        readonly property color maroon: theme._p.maroon ?? "#eba0ac"
+        readonly property color peach: theme._p.peach ?? "#fab387"
+        readonly property color yellow: theme._p.yellow ?? "#f9e2af"
+        readonly property color green: theme._p.green ?? "#a6e3a1"
+        readonly property color teal: theme._p.teal ?? "#94e2d5"
+        readonly property color sky: theme._p.sky ?? "#89dceb"
+        readonly property color sapphire: theme._p.sapphire ?? "#74c7ec"
+        readonly property color blue: theme._p.blue ?? "#89b4fa"
+        readonly property color lavender: theme._p.lavender ?? "#b4befe"
     }
 
     readonly property QtObject colors: QtObject {
@@ -83,12 +87,14 @@ Singleton {
         readonly property int xlarge: 14
         readonly property int huge: 16
         
-        readonly property string main: "Rubik"
-        // Monaspace *NF* is the only Nerd-Font-patched family actually
-        // installed on this box ("JetBrains Mono NF" / "Symbols Nerd Font"
-        // resolve to Noto and render tofu for every icon glyph).
-        readonly property string mono: "Monaspace Neon NF"
-        readonly property string icon: "Monaspace Neon NF"
+        // Two knobs, set in Settings > General (Appearance):
+        //   main  - the UI text font
+        //   mono  - the monospace font; it MUST be Nerd-Font-patched because
+        //           `icon` is an alias for it (every glyph in the shell comes
+        //           from this one family). Monaspace Neon NF is the default.
+        readonly property string main: Appearance.fontFamily || "Rubik"
+        readonly property string mono: Appearance.fontMono || "Monaspace Neon NF"
+        readonly property string icon: mono
         
         readonly property int light: Font.Light
         readonly property int regular: Font.Normal

@@ -12,7 +12,12 @@ PillButton 1.0 PillButton.qml
 WifiNetworkRow 1.0 WifiNetworkRow.qml
 BluetoothDeviceRow 1.0 BluetoothDeviceRow.qml
 VolumeControl 1.0 VolumeControl.qml
+IconButton 1.0 IconButton.qml
+BarGroupEditor 1.0 BarGroupEditor.qml
+WidgetPicker 1.0 WidgetPicker.qml
+SchemeRow 1.0 SchemeRow.qml
 WelcomePage 1.0 WelcomePage.qml
+GeneralPage 1.0 GeneralPage.qml
 WiFiPage 1.0 WiFiPage.qml
 BluetoothPage 1.0 BluetoothPage.qml
 SoundPage 1.0 SoundPage.qml

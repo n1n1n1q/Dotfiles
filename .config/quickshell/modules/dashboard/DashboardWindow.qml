@@ -181,9 +181,9 @@ PanelWindow {
                             // Fallback icon when image is not available
                             Text {
                                 anchors.centerIn: parent
-                                text: "" // Font Awesome user icon
-                                font.family: "Font Awesome 6 Free"
-                                font.pixelSize: 24
+                                text: "󰀄" // nf-md-account
+                                font.family: Theme.font.icon
+                                font.pointSize: Theme.font.xlarge
                                 color: Theme.colors.accent
                                 visible: userIcon.status !== Image.Ready
                             }

@@ -28,7 +28,7 @@ Rectangle {
         // Icon with fixed width for alignment
         Text {
             text: root.sliderIcon
-            font.family: "Symbols Nerd Font"
+            font.family: Theme.font.icon
             font.pointSize: Theme.fontSize.xlarge
             color: root.isMuted ? Theme.colors.red : Theme.colors.green
             Layout.alignment: Qt.AlignVCenter
