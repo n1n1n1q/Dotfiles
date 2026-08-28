@@ -6,10 +6,10 @@ import qs.modules.settings
 
 SettingsPage {
     heading: "Display"
+    icon: "󰍹"
     blurb: "Monitors attached to this session."
 
     SettingsGroup {
-        caption: "Monitors"
 
         Repeater {
             model: Quickshell.screens
@@ -25,7 +25,6 @@ SettingsPage {
     }
 
     SettingsGroup {
-        caption: "Layout"
 
         SettingsRow {
             icon: "󰕰"

@@ -41,12 +41,13 @@ Rectangle {
         }
     }
 
+    // Controlled component: never mutate `checked` here (that would clobber the
+    // caller's binding to backend state — the "stays on after edit mode ends"
+    // bug). Just report the intent; the caller flips the source, which flows
+    // back through `checked`.
     MouseArea {
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
-        onClicked: {
-            root.checked = !root.checked;
-            root.toggled(root.checked);
-        }
+        onClicked: root.toggled(!root.checked)
     }
 }

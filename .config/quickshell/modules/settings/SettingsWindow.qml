@@ -40,7 +40,7 @@ FloatingWindow {
         ],
         [
             { slug: "bar",       icon: "󰟀", title: "Bar",       subtitle: "Top bar layout",  search: "customization rice" },
-            { slug: "widgets",   icon: "󰀻", title: "Widgets",   subtitle: "Bar & dashboard", search: "customization rice" },
+            { slug: "widgets",   icon: "󰀻", title: "Widgets",   subtitle: "Desktop widgets", search: "customization rice clock desktop" },
             { slug: "dashboard", icon: "󰕮", title: "Dashboard", subtitle: "Panel sections",  search: "customization rice" }
         ],
         [ { slug: "about", icon: "󰋽", title: "About", subtitle: "Shell & credits", search: "" } ]
@@ -83,6 +83,16 @@ FloatingWindow {
                 Layout.preferredWidth: Math.round(root.width / 2.7)
                 Layout.fillHeight: true
 
+                // Faint separator from the content pane.
+                Rectangle {
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    width: 1
+                    color: Qt.rgba(Theme.colors.borderSubtle.r, Theme.colors.borderSubtle.g,
+                                   Theme.colors.borderSubtle.b, 0.5)
+                }
+
                 ColumnLayout {
                     anchors.fill: parent
                     anchors.margins: Theme.spacing.large
@@ -123,37 +133,45 @@ FloatingWindow {
 
                     // Nav list — one SettingsGroup per navGroup (spacing 0 so the
                     // entries touch and only the run's ends round); padding
-                    // between the groups.
-                    ColumnLayout {
+                    // between the groups. Scrolls when it overflows a short
+                    // window.
+                    Flickable {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        Layout.alignment: Qt.AlignTop
-                        spacing: Theme.spacing.small
+                        clip: true
+                        contentWidth: width
+                        contentHeight: navCol.implicitHeight
+                        boundsBehavior: Flickable.StopAtBounds
+                        ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
 
-                        Repeater {
-                            model: root.navGroups
+                        ColumnLayout {
+                            id: navCol
+                            width: parent.width
+                            spacing: Theme.spacing.small
 
-                            delegate: SettingsGroup {
-                                required property var modelData
-                                spacing: 0
+                            Repeater {
+                                model: root.navGroups
 
-                                Repeater {
-                                    model: modelData
+                                delegate: SettingsGroup {
+                                    required property var modelData
+                                    spacing: 0
 
-                                    delegate: NavEntry {
-                                        required property var modelData
-                                        visible: root.matches(modelData)
-                                        icon: modelData.icon
-                                        title: modelData.title
-                                        subtitle: modelData.subtitle
-                                        selected: SettingsController.section === modelData.slug
-                                        onClicked: SettingsController.section = modelData.slug
+                                    Repeater {
+                                        model: modelData
+
+                                        delegate: NavEntry {
+                                            required property var modelData
+                                            visible: root.matches(modelData)
+                                            icon: modelData.icon
+                                            title: modelData.title
+                                            subtitle: modelData.subtitle
+                                            selected: SettingsController.section === modelData.slug
+                                            onClicked: SettingsController.section = modelData.slug
+                                        }
                                     }
                                 }
                             }
                         }
-
-                        Item { Layout.fillHeight: true }
                     }
                 }
             }

@@ -1,0 +1,6 @@
+module qs.modules.desktop
+DesktopLayer 1.0 DesktopLayer.qml
+DesktopWidget 1.0 DesktopWidget.qml
+ClockWidget 1.0 ClockWidget.qml
+DesktopStatsWidget 1.0 DesktopStatsWidget.qml
+DesktopMediaWidget 1.0 DesktopMediaWidget.qml

@@ -1,2 +1,10 @@
 repos
 .claude
+
+# Quickshell runtime state (written by the shell itself, now that
+# ~/.config/quickshell symlinks here). Not part of the tracked config.
+.config/quickshell/appearance.json
+.config/quickshell/bar.json
+.config/quickshell/desktop.json
+.config/quickshell/colorschemes/
+.config/quickshell/wallpapers/

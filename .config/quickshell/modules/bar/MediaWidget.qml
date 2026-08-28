@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import qs.config
 import qs.services
 import qs.widgets
+import qs.modules.popout
 
 // Bar "now playing": an end-4-style filled circular gauge (wedge = track
 // position) with a music-note glyph knocked through the centre, plus the current
@@ -11,9 +12,18 @@ import qs.widgets
 HoverPill {
     id: root
 
+    property string screenName: ""
     spacing: Theme.spacing.tiny
 
     readonly property bool hasPlayer: Media.activePlayer !== null
+
+    // Gauge keeps play/pause (its own MouseArea); clicking the label / dead
+    // space opens the media popout.
+    clickable: true
+    onClicked: {
+        const p = mapToItem(null, width / 2, 0);
+        PopoutController.toggle("media", p.x, width, screenName);
+    }
 
     CircularWidget {
         id: widget

@@ -125,6 +125,15 @@ Singleton {
         if (root.doNotDisturb) root.popups = []
     }
 
+    // `qs ipc call notifications dnd|dndOn|dndOff` — handy for a niri keybind.
+    IpcHandler {
+        target: "notifications"
+        function dnd(): void { root.toggleDnd() }
+        function dndOn(): void { root.doNotDisturb = true; root.popups = [] }
+        function dndOff(): void { root.doNotDisturb = false }
+        function clear(): void { root.clear() }
+    }
+
     // --- helpers used by the card ---------------------------------------
 
     function iconSource(entry) {

@@ -5,10 +5,10 @@ import qs.modules.settings
 
 SettingsPage {
     heading: "Dashboard"
+    icon: "󰕮"
     blurb: "The panel that drops down from the window title on the left of the bar."
 
     SettingsGroup {
-        caption: "Sections"
 
         Repeater {
             model: [

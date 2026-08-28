@@ -8,10 +8,10 @@ import qs.modules.settings
 
 SettingsPage {
     heading: "About"
+    icon: "󰋽"
     blurb: "The shell, the machine and the people behind it."
 
     SettingsGroup {
-        caption: "Shell"
 
         SettingsRow {
             icon: "󰆍"
@@ -45,7 +45,6 @@ SettingsPage {
     }
 
     SettingsGroup {
-        caption: "Session"
 
         SettingsRow {
             icon: "󰀄"
@@ -76,7 +75,6 @@ SettingsPage {
     }
 
     SettingsGroup {
-        caption: "Credits"
 
         SettingsRow {
             icon: "󰊤"

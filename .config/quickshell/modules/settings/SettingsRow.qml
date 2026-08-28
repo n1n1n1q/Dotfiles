@@ -24,7 +24,7 @@ Rectangle {
     readonly property bool _roundBottom: blockPosition === "bottom" || blockPosition === "single"
 
     Layout.fillWidth: true
-    implicitHeight: Math.max(56, row.implicitHeight + Theme.spacing.normal * 2)
+    implicitHeight: Math.max(60, row.implicitHeight + Theme.spacing.normal * 2)
 
     color: (hoverable && mouse.containsMouse) ? Theme.colors.surfaceVariant : Theme.colors.surface
     topLeftRadius: _roundTop ? _r : 0
@@ -33,6 +33,20 @@ Rectangle {
     bottomRightRadius: _roundBottom ? _r : 0
 
     Behavior on color { ColorAnimation { duration: Theme.animation.fast } }
+
+    // Hairline divider between stacked rows in a run (drawn on the bottom edge
+    // of all but the last row — no doubling at the seam).
+    Rectangle {
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.leftMargin: Theme.spacing.normal
+        anchors.rightMargin: Theme.spacing.normal
+        height: 1
+        visible: root.blockPosition === "top" || root.blockPosition === "middle"
+        color: Qt.rgba(Theme.colors.borderSubtle.r, Theme.colors.borderSubtle.g,
+                       Theme.colors.borderSubtle.b, 0.5)
+    }
 
     RowLayout {
         id: row
@@ -49,14 +63,15 @@ Rectangle {
             implicitWidth: 34
             implicitHeight: 34
             radius: Theme.rounding.small
-            color: Theme.colors.surfaceVariant
+            color: Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g,
+                           Theme.colors.accent.b, 0.16)
 
             Text {
                 anchors.centerIn: parent
                 text: root.icon
                 font.family: Theme.font.icon
                 font.pointSize: Theme.font.large
-                color: Theme.colors.textPrimary
+                color: Theme.colors.accent
             }
         }
 

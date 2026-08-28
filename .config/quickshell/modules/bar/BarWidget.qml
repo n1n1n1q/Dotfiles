@@ -30,9 +30,9 @@ Loader {
 
     Component { id: cWindowTitle; WindowTitle { parentWindow: root.panelWindow; barHeight: Theme.bar.height } }
     Component { id: cWorkspaces;  WorkspaceIndicator { outputName: root.screenName } }
-    Component { id: cSystemStats; SystemStats {} }
-    Component { id: cMedia;       MediaWidget {} }
-    Component { id: cClock;       TimeWidget {} }
+    Component { id: cSystemStats; SystemStats { screenName: root.screenName } }
+    Component { id: cMedia;       MediaWidget { screenName: root.screenName } }
+    Component { id: cClock;       TimeWidget { screenName: root.screenName } }
     Component { id: cBattery;     BatteryWidget {} }
     Component { id: cVolume;      VolumeWidget {} }
     Component { id: cConnectivity; ConnectivityWidget {} }

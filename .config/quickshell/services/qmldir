@@ -6,6 +6,9 @@ singleton Brightness 1.0 Brightness.qml
 singleton Time 1.0 Time.qml
 singleton Media 1.0 Media.qml
 singleton Notifications 1.0 Notifications.qml
+singleton Processes 1.0 Processes.qml
 singleton System 1.0 System.qml
 singleton SysResources 1.0 SysResources.qml
+singleton SystemInfo 1.0 SystemInfo.qml
+singleton Wallpaper 1.0 Wallpaper.qml
 singleton WiFi 1.0 WiFi.qml

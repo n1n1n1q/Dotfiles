@@ -1,0 +1,6 @@
+module qs.modules.popout
+singleton PopoutController 1.0 PopoutController.qml
+BarPopout 1.0 BarPopout.qml
+CalendarCard 1.0 CalendarCard.qml
+MediaCard 1.0 MediaCard.qml
+SystemMonitorCard 1.0 SystemMonitorCard.qml

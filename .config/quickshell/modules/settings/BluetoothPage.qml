@@ -8,6 +8,7 @@ import qs.modules.settings
 SettingsPage {
     id: page
     heading: "Bluetooth"
+    icon: "󰂯"
     blurb: "Adapter power, visibility and paired devices, via BlueZ."
 
     // Scan only while the user asked for it AND this page is on screen.
@@ -66,7 +67,6 @@ SettingsPage {
 
     // --- paired devices ------------------------------------------------------
     SettingsGroup {
-        caption: "My devices"
         visible: Bluetooth.enabled
 
         Repeater {
@@ -87,7 +87,6 @@ SettingsPage {
 
     // --- discovery -----------------------------------------------------------
     SettingsGroup {
-        caption: "Add a device"
         visible: Bluetooth.enabled
 
         SettingsRow {

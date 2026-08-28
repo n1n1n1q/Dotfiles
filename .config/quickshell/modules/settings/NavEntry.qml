@@ -28,8 +28,11 @@ Rectangle {
     readonly property color _rest: Qt.rgba(Theme.palette.surface0.r,
                                            Theme.palette.surface0.g,
                                            Theme.palette.surface0.b, 0.45)
-    color: selected ? Theme.colors.surfaceVariant
-        : mouse.containsMouse ? Theme.colors.surface
+    readonly property color _accentWash: Qt.rgba(Theme.colors.accent.r,
+                                                 Theme.colors.accent.g,
+                                                 Theme.colors.accent.b, 0.16)
+    color: selected ? _accentWash
+        : mouse.containsMouse ? Theme.colors.surfaceVariant
         : _rest
     topLeftRadius: _roundTop ? _r : 0
     topRightRadius: _roundTop ? _r : 0
@@ -38,6 +41,18 @@ Rectangle {
 
     Behavior on color {
         ColorAnimation { duration: Theme.animation.fast }
+    }
+
+    // Accent bar on the left edge of the active entry.
+    Rectangle {
+        anchors.left: parent.left
+        anchors.verticalCenter: parent.verticalCenter
+        width: 3
+        height: parent.height - Theme.spacing.normal
+        radius: width / 2
+        color: Theme.colors.accent
+        opacity: root.selected ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: Theme.animation.fast } }
     }
 
     RowLayout {

@@ -4,34 +4,78 @@ import Quickshell
 import Quickshell.Wayland
 import qs.config
 
+// Screen-edge decoration: a thin frame border on the three (or four) edges the
+// bar doesn't occupy, its rounded corner joints, and the black "screen rounder"
+// accents. All three are independently toggleable via BarConfig.style
+// (`frame` / `rounded` / `blackCorners`) and the whole thing follows the bar to
+// whichever edge it's docked on.
 Scope {
-    // Configuration
     readonly property int frameRounding: 60   // fixed corner-window box size
-    readonly property int innerRounding: 34   // smaller black "screen rounding" radius, nested on top
+    readonly property int innerRounding: 34   // black "screen rounding" radius
     readonly property int barHeight: Theme.bar.height
-    // Shared with Bar.qml, whose own bottom edge is styled to be this same
-    // color/thickness - that's the frame's top run, so there's nothing
-    // separate to keep in sync here beyond referencing the same constants.
-    readonly property int frameCornerRadius: Theme.frame.cornerRadius
     readonly property color frameColor: Theme.frame.color
     readonly property color innerFrameColor: Theme.frame.innerColor
     readonly property int edgeThickness: Theme.frame.thickness
-    // The bottom corner's actual content-side curvature: FrameCornerPiece is
-    // a border.width-thick ring, so its inner (content) edge sits one
-    // border-width inside the outer radius - not at frameCornerRadius itself.
-    // The top fillet (BarFillet) is a plain filled wedge, not a ring, so it
-    // has to be told this same radius explicitly to curve the same amount as
-    // the bottom - otherwise "same corner radius" on paper still reads as a
-    // tighter curve on one side and a gentler one on the other.
-    readonly property int contentCornerRadius: frameCornerRadius - edgeThickness
 
-    // Cross-compositor fullscreen tracking via wlr-foreign-toplevel-management
-    // (Quickshell.Wayland's ToplevelManager) rather than niri's own IPC - this
-    // niri build doesn't expose an is_fullscreen field over `niri msg -j
-    // windows` at all, whereas the toplevel-management protocol reports it
-    // directly per window, per screen. Drives hiding the frame's border while
-    // a window is fullscreen; the black screen-rounder corners are meant to
-    // stay above everything regardless and never consult this.
+    // --- live style ----------------------------------------------------
+    readonly property string barEdge: BarConfig.edge          // top|bottom|left|right
+    readonly property bool barFloating: BarConfig.floating
+    readonly property bool frameOn: BarConfig.frameEnabled
+    // The black screen-rounder accents — independent of everything else, works
+    // in floating/pill mode too.
+    readonly property bool cornersOn: BarConfig.blackCorners
+    readonly property bool roundedOn: BarConfig.frameRounded
+    // Corner radius is a geometry constant; whether a given corner is rounded
+    // is decided per-corner below (rounded toggle, black accent, or neither).
+    readonly property int frameCornerRadius: Theme.frame.cornerRadius
+    // Content-side curvature of a border.width-thick corner ring.
+    readonly property int contentCornerRadius: Math.max(0, frameCornerRadius - edgeThickness)
+    // The fillet tucks past the border strip when there is one, flush to the
+    // screen edge when there isn't (no phantom margin without a frame).
+    readonly property int filletEdgeInset: frameOn ? edgeThickness : 0
+
+    // corner: 0=TopLeft 1=TopRight 2=BottomLeft 3=BottomRight
+    function edgeTouchesCorner(edge, corner) {
+        if (edge === "top") return corner === 0 || corner === 1;
+        if (edge === "bottom") return corner === 2 || corner === 3;
+        if (edge === "left") return corner === 0 || corner === 2;
+        if (edge === "right") return corner === 1 || corner === 3;
+        return false;
+    }
+    // A docked bar sits on two corners — they never get a frame joint.
+    function cornerIsBarSide(corner) {
+        return !barFloating && edgeTouchesCorner(barEdge, corner);
+    }
+    // Those two corners get a bar-coloured seam-softening fillet — driven by
+    // the `rounded` toggle only (black-corners-but-not-rounded → square bar
+    // seam, rounded joint on the other corners).
+    function cornerHasFillet(corner) {
+        return roundedOn && cornerIsBarSide(corner);
+    }
+    // Every other corner gets the rounded frame-border joint when the frame is
+    // on and EITHER `rounded` or the black accent wants a curve there (a square
+    // border corner inside a rounded black corner looks broken).
+    function cornerHasJoint(corner) {
+        return frameOn && !cornerIsBarSide(corner) && (roundedOn || cornersOn);
+    }
+    // How far the frame yields on a given side — barHeight where the bar docks.
+    function sideInset(side) {
+        return (!barFloating && side === barEdge) ? barHeight : 0;
+    }
+    // Is there a border strip on this side at all?
+    function sideHasStrip(side) {
+        return frameOn && !(!barFloating && side === barEdge);
+    }
+    // Strips stop short of a corner for its joint AND for the black accent
+    // (cross-window stacking is unreliable — better to leave the room than
+    // hope the accent draws on top).
+    function endMargin(endSide, corner) {
+        return Math.max(
+            sideInset(endSide),
+            cornerHasJoint(corner) ? frameCornerRadius : 0,
+            cornersOn ? innerRounding : 0);
+    }
+
     readonly property var fullscreenScreens: {
         const screens = new Set()
         for (const toplevel of ToplevelManager.toplevels.values) {
@@ -41,30 +85,16 @@ Scope {
         }
         return screens
     }
-
     function isFrameHidden(screen) {
         return fullscreenScreens.has(screen)
     }
 
-    // This is the exact ShapePath/PathAngleArc construction the original
-    // per-corner code used (just parameterized over isLeft/isTop/startAngle
-    // instead of being copy-pasted four times), producing a small wedge
-    // flush with the two edges that curves away near the interior corner.
-    // Earlier attempts to "fix" this by swapping in a Rectangle corner-radius
-    // or a hand-rolled Canvas arc both changed the actual shape for the
-    // worse - the bug reports were right and this plain revert is the fix.
-    // Used only for the black "screen rounder" accent below - confirmed
-    // correct, left untouched.
+    // Hand-rolled wedge, used only for the black screen-rounder accent and the
+    // bar/strip fillet. Left untouched — see git history for why every "fix"
+    // here was a regression.
     component CornerShape: Shape {
         id: shape
         required property real rounding
-        // Size of the square window this wedge is being drawn into - the
-        // "far corner" reference for whichever axis isLeft/isTop don't pin
-        // to 0. This must be THIS shape's own containing box, not a global
-        // constant: hardcoding the corner-window size here was exactly the
-        // earlier bug (only ever exercised inside one fixed box size, so it
-        // silently broke the moment the same wedge math got reused inside a
-        // differently-sized box, e.g. the bar/edge-strip fillet).
         required property real boxSize
         required property color fillColor
         required property bool isLeft
@@ -80,15 +110,6 @@ Scope {
             id: shapePath
             strokeWidth: 0
             fillColor: shape.fillColor
-
-            // The true far corner of the containing box - fixed regardless
-            // of this wedge's own radius. Using `rounding` here (instead of
-            // the box's actual size) is only correct when rounding ==
-            // boxSize, which held for the outer accent but not for a
-            // smaller nested one - that's what was dragging the inner
-            // corner away from the real corner on every side except
-            // top-left (where isLeft and isTop both collapse the
-            // expression to 0 regardless).
             startX: shape.isLeft ? 0 : shape.boxSize
             startY: shape.isTop ? 0 : shape.boxSize
 
@@ -106,12 +127,8 @@ Scope {
         }
     }
 
-    // The frame's own corner joint: a window into one corner of a virtual,
-    // larger rounded rectangle. Clipping a radius x radius box around that
-    // corner shows a constant-width curve (real Rectangle border rendering,
-    // not hand-rolled arc math) that continues in a dead straight line into
-    // the edge strips right at the clip boundary - so the border reads as
-    // one continuous uniform-width shape, not a separate blob glued on.
+    // The frame's own corner joint: a constant-width curve clipped from one
+    // corner of a virtual 2r rounded rectangle.
     component FrameCornerPiece: Item {
         id: piece
         required property bool isLeft
@@ -136,61 +153,60 @@ Scope {
         }
     }
 
-    // Softens the seam right under the bar where its bottom edge meets the
-    // thin vertical edge strip: without this, the strip starts at a hard
-    // right angle at (edgeThickness, barHeight) - the top-left corner of the
-    // content area - instead of curving into it like the bottom corners do.
-    // This reuses the exact same wedge math as the black screen-rounder
-    // corner (CornerShape) - a small quarter-circle sliver filled solid and
-    // tucked into that junction - just filled with the frame color and
-    // placed at the bar/strip seam instead of the true screen corner.
+    // Softens the seam where a docked bar's edge meets a perpendicular run.
+    // One per corner the bar touches; a bar-coloured quarter-circle tucked into
+    // that inside corner. Works for every edge (and even with the frame off —
+    // it just rounds the bar into the screen corner).
     component BarFillet: PanelWindow {
         id: fillet
         required property ShellScreen targetScreen
-        required property bool isLeft
+        required property int corner   // 0..3
+
+        readonly property bool cIsLeft: corner === 0 || corner === 2
+        readonly property bool cIsTop: corner === 0 || corner === 1
+        readonly property bool barHoriz: barEdge === "top" || barEdge === "bottom"
 
         screen: targetScreen
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Overlay
         color: "transparent"
-        visible: !isFrameHidden(fillet.targetScreen)
+        visible: cornerHasFillet(fillet.corner) && !isFrameHidden(fillet.targetScreen)
         mask: Region {}
 
         anchors {
-            top: true
-            left: isLeft
-            right: !isLeft
+            top: fillet.cIsTop
+            bottom: !fillet.cIsTop
+            left: fillet.cIsLeft
+            right: !fillet.cIsLeft
         }
         margins {
-            left: isLeft ? edgeThickness : 0
-            right: isLeft ? 0 : edgeThickness
-            top: barHeight
+            left: fillet.cIsLeft ? (fillet.barHoriz ? filletEdgeInset : barHeight) : 0
+            right: !fillet.cIsLeft ? (fillet.barHoriz ? filletEdgeInset : barHeight) : 0
+            top: fillet.cIsTop ? (fillet.barHoriz ? barHeight : filletEdgeInset) : 0
+            bottom: !fillet.cIsTop ? (fillet.barHoriz ? barHeight : filletEdgeInset) : 0
         }
 
         implicitWidth: frameCornerRadius
         implicitHeight: frameCornerRadius
 
         CornerShape {
-            // contentCornerRadius, not frameCornerRadius - see its
-            // definition above. This is what makes the curve here match the
-            // bottom corners' actual curvature instead of a bigger, gentler
-            // one.
-            rounding: contentCornerRadius
+            // With a border strip the fillet matches the content-side curve;
+            // bare (no frame) it matches the black accent's screen rounding.
+            rounding: frameOn ? contentCornerRadius : frameCornerRadius
             boxSize: frameCornerRadius
             fillColor: frameColor
-            isLeft: fillet.isLeft
-            isTop: true
-            cornerStartAngle: fillet.isLeft ? 180 : -90
+            isLeft: fillet.cIsLeft
+            isTop: fillet.cIsTop
+            cornerStartAngle: [180, -90, 90, 0][fillet.corner]
         }
     }
 
-    // One decorative corner badge. Sits on the Overlay layer so it always
-    // reads as "on top" of the bar, the dashboard and every app window - an
-    // empty mask keeps it from ever intercepting a click despite that.
+    // One decorative corner: the frame's rounded joint (when that corner has
+    // one) plus the black screen-rounder accent (independent toggle).
     component CornerWindow: PanelWindow {
         id: cornerWindow
         required property ShellScreen targetScreen
-        required property int corner // 0=TopLeft, 1=TopRight, 2=BottomLeft, 3=BottomRight
+        required property int corner
 
         screen: targetScreen
         exclusionMode: ExclusionMode.Ignore
@@ -209,24 +225,33 @@ Scope {
             left: isLeftSide
             right: !isLeftSide
         }
-        // Flush with the true screen corner - no bar offset. This is the
-        // "screen rounding" mask, and it's meant to sit above everything
-        // that lives in that corner, bar included, so it has to actually
-        // occupy the real corner rather than one inset below the bar.
         implicitWidth: frameRounding
         implicitHeight: frameRounding
 
-        // Only the bottom corners get the frame's own rounded joint here -
-        // the top corners' frame run is the bar's own bottom edge
-        // (Bar.qml), which is already flush with the bar and needs no
-        // separate piece or bar-height offset glued on below it.
+        // Behind the border joint: fill the outside-of-the-curve sliver with
+        // the frame colour so a frame with no black accent still reads as a
+        // solid rounded rectangle (no see-through corner). Covered by the
+        // black accent when that's on.
+        CornerShape {
+            visible: frameOn && cornerHasJoint(cornerWindow.corner)
+                && !isFrameHidden(cornerWindow.targetScreen)
+            rounding: innerRounding
+            boxSize: frameRounding
+            fillColor: frameColor
+            isLeft: cornerWindow.isLeftSide
+            isTop: cornerWindow.isTopSide
+            cornerStartAngle: cornerWindow.cornerStartAngle
+        }
+
         FrameCornerPiece {
-            visible: !cornerWindow.isTopSide && !isFrameHidden(cornerWindow.targetScreen)
+            visible: cornerHasJoint(cornerWindow.corner)
+                && !isFrameHidden(cornerWindow.targetScreen)
             isLeft: cornerWindow.isLeftSide
             isTop: cornerWindow.isTopSide
         }
 
         CornerShape {
+            visible: cornersOn
             rounding: innerRounding
             boxSize: frameRounding
             fillColor: innerFrameColor
@@ -236,25 +261,27 @@ Scope {
         }
     }
 
-    // A thin decorative strip along one full screen edge - same
-    // always-on-top, fully click-through treatment as the corners. Stops
-    // short of the frame's own corner joints on both ends rather than
-    // running full-length, so the two never need to agree on stacking order
-    // to look continuous - they just tile. There's no "top" strip: the
-    // bar's own bottom edge (Bar.qml) already is the frame's top run, flush
-    // against it with no separate piece and no seam.
+    // A thin border strip along one full screen edge. Yields barHeight where
+    // the bar docks and frameCornerRadius at each rounded corner joint.
     component EdgeStrip: PanelWindow {
         id: edge
         required property ShellScreen targetScreen
-        required property string side // "bottom" | "left" | "right"
+        required property string side // "top" | "bottom" | "left" | "right"
 
         readonly property bool isVertical: side === "left" || side === "right"
+        // perpendicular corners at this strip's two ends
+        readonly property int endCornerA: side === "top" ? 0 : side === "bottom" ? 2
+            : side === "left" ? 0 : 1
+        readonly property int endCornerB: side === "top" ? 1 : side === "bottom" ? 3
+            : side === "left" ? 2 : 3
+        readonly property string endSideA: isVertical ? "top" : "left"
+        readonly property string endSideB: isVertical ? "bottom" : "right"
 
         screen: targetScreen
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Overlay
         color: frameColor
-        visible: !isFrameHidden(targetScreen)
+        visible: sideHasStrip(edge.side) && !isFrameHidden(targetScreen)
         mask: Region {}
 
         anchors {
@@ -263,64 +290,41 @@ Scope {
             left: side !== "right"
             right: side !== "left"
         }
-
-        // Left/right strips run from right below the bar down to the
-        // bottom corner joint; the bottom strip runs between the two
-        // bottom corner joints. Nothing here is inset for the bar beyond
-        // simply starting below it - the frame's rounded corner only
-        // exists at the bottom now.
         margins {
-            left: isVertical ? 0 : frameCornerRadius
-            right: isVertical ? 0 : frameCornerRadius
-            top: isVertical ? barHeight : 0
-            bottom: isVertical ? frameCornerRadius : 0
+            top: isVertical ? endMargin(edge.endSideA, edge.endCornerA) : 0
+            bottom: isVertical ? endMargin(edge.endSideB, edge.endCornerB) : 0
+            left: isVertical ? 0 : endMargin(edge.endSideA, edge.endCornerA)
+            right: isVertical ? 0 : endMargin(edge.endSideB, edge.endCornerB)
         }
 
         implicitWidth: isVertical ? edgeThickness : 1
         implicitHeight: isVertical ? 1 : edgeThickness
     }
 
-    // Each corner/edge gets its own flat `Variants` over the screen list -
-    // matching the simple one-window-per-screen pattern Bar.qml already uses
-    // successfully - rather than one Variants nesting a Scope with 8
-    // children per screen. That nested form was silently dropping 3 of the
-    // 4 corners on every monitor but the first one Quickshell enumerated.
-    Variants {
-        model: Quickshell.screens
-        CornerWindow { required property ShellScreen modelData; targetScreen: modelData; corner: 0 }
-    }
-    Variants {
-        model: Quickshell.screens
-        CornerWindow { required property ShellScreen modelData; targetScreen: modelData; corner: 1 }
-    }
-    Variants {
-        model: Quickshell.screens
-        CornerWindow { required property ShellScreen modelData; targetScreen: modelData; corner: 2 }
-    }
-    Variants {
-        model: Quickshell.screens
-        CornerWindow { required property ShellScreen modelData; targetScreen: modelData; corner: 3 }
-    }
+    Variants { model: Quickshell.screens
+        CornerWindow { required property ShellScreen modelData; targetScreen: modelData; corner: 0 } }
+    Variants { model: Quickshell.screens
+        CornerWindow { required property ShellScreen modelData; targetScreen: modelData; corner: 1 } }
+    Variants { model: Quickshell.screens
+        CornerWindow { required property ShellScreen modelData; targetScreen: modelData; corner: 2 } }
+    Variants { model: Quickshell.screens
+        CornerWindow { required property ShellScreen modelData; targetScreen: modelData; corner: 3 } }
 
-    Variants {
-        model: Quickshell.screens
-        EdgeStrip { required property ShellScreen modelData; targetScreen: modelData; side: "bottom" }
-    }
-    Variants {
-        model: Quickshell.screens
-        EdgeStrip { required property ShellScreen modelData; targetScreen: modelData; side: "left" }
-    }
-    Variants {
-        model: Quickshell.screens
-        EdgeStrip { required property ShellScreen modelData; targetScreen: modelData; side: "right" }
-    }
+    Variants { model: Quickshell.screens
+        EdgeStrip { required property ShellScreen modelData; targetScreen: modelData; side: "top" } }
+    Variants { model: Quickshell.screens
+        EdgeStrip { required property ShellScreen modelData; targetScreen: modelData; side: "bottom" } }
+    Variants { model: Quickshell.screens
+        EdgeStrip { required property ShellScreen modelData; targetScreen: modelData; side: "left" } }
+    Variants { model: Quickshell.screens
+        EdgeStrip { required property ShellScreen modelData; targetScreen: modelData; side: "right" } }
 
-    Variants {
-        model: Quickshell.screens
-        BarFillet { required property ShellScreen modelData; targetScreen: modelData; isLeft: true }
-    }
-    Variants {
-        model: Quickshell.screens
-        BarFillet { required property ShellScreen modelData; targetScreen: modelData; isLeft: false }
-    }
+    Variants { model: Quickshell.screens
+        BarFillet { required property ShellScreen modelData; targetScreen: modelData; corner: 0 } }
+    Variants { model: Quickshell.screens
+        BarFillet { required property ShellScreen modelData; targetScreen: modelData; corner: 1 } }
+    Variants { model: Quickshell.screens
+        BarFillet { required property ShellScreen modelData; targetScreen: modelData; corner: 2 } }
+    Variants { model: Quickshell.screens
+        BarFillet { required property ShellScreen modelData; targetScreen: modelData; corner: 3 } }
 }

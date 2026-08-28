@@ -7,6 +7,7 @@ import qs.modules.settings
 SettingsPage {
     id: page
     heading: "Welcome, " + System.userName
+    icon: "󰋜"
     blurb: "The control panel for the shell. Pick an entry on the left — system "
         + "toggles, display and input, or the look of the bar and dashboard."
 

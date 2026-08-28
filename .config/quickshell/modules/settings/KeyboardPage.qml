@@ -6,10 +6,10 @@ import qs.modules.settings
 
 SettingsPage {
     heading: "Keyboard"
+    icon: "󰌌"
     blurb: "Layouts come from the niri config; the shell reflects the live state."
 
     SettingsGroup {
-        caption: "Layouts"
 
         Repeater {
             model: NiriService.keyboardLayoutNames
@@ -25,7 +25,6 @@ SettingsPage {
     }
 
     SettingsGroup {
-        caption: "Behaviour"
 
         SettingsRow {
             icon: "󰌏"

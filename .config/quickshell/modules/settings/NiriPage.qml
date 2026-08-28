@@ -6,6 +6,7 @@ import qs.modules.settings
 
 SettingsPage {
     heading: "niri"
+    icon: "󱂬"
     blurb: "The scrollable-tiling Wayland compositor this session runs on."
 
     SettingsGroup {
@@ -31,7 +32,6 @@ SettingsPage {
     }
 
     SettingsGroup {
-        caption: "Configuration"
 
         SettingsRow {
             icon: "󰅩"

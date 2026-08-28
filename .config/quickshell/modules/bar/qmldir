@@ -3,6 +3,8 @@ Bar 1.0 Bar.qml
 BarSection 1.0 BarSection.qml
 BarGroup 1.0 BarGroup.qml
 BarWidget 1.0 BarWidget.qml
+BarEditOverlay 1.0 BarEditOverlay.qml
+BarEditStage 1.0 BarEditStage.qml
 WindowTitle 1.0 WindowTitle.qml
 SystemStats 1.0 SystemStats.qml
 Tray 1.0 Tray.qml

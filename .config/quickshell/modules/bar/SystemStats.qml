@@ -4,6 +4,7 @@ import QtQuick.Controls
 import qs.config
 import qs.services
 import qs.widgets
+import qs.modules.popout
 
 // Three circular gauges for CPU / RAM / GPU load, fed by the polled SysResources
 // service. The gauge (Theme.widget.circularStyle) tracks the load; its colour
@@ -13,7 +14,14 @@ import qs.widgets
 HoverPill {
     id: root
 
+    property string screenName: ""
     spacing: Theme.spacing.small
+
+    clickable: true
+    onClicked: {
+        const p = mapToItem(null, width / 2, 0);
+        PopoutController.toggle("sysmon", p.x, width, screenName);
+    }
 
     component Gauge: RowLayout {
         id: g

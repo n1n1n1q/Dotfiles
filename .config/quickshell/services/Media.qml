@@ -8,7 +8,22 @@ Singleton {
     id: root
 
     readonly property var players: Mpris.players.values
-    readonly property var activePlayer: players.length > 0 ? players[0] : null
+    // Which player the UI is focused on. Clamped to the live list so players
+    // appearing / disappearing never leaves a stale index.
+    property int selectedIndex: 0
+    readonly property var activePlayer: players.length > 0
+        ? players[Math.min(selectedIndex, players.length - 1)] : null
+
+    function cyclePlayer() {
+        if (players.length > 1)
+            selectedIndex = (Math.min(selectedIndex, players.length - 1) + 1) % players.length;
+    }
+
+    // Seek to an absolute position (microseconds, same unit as `length`).
+    function seek(pos) {
+        if (activePlayer && (activePlayer.positionSupported ?? false))
+            activePlayer.position = Math.max(0, pos);
+    }
 
     readonly property string title: activePlayer?.trackTitle ?? "No media"
     readonly property string artist: activePlayer?.trackArtist ?? ""

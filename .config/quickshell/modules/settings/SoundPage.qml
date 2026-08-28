@@ -7,6 +7,7 @@ import qs.modules.settings
 SettingsPage {
     id: page
     heading: "Sound"
+    icon: "󰕾"
     blurb: "Output and input devices, levels and per-app volume — via PipeWire."
 
     component DeviceRow: SettingsRow {
@@ -32,7 +33,6 @@ SettingsPage {
 
     // --- output ------------------------------------------------------------
     SettingsGroup {
-        caption: "Output"
 
         VolumeControl {
             icon: "󰕾"
@@ -46,7 +46,6 @@ SettingsPage {
     }
 
     SettingsGroup {
-        caption: "Output device"
         visible: Audio.sinks.length > 0
 
         Repeater {
@@ -62,7 +61,6 @@ SettingsPage {
 
     // --- input -----------------------------------------------------------------
     SettingsGroup {
-        caption: "Input"
 
         VolumeControl {
             icon: "󰍬"
@@ -77,7 +75,6 @@ SettingsPage {
     }
 
     SettingsGroup {
-        caption: "Input device"
         visible: Audio.sources.length > 0
 
         Repeater {
@@ -94,7 +91,6 @@ SettingsPage {
 
     // --- per-app mixer -----------------------------------------------------
     SettingsGroup {
-        caption: "App volume"
         visible: Audio.streams.length > 0
 
         Repeater {

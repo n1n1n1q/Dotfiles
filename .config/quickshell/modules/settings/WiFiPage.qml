@@ -8,6 +8,7 @@ import qs.modules.settings
 SettingsPage {
     id: page
     heading: "Wi‑Fi"
+    icon: "󰤨"
     blurb: "Wireless networking, handled by NetworkManager."
 
     // --- radio + scan ------------------------------------------------------
@@ -46,7 +47,6 @@ SettingsPage {
 
     // --- network list -------------------------------------------------------
     SettingsGroup {
-        caption: "Networks"
         visible: WiFi.enabled
 
         Repeater {

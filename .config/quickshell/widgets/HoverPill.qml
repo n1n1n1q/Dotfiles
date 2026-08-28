@@ -16,6 +16,12 @@ Item {
     property real hPadding: Theme.spacing.small
     readonly property bool hovered: hover.hovered
 
+    // Opt-in whole-pill click. A TapHandler (not a MouseArea) so nested
+    // interactive children — e.g. MediaWidget's play/pause gauge — still win
+    // their own presses; the tap only fires on the pill's own dead space.
+    property bool clickable: false
+    signal clicked()
+
     implicitWidth: layout.implicitWidth + hPadding * 2
     implicitHeight: Theme.workspace.indicatorHeight
 
@@ -27,6 +33,12 @@ Item {
     }
 
     HoverHandler { id: hover }
+
+    TapHandler {
+        enabled: root.clickable
+        gesturePolicy: TapHandler.ReleaseWithinBounds
+        onTapped: root.clicked()
+    }
 
     RowLayout {
         id: layout

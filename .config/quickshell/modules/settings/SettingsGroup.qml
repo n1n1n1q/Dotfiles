@@ -2,12 +2,15 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 
-// A titled stack of SettingsRow "sub-blocks" with a small gap between them.
-// Assigns each visible row a `blockPosition` so the first/last get rounded
-// outer corners and the middles stay square (segmented-list look).
+// A stack of SettingsRow "sub-blocks" with a small gap between them. Assigns
+// each visible row a `blockPosition` so the first/last get rounded outer
+// corners and the middles stay square (segmented-list look). Sections are
+// separated by the surrounding SettingsPage column's spacing alone — no
+// header text.
 ColumnLayout {
     id: group
 
+    // Kept as a harmless no-op so old call sites don't error; not rendered.
     property string caption: ""
     // Plain non-row children (a Text note, a Slider) can be dropped in too; they
     // just don't get a blockPosition.
@@ -16,24 +19,11 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: Theme.spacing.tiny
 
-    Text {
-        id: cap
-        visible: group.caption.length > 0
-        text: group.caption
-        font.family: Theme.font.main
-        font.pointSize: Theme.font.small
-        font.weight: Theme.font.semiBold
-        font.capitalization: Font.AllUppercase
-        color: Theme.colors.textTertiary
-        Layout.leftMargin: Theme.spacing.tiny
-        Layout.bottomMargin: 2
-    }
-
     function relayout() {
         let rows = [];
         for (let i = 0; i < group.children.length; i++) {
             let c = group.children[i];
-            if (c !== cap && c.blockPosition !== undefined && c.visible)
+            if (c.blockPosition !== undefined && c.visible)
                 rows.push(c);
         }
         for (let j = 0; j < rows.length; j++) {
