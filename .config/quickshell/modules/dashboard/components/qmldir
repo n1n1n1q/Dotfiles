@@ -1,0 +1,8 @@
+module qs.modules.dashboard.components
+AudioDeviceList 1.0 AudioDeviceList.qml
+CompactSlider 1.0 CompactSlider.qml
+DashboardHeader 1.0 DashboardHeader.qml
+ExpandableSection 1.0 ExpandableSection.qml
+ExpandableSlider 1.0 ExpandableSlider.qml
+MediaPlayer 1.0 MediaPlayer.qml
+QuickToggle 1.0 QuickToggle.qml

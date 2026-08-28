@@ -7,7 +7,11 @@ import Quickshell.Services.UPower
 Singleton {
     id: root
     
-    readonly property real percentage: UPower.displayDevice?.percentage ?? 0
+    // Quickshell's UPowerDevice.percentage is 0..100; everything here (and the
+    // bar widget) works in 0..1. Values <= 1 are passed through so a genuine
+    // 1% reading isn't mistaken for "full".
+    readonly property real _rawPercentage: UPower.displayDevice?.percentage ?? 0
+    readonly property real percentage: _rawPercentage > 1 ? _rawPercentage / 100 : _rawPercentage
     readonly property bool charging: UPower.displayDevice?.state === UPowerDeviceState.Charging
     readonly property bool isLow: percentage < 0.2 && !charging
     readonly property bool isLaptopBattery: UPower.displayDevice?.isLaptopBattery ?? false

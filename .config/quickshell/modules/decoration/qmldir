@@ -1,0 +1,2 @@
+module qs.modules.decoration
+ScreenFrame 1.0 ScreenFrame.qml

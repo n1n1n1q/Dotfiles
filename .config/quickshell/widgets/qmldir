@@ -1,0 +1,4 @@
+module qs.widgets
+CircularWidget 1.0 CircularWidget.qml
+BarPill 1.0 BarPill.qml
+HoverPill 1.0 HoverPill.qml

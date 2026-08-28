@@ -12,33 +12,58 @@ Singleton {
         const allNodes = Pipewire.nodes.values;
         const result = {
             sinks: [],
-            sources: []
+            sources: [],
+            streams: []
         };
-        
+
         for (let i = 0; i < allNodes.length; i++) {
             const node = allNodes[i];
-            // Filter out streams (applications) - we only want hardware devices
-            if (!node.isStream) {
-                if (node.isSink) {
-                    result.sinks.push(node);
-                } else if (node.audio) {
-                    result.sources.push(node);
-                }
+            if (node.isStream) {
+                // Application playback streams (app -> speakers).
+                if (node.audio && node.isSink)
+                    result.streams.push(node);
+            } else if (node.isSink) {
+                result.sinks.push(node);
+            } else if (node.audio && !(node.name || "").endsWith(".monitor")) {
+                // Real capture devices, not loopback monitors.
+                result.sources.push(node);
             }
         }
-        
+
         return result;
     }
-    
+
     readonly property var sinks: nodes.sinks
     readonly property var sources: nodes.sources
-    
+    // Per-application playback streams, for the per-app mixer.
+    readonly property var streams: nodes.streams
+
     readonly property PwNode sink: Pipewire.defaultAudioSink
     readonly property PwNode source: Pipewire.defaultAudioSource
-    
+
     // Bind all audio nodes so we can read their properties
-    PwObjectTracker { 
-        objects: [...root.sinks, ...root.sources, sink, source].filter(node => node != null)
+    PwObjectTracker {
+        objects: [...root.sinks, ...root.sources, ...root.streams, sink, source].filter(node => node != null)
+    }
+
+    // Friendly label for a node (app name / description / name).
+    function label(node) {
+        if (!node)
+            return "";
+        const p = node.properties ?? ({});
+        return p["application.name"] || node.description || node.nickname || node.name || "Unknown";
+    }
+    function nodeIcon(node) {
+        const p = node?.properties ?? ({});
+        const n = ((p["application.name"] || node?.name || "") + " " + (p["application.icon-name"] || "")).toLowerCase();
+        if (n.includes("firefox") || n.includes("zen")) return "󰈹";
+        if (n.includes("chrom")) return "󰊯";
+        if (n.includes("mpv") || n.includes("vlc") || n.includes("video")) return "󰐌";
+        if (n.includes("spotify")) return "󰓇";
+        if (n.includes("discord")) return "󰙯";
+        if (n.includes("telegram")) return "󰔁";
+        if (n.includes("music") || n.includes("audacious") || n.includes("player")) return "󰝚";
+        return "󰝚";
     }
     
     readonly property real volume: sink?.audio?.volume ?? 0

@@ -84,8 +84,11 @@ Singleton {
         readonly property int huge: 16
         
         readonly property string main: "Rubik"
-        readonly property string mono: "JetBrains Mono NF"
-        readonly property string icon: "JetBrains Mono NF"
+        // Monaspace *NF* is the only Nerd-Font-patched family actually
+        // installed on this box ("JetBrains Mono NF" / "Symbols Nerd Font"
+        // resolve to Noto and render tofu for every icon glyph).
+        readonly property string mono: "Monaspace Neon NF"
+        readonly property string icon: "Monaspace Neon NF"
         
         readonly property int light: Font.Light
         readonly property int regular: Font.Normal
@@ -164,24 +167,85 @@ Singleton {
         readonly property int iconSize: 20
         readonly property int buttonSize: 44
         
-        readonly property int fontSize: font.large
-        readonly property int fontSizeLarge: font.xlarge
-        readonly property int fontSizeSmall: font.medium
+        readonly property int fontSize: font.large + 1
+        readonly property int fontSizeLarge: font.xlarge + 1
+        readonly property int fontSizeSmall: font.medium + 1
     }
-    
+
+    // Shared with the screen-edge decoration (ScreenFrame) - the bar's own
+    // bottom edge is styled to double as the frame's top run, so both need
+    // to agree on the exact same thickness/radius/color.
+    readonly property QtObject frame: QtObject {
+        readonly property int thickness: 10
+        // Outer radius of the frame's corner joint. The content area then
+        // curves at cornerRadius - thickness (~24), matching caelestia's
+        // border.rounding of 25.
+        readonly property int cornerRadius: 34
+        // Same color as the bar itself, so the bar's bottom edge and the
+        // frame it flows into read as one uninterrupted shape.
+        readonly property color color: bar.background
+        readonly property color innerColor: "#000000"
+    }
+
+    // Floating shell surfaces (the top-left dashboard, the top-centre OSD).
+    // `margin` is the single knob for how far any of them sits off the inner
+    // edge of the screen-frame border - the dashboard is inset by it on
+    // left/top/bottom, the OSD hangs it below the bar - so they all read as
+    // an equal, tweakable distance from the frame.
+    readonly property QtObject popup: QtObject {
+        // Every floating surface (dashboard, OSD) carries the bar's own
+        // treatment - the bar background colour, a bar-pill corner radius and
+        // no border - just lifted off the desktop with a soft shadow.
+        // `margin` is the single knob for how far any of them sits off the
+        // bar / frame.
+        readonly property int margin: 8
+        readonly property int radius: rounding.xlarge   // bar-pill radius (workspace.indicatorRadius)
+        readonly property int padding: theme.padding.xlarge
+        readonly property color background: colors.background   // same as the bar strip
+        readonly property int borderWidth: 0
+        readonly property color border: colors.border
+        readonly property color shadow: "#00000060"
+        readonly property int osdWidth: 320
+        readonly property int osdTimeout: 1500
+        // Top-right notification toasts (NotificationPopups) + the dashboard's
+        // notification centre share this width; toasts auto-dismiss after
+        // notifTimeout unless the notification is Critical.
+        readonly property int notifWidth: 380
+        readonly property int notifTimeout: 5000
+    }
+
     readonly property QtObject workspace: QtObject {
-        readonly property int indicatorHeight: bar.height - (spacing.small * 2)
-        readonly property int indicatorSpacing: 0
+        // --- shared with BarPill (generic bar-widget capsule) --------------
+        readonly property int indicatorHeight: bar.height - 12
         readonly property int indicatorPadding: spacing.small
-        readonly property int indicatorWidth: 32
         readonly property int indicatorRadius: rounding.xlarge
-        
         readonly property color background: colors.surface
+
+        // --- workspace chips (WorkspaceIndicator) -------------------------
+        // A fixed row of slotCount thin vertical bars in a capsule matching
+        // the other bar widgets. Every bar is the same height as the active
+        // circle. Four states, four colours:
+        //   active     -> activeBg      (the floating accent puck)
+        //   occupied   -> occupiedBg    (real workspace with windows, unfocused)
+        //   available  -> availableBg   (real workspace, empty - reachable in order)
+        //   nonexistent-> nonexistentBg (phantom slot niri doesn't have)
+        // The active workspace is a separate puck that slides between slots,
+        // stretching to bridge them then pulling back into a circle.
+        readonly property int chipH: 26        // bar height AND circle diameter
+        readonly property int rectW: 13        // bar width
+        readonly property int slotSpacing: spacing.normal
+        readonly property int rectRadius: rounding.small
+        readonly property int slotCount: 5     // hard cap on shown workspaces
+
         readonly property color activeBg: colors.accent
-        readonly property color occupiedBg: colors.surfaceVariant
-        readonly property color activeText: colors.bg
-        readonly property color occupiedText: colors.textPrimary
-        readonly property color emptyText: colors.textTertiary
+        readonly property color availableBg: palette.overlay1
+        readonly property color nonexistentBg: palette.mantle
+        // "between" active and available - a desaturated accent.
+        readonly property color occupiedBg: Qt.rgba(
+            (activeBg.r + availableBg.r) / 2,
+            (activeBg.g + availableBg.g) / 2,
+            (activeBg.b + availableBg.b) / 2,
+            1)
     }
     
     readonly property QtObject dashboard: QtObject {
@@ -196,10 +260,15 @@ Singleton {
     }
     
     readonly property QtObject widget: QtObject {
-        readonly property int circularSize: 32
+        readonly property int circularSize: 36
         readonly property int circularStrokeWidth: 3
         readonly property int circularBorderWidth: 1
-        
+
+        // "filled" = end-4 pie-wedge with a knocked-out glyph;
+        // "ring"   = the previous thin track + progress arc, glyph drawn solid.
+        readonly property string circularStyle: "filled"
+        readonly property real circularRingWidth: 3.5
+
         readonly property color circularBg: colors.bg
         readonly property color circularBorder: colors.surface
         readonly property color iconColor: colors.textPrimary

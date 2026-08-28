@@ -7,4 +7,5 @@ singleton Time 1.0 Time.qml
 singleton Media 1.0 Media.qml
 singleton Notifications 1.0 Notifications.qml
 singleton System 1.0 System.qml
+singleton SysResources 1.0 SysResources.qml
 singleton WiFi 1.0 WiFi.qml

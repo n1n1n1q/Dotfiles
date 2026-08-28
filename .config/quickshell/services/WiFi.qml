@@ -4,159 +4,282 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 
+// Wi-Fi via nmcli. Keeps a scanned list of access points (grouped by SSID),
+// tracks the active one, and drives connect / disconnect / forget. Connect
+// surfaces a "needs a password" / "check your login" state per-SSID so the UI
+// can prompt inline. Ideas taken from end-4's dots-hyprland Network.qml.
 Singleton {
     id: root
 
+    // --- state -------------------------------------------------------------
     property bool enabled: true
-    property bool connected: false
-    property string ssid: ""
-    property int strength: 0
-    property string icon: getWifiIcon()
+
+    // Scanned APs, active pinned first then known, then by signal. Each entry:
+    //   { ssid, signal (0..100), security, secure, enterprise, active, known }
+    property var networks: []
+    readonly property var activeNetwork: networks.find(n => n.active) ?? null
+    readonly property bool connected: activeNetwork !== null
+    readonly property string ssid: activeNetwork?.ssid ?? ""
+    readonly property int strength: activeNetwork?.signal ?? 0
     readonly property bool scanning: rescanProc.running
 
-    function getWifiIcon() {
-        if (!enabled) return "󰖪"  // wifi_off
-        if (!connected) return "�"  // wifi (enabled but not connected)
-        // Return icon based on signal strength when connected
-        if (strength > 75) return "󰖩"  // wifi_4_bar
-        if (strength > 50) return "󰖨"  // wifi_3_bar
-        if (strength > 25) return "󰖧"  // wifi_2_bar
-        return "󰖩"  // wifi_1_bar (fallback)
+    // Per-SSID connection feedback.
+    property string busySsid: ""
+    readonly property bool connecting: busySsid.length > 0
+    property string errorSsid: ""
+    property string errorText: ""
+
+    property var _saved: []
+
+    readonly property string icon: {
+        if (!enabled) return "󰖪"            // wifi-off
+        if (!connected) return "󰤫"          // wifi-strength-off-outline
+        if (strength > 75) return "󰤨"
+        if (strength > 50) return "󰤥"
+        if (strength > 25) return "󰤢"
+        return "󰤟"
     }
 
+    function signalIcon(sig) {
+        if (sig > 75) return "󰤨"
+        if (sig > 50) return "󰤥"
+        if (sig > 25) return "󰤢"
+        if (sig > 0)  return "󰤟"
+        return "󰤯"
+    }
+
+    // --- actions ---------------------------------------------------------------
+    function setEnabled(on) {
+        radioProc.exec(["nmcli", "radio", "wifi", on ? "on" : "off"]);
+    }
     function toggleWifi() {
-        const cmd = enabled ? "off" : "on"
-        toggleProc.exec(["nmcli", "radio", "wifi", cmd])
+        setEnabled(!enabled);
     }
-
+    function scan() {
+        if (enabled)
+            rescanProc.running = true;
+    }
     function rescan() {
-        rescanProc.running = true
+        scan();
     }
 
-    function connectToNetwork(ssid, password) {
-        if (password) {
-            connectProc.exec(["nmcli", "dev", "wifi", "connect", ssid, "password", password])
-        } else {
-            connectProc.exec(["nmcli", "dev", "wifi", "connect", ssid])
-        }
+    function _begin(s) {
+        busySsid = s;
+        errorSsid = "";
+        errorText = "";
+    }
+    function _fail(s, msg) {
+        busySsid = "";
+        errorSsid = s;
+        errorText = msg;
+    }
+    function clearError() {
+        errorSsid = "";
+        errorText = "";
     }
 
-    function disconnect() {
-        if (connected && ssid) {
-            disconnectProc.exec(["nmcli", "connection", "down", ssid])
-        }
+    function _env(extra) {
+        let e = { "LANG": "C", "LC_ALL": "C" };
+        for (const k in extra)
+            e[k] = extra[k];
+        return e;
     }
 
-    // Monitor WiFi status
+    // Open network, or one we already have a saved profile for (nmcli reuses
+    // the stored secrets).
+    function connect(ssid) {
+        _begin(ssid);
+        cxnProc.exec({
+            "environment": _env({ "SSID": ssid }),
+            "command": ["bash", "-c", 'nmcli dev wifi connect "$SSID"']
+        });
+    }
+
+    function connectWithPassword(ssid, password) {
+        _begin(ssid);
+        cxnProc.exec({
+            "environment": _env({ "SSID": ssid, "PW": password }),
+            "command": ["bash", "-c", 'nmcli dev wifi connect "$SSID" password "$PW"']
+        });
+    }
+
+    // WPA/WPA2-Enterprise (802.1X) with PEAP/MSCHAPv2 — the common corporate /
+    // eduroam-style setup.
+    function connectEnterprise(ssid, username, password) {
+        _begin(ssid);
+        cxnProc.exec({
+            "environment": _env({ "SSID": ssid, "IDENT": username, "PW": password }),
+            "command": ["bash", "-c",
+                'nmcli con delete "$SSID" >/dev/null 2>&1; ' +
+                'nmcli con add type wifi con-name "$SSID" ssid "$SSID" ' +
+                'wifi-sec.key-mgmt wpa-eap ' +
+                '802-1x.eap peap 802-1x.phase2-auth mschapv2 ' +
+                '802-1x.identity "$IDENT" 802-1x.password "$PW" && ' +
+                'nmcli con up "$SSID"']
+        });
+    }
+
+    function disconnectFrom(name) {
+        const s = name || root.ssid;
+        if (s.length > 0)
+            disconnectProc.exec(["nmcli", "con", "down", s]);
+    }
+    function forget(name) {
+        if (name && name.length > 0)
+            forgetProc.exec(["nmcli", "con", "delete", name]);
+    }
+
+    // --- refresh -------------------------------------------------------------
+    function refresh() {
+        radioQuery.running = true;
+        savedProc.running = true;
+    }
+
     Process {
+        id: monitor
         running: true
-        command: ["nmcli", "m"]
+        command: ["nmcli", "monitor"]
         stdout: SplitParser {
-            onRead: getStatusProc.running = true
+            onRead: refreshDebounce.restart()
         }
     }
-
-    // Get WiFi enabled status
-    Process {
-        id: getStatusProc
+    Timer {
+        id: refreshDebounce
+        interval: 300
+        onTriggered: root.refresh()
+    }
+    Timer {
+        interval: 15000
         running: true
+        repeat: true
+        onTriggered: root.refresh()
+    }
+
+    Process {
+        id: radioQuery
         command: ["nmcli", "radio", "wifi"]
-        environment: ({
-            LANG: "C.UTF-8",
-            LC_ALL: "C.UTF-8"
-        })
+        environment: ({ "LANG": "C", "LC_ALL": "C" })
+        stdout: StdioCollector {
+            onStreamFinished: root.enabled = text.trim() === "enabled"
+        }
+    }
+
+    // Saved wifi profile names — feeds each network's `known` flag. Chained
+    // before the AP list so `known` is right on the same cycle.
+    Process {
+        id: savedProc
+        command: ["nmcli", "-g", "NAME,TYPE", "con", "show"]
+        environment: ({ "LANG": "C", "LC_ALL": "C" })
         stdout: StdioCollector {
             onStreamFinished: {
-                root.enabled = text.trim() === "enabled"
-                if (root.enabled) {
-                    getConnectionProc.running = true
-                }
-                root.icon = root.getWifiIcon()
+                root._saved = text.trim().split("\n")
+                    .map(l => l.split(":"))
+                    .filter(p => p[1] === "802-11-wireless")
+                    .map(p => p[0]);
             }
         }
+        onExited: listProc.running = true
     }
 
-    // Get current connection info
     Process {
-        id: getConnectionProc
-        running: true
-        command: ["nmcli", "-t", "-f", "ACTIVE,SSID,SIGNAL", "dev", "wifi"]
-        environment: ({
-            LANG: "C.UTF-8",
-            LC_ALL: "C.UTF-8"
-        })
+        id: listProc
+        command: ["nmcli", "-g", "ACTIVE,SIGNAL,SSID,SECURITY", "dev", "wifi"]
+        environment: ({ "LANG": "C", "LC_ALL": "C" })
         stdout: StdioCollector {
-            onStreamFinished: {
-                const lines = text.trim().split("\n")
-                const activeLine = lines.find(line => line.startsWith("yes:"))
-                
-                if (activeLine) {
-                    const parts = activeLine.split(":")
-                    root.connected = true
-                    root.ssid = parts[1] || ""
-                    root.strength = parseInt(parts[2]) || 0
-                } else {
-                    root.connected = false
-                    root.ssid = ""
-                    root.strength = 0
-                }
-                
-                root.icon = root.getWifiIcon()
-            }
+            onStreamFinished: root._parseList(text)
         }
     }
 
-    // Toggle WiFi
+    function _parseList(text) {
+        const PH = "\u0001";
+        const phRe = new RegExp(PH, "g");
+        const rows = text.trim().split("\n").filter(l => l.length > 0).map(line => {
+            const f = line.replace(/\\:/g, PH).split(":");
+            const ssid = (f[2] || "").replace(phRe, ":");
+            const sec = (f[3] || "").replace(phRe, ":").trim();
+            return {
+                "active": f[0] === "yes",
+                "signal": parseInt(f[1]) || 0,
+                "ssid": ssid,
+                "security": sec,
+                "secure": sec.length > 0 && sec !== "--",
+                "enterprise": sec.indexOf("802.1X") !== -1,
+                "known": root._saved.indexOf(ssid) !== -1
+            };
+        }).filter(n => n.ssid.length > 0);
+
+        const map = {};
+        for (const n of rows) {
+            const e = map[n.ssid];
+            if (!e || (n.active && !e.active) || (!e.active && n.signal > e.signal))
+                map[n.ssid] = n;
+        }
+        const list = Object.keys(map).map(k => map[k]);
+        list.sort((a, b) => (b.active - a.active) || (b.known - a.known) || (b.signal - a.signal));
+        root.networks = list;
+
+        if (root.busySsid.length > 0 && map[root.busySsid] && map[root.busySsid].active) {
+            root.busySsid = "";
+            root.errorSsid = "";
+            root.errorText = "";
+        }
+    }
+
     Process {
-        id: toggleProc
-        onExited: {
-            getStatusProc.running = true
-        }
+        id: radioProc
+        onExited: root.refresh()
     }
-
-    // Rescan WiFi
     Process {
         id: rescanProc
         command: ["nmcli", "dev", "wifi", "list", "--rescan", "yes"]
-        onExited: {
-            getConnectionProc.running = true
+        environment: ({ "LANG": "C", "LC_ALL": "C" })
+        stdout: StdioCollector {
+            onStreamFinished: root._parseList(text)
         }
+        onExited: root.refresh()
     }
 
-    // Connect to network
     Process {
-        id: connectProc
+        id: cxnProc
+        property string lastErr: ""
         stdout: SplitParser {
-            onRead: getConnectionProc.running = true
+            onRead: refreshDebounce.restart()
         }
         stderr: StdioCollector {
-            onStreamFinished: {
-                if (text) console.warn("WiFi connection error:", text)
+            onStreamFinished: if (text.trim().length > 0) cxnProc.lastErr = text.trim()
+        }
+        onExited: code => {
+            const s = root.busySsid;
+            if (code === 0) {
+                root.busySsid = "";
+                root.errorSsid = "";
+                root.errorText = "";
+            } else {
+                let msg = cxnProc.lastErr;
+                if (msg.indexOf("Secrets were required") !== -1 || msg.indexOf("no secrets") !== -1)
+                    msg = "Password required";
+                else if (msg.indexOf("802-1x") !== -1 || msg.indexOf("802.1X") !== -1)
+                    msg = "Check your username and password";
+                else
+                    msg = (msg.split("\n")[0] || "").replace(/^Error:\s*/, "") || "Couldn't connect";
+                root._fail(s, msg);
             }
+            cxnProc.lastErr = "";
+            root.refresh();
         }
     }
-
-    // Disconnect from network
     Process {
         id: disconnectProc
-        onExited: {
-            getConnectionProc.running = true
-        }
+        onExited: root.refresh()
     }
-
-    // Timer for periodic updates
-    Timer {
-        interval: 10000
-        running: true
-        repeat: true
-        onTriggered: {
-            if (root.enabled) {
-                getConnectionProc.running = true
-            }
-        }
+    Process {
+        id: forgetProc
+        onExited: root.refresh()
     }
 
     Component.onCompleted: {
-        console.log("WiFi service initialized")
+        refresh();
+        if (enabled)
+            rescanProc.running = true;
     }
 }

@@ -1,0 +1,10 @@
+module qs.modules.bar
+Bar 1.0 Bar.qml
+WindowTitle 1.0 WindowTitle.qml
+SystemStats 1.0 SystemStats.qml
+Tray 1.0 Tray.qml
+WorkspaceIndicator 1.0 WorkspaceIndicator.qml
+TimeWidget 1.0 TimeWidget.qml
+MediaWidget 1.0 MediaWidget.qml
+BatteryWidget 1.0 BatteryWidget.qml
+VolumeWidget 1.0 VolumeWidget.qml

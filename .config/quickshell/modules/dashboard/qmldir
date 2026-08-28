@@ -1,0 +1,2 @@
+module qs.modules.dashboard
+DashboardWindow 1.0 DashboardWindow.qml

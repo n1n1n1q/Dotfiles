@@ -4,63 +4,81 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 
+// Backlight brightness as a 0..1 value.
+//
+// niri changes brightness out-of-process (the XF86MonBrightness* keys spawn
+// `brightnessctl` directly - see ~/.config/niri/config.kdl), so there's no
+// in-shell signal for a hardware key press. Instead of polling, watch udev
+// for `backlight` subsystem `change` events and re-read on each one; that's
+// event-driven and costs nothing while idle. The dashboard slider path
+// (setBrightness) also lands here via the same udev echo.
+//
+// `brightness` is quantised to whole percent so an external change and an
+// internal one converge on the same number and don't ping-pong the change
+// signal (which drives the OSD).
 Singleton {
     id: root
 
     property real brightness: 0.5
-    
-    readonly property Process initProc: Process {
+
+    function refresh() {
+        readProc.running = true
+    }
+
+    Process {
+        id: readProc
         running: true
-        command: ["sh", "-c", "brightnessctl g"]
-        
+        command: ["brightnessctl", "-m"]
         stdout: SplitParser {
-            onRead: data => {
-                const current = parseInt(data.trim())
-                if (!isNaN(current) && current > 0) {
-                    getMaxProc.running = true
-                }
+            onRead: line => {
+                // name,class,current,NN%,max
+                const parts = line.trim().split(",")
+                if (parts.length < 4)
+                    return
+                const pct = parseInt(parts[3])
+                if (!isNaN(pct))
+                    root.brightness = Math.max(0, Math.min(1, pct / 100))
             }
         }
     }
-    
-    readonly property Process getMaxProc: Process {
-        command: ["sh", "-c", "brightnessctl m"]
-        
+
+    Process {
+        running: true
+        command: ["stdbuf", "-oL", "udevadm", "monitor", "--udev", "--subsystem-match=backlight"]
         stdout: SplitParser {
-            onRead: data => {
-                const max = parseInt(data.trim())
-                const current = parseInt(initProc.stdout)
-                if (!isNaN(max) && max > 0 && !isNaN(current)) {
-                    root.brightness = current / max
-                }
+            onRead: line => {
+                if (line.indexOf("change") !== -1)
+                    refreshDebounce.restart()
             }
         }
     }
-    
+
+    Timer {
+        id: refreshDebounce
+        interval: 50
+        onTriggered: root.refresh()
+    }
+
     function setBrightness(value) {
-        // Clamp value between 0.05 and 1.0 (don't go completely dark)
-        const clampedValue = Math.max(0.05, Math.min(1.0, value))
-        
-        if (Math.abs(clampedValue - root.brightness) < 0.01) {
-            return // Skip tiny changes
-        }
-        
-        root.brightness = clampedValue
-        const percent = Math.round(clampedValue * 100)
-        
+        // Clamp between 5% and 100% (don't go fully dark).
+        const clamped = Math.max(0.05, Math.min(1.0, value))
+        const percent = Math.round(clamped * 100)
+
+        if (percent === Math.round(root.brightness * 100))
+            return
+
+        root.brightness = percent / 100
         Quickshell.execDetached(["brightnessctl", "s", `${percent}%`])
-        
-        console.log("Brightness set to:", percent + "%")
     }
-    
+
     function incrementBrightness(amount = 0.1) {
         setBrightness(brightness + amount)
     }
-    
+
     function decrementBrightness(amount = 0.1) {
         setBrightness(brightness - amount)
     }
-    
+
     function getBrightnessIcon() {
         if (brightness > 0.66) return "󰃠" // High brightness
         if (brightness > 0.33) return "󰃟" // Medium brightness
