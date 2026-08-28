@@ -12,14 +12,16 @@ HoverPill {
 
     Text {
         Layout.alignment: Qt.AlignVCenter
+        font.family: Theme.font.main
         font.pointSize: Theme.bar.fontSize
-        font.weight: Theme.font.regular
+        font.weight: Theme.font.semiBold
         color: Theme.colors.textPrimary
         text: Time.timeString
     }
 
     Text {
         Layout.alignment: Qt.AlignVCenter
+        font.family: Theme.font.main
         font.pointSize: Theme.bar.fontSize + 2
         color: Theme.colors.textSecondary
         text: "•"
@@ -27,6 +29,7 @@ HoverPill {
 
     Text {
         Layout.alignment: Qt.AlignVCenter
+        font.family: Theme.font.main
         font.pointSize: Theme.bar.fontSize
         font.weight: Theme.font.regular
         color: Theme.colors.textSecondary

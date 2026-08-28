@@ -195,6 +195,7 @@ PanelWindow {
 
                             Text {
                                 text: System.userName
+                                font.family: Theme.font.main
                                 font.pointSize: Theme.fontSize.large
                                 font.weight: Font.Bold
                                 color: Theme.colors.text
@@ -203,6 +204,7 @@ PanelWindow {
                             Text {
                                 id: uptimeText
                                 text: "Uptime: Loading..."
+                                font.family: Theme.font.main
                                 font.pointSize: Theme.fontSize.normal
                                 color: Theme.colors.subtext0
 

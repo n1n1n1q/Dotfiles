@@ -40,6 +40,7 @@ GroupBox {
                     
                     Text {
                         text: root.headerText
+                        font.family: Theme.font.main
                         font.pointSize: Theme.fontSize.large
                         font.bold: true
                         color: Theme.colors.text
@@ -48,6 +49,7 @@ GroupBox {
                     
                     Text {
                         text: root.valueText
+                        font.family: Theme.font.main
                         font.pointSize: Theme.fontSize.medium
                         color: Theme.colors.subtext0
                     }

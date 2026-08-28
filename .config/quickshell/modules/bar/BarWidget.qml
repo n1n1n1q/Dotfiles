@@ -22,6 +22,7 @@ Loader {
         case "clock":       return cClock;
         case "battery":     return cBattery;
         case "volume":      return cVolume;
+        case "connectivity": return cConnectivity;
         case "tray":        return cTray;
         default:            return null;
         }
@@ -34,5 +35,6 @@ Loader {
     Component { id: cClock;       TimeWidget {} }
     Component { id: cBattery;     BatteryWidget {} }
     Component { id: cVolume;      VolumeWidget {} }
+    Component { id: cConnectivity; ConnectivityWidget {} }
     Component { id: cTray;        Tray {} }
 }

@@ -29,6 +29,7 @@ Singleton {
         { id: "clock",       name: "Clock",         desc: "Time and date",                                                 icon: "󰅐" },
         { id: "battery",     name: "Battery",       desc: "Charge %, time remaining, charging pulse",                       icon: "󰁽" },
         { id: "volume",      name: "Volume",        desc: "Output level gauge — scroll to change, click to mute",           icon: "󰕾" },
+        { id: "connectivity", name: "Connectivity", desc: "Wi‑Fi, Bluetooth and sound glyphs; each opens its Settings page", icon: "󰤨" },
         { id: "tray",        name: "System tray",   desc: "StatusNotifier icons from running apps",                        icon: "󰧜" }
     ]
 
@@ -46,7 +47,7 @@ Singleton {
             { "background": true, "pin": true, "widgets": ["workspaces"] },
             { "background": true, "widgets": ["clock", "battery"] }
         ],
-        "right":  [ { "background": false, "widgets": ["tray"] } ]
+        "right":  [ { "background": false, "widgets": ["connectivity", "tray"] } ]
     })
 
     function reset() {

@@ -199,6 +199,7 @@ ColumnLayout {
                             Text {
                                 text: modelData.description || modelData.name || "Unknown Device"
                                 color: parent.parent.isActive ? Theme.colors.bg : Theme.colors.textPrimary
+                                font.family: Theme.font.main
                                 font.pointSize: Theme.font.normal
                                 elide: Text.ElideMiddle
                                 Layout.fillWidth: true

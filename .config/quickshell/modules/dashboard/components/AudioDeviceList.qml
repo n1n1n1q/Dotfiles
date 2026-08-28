@@ -66,6 +66,7 @@ Rectangle {
                     Text {
                         text: modelData.description || modelData.name || "Unknown Device"
                         color: parent.parent.isActive ? Theme.colors.base : Theme.colors.text
+                        font.family: Theme.font.main
                         font.pointSize: Theme.fontSize.normal
                         elide: Text.ElideMiddle
                         Layout.fillWidth: true

@@ -39,6 +39,7 @@ Rectangle {
             Text {
                 text: Media.title || "No media playing"
                 color: Theme.colors.textPrimary
+                font.family: Theme.font.main
                 font.pointSize: Theme.font.medium
                 font.weight: Theme.font.bold
                 Layout.fillWidth: true
@@ -48,6 +49,7 @@ Rectangle {
             Text {
                 text: Media.artist || (Media.identity ? `Ready - ${Media.identity}` : "Select a music app to see controls")
                 color: Theme.colors.textSecondary
+                font.family: Theme.font.main
                 font.pointSize: Theme.font.small
                 Layout.fillWidth: true
                 elide: Text.ElideRight
@@ -80,6 +82,8 @@ Rectangle {
                         contentItem: Text {
                             text: parent.text
                             color: Theme.colors.textPrimary
+                            font.family: Theme.font.icon
+                            font.pointSize: Theme.font.normal
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
                         }
