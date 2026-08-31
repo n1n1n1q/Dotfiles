@@ -6,17 +6,33 @@ import Quickshell
 import qs.config
 import qs.services
 import qs.modules.settings
+import qs.widgets
 
+// Everything that decides how the shell looks, in the order you'd set a fresh
+// machine up: who you are, the palette, the picture behind it, the type.
+// Behaviour of individual surfaces lives on their own pages — the bar's frame
+// on Bar, the OSD pill on Notifications.
 SettingsPage {
     id: page
-    heading: "General"
-    icon: "󰒓"
-    blurb: "Profile, colours and fonts. Colour schemes are JSON files in "
-        + "~/.config/quickshell/colorschemes/."
+    heading: "Appearance"
+    icon: "󰏘"
+    blurb: "Profile, colour scheme, wallpaper and fonts. Schemes are JSON files "
+        + "in ~/.config/quickshell/colorschemes/; wallpapers are images in "
+        + "~/.config/quickshell/wallpapers/."
+
+    // rescan the wallpapers folder whenever the settings window opens or the
+    // user navigates here, so images added outside the shell show up
+    Connections {
+        target: SettingsController
+        function onOpenChanged() { if (SettingsController.open) Wallpaper.reload(); }
+        function onSectionChanged() { if (SettingsController.section === "appearance") Wallpaper.reload(); }
+    }
 
     // --- profile ---------------------------------------------------------
     SettingsGroup {
         caption: "Profile"
+        icon: "󰀄"
+        hint: System.userName
 
         SettingsRow {
             icon: "󰗋"
@@ -79,110 +95,57 @@ SettingsPage {
     }
 
     // --- colour scheme ---------------------------------------------------
-    Flow {
-        Layout.fillWidth: true
-        spacing: Theme.spacing.small
-
-        Repeater {
-            model: Appearance.schemeNames
-            delegate: SchemeCard {
-                required property var modelData
-                schemeName: modelData
-                colors: Appearance.schemes[modelData] ?? ({})
-            }
-        }
-    }
-
-    SettingsRow {
-        icon: "󰉋"
-        title: "Scheme files"
-        subtitle: "~/.config/quickshell/colorschemes/ — add a .json to define your own"
-        PillButton {
-            text: "Reload"
-            onClicked: Appearance.reloadSchemes()
-        }
-    }
-
-    // --- fonts ----------------------------------------------------------------
     SettingsGroup {
-        caption: "Fonts"
+        caption: "Colour scheme"
+        icon: "󰏘"
+        hint: Appearance.schemeName
 
-        component FontPick: SettingsRow {
-            id: fp
-            property string current: ""
-            signal chosen(string family)
-
-            ComboBox {
-                Layout.preferredWidth: 220
-                model: Qt.fontFamilies()
-                editable: true
-                font.family: Theme.font.main
-                font.pointSize: Theme.font.small
-                Component.onCompleted: {
-                    const i = find(fp.current);
-                    if (i >= 0) currentIndex = i; else editText = fp.current;
-                }
-                onActivated: fp.chosen(currentText)
-                onAccepted: fp.chosen(editText)
-            }
-        }
-
-        FontPick {
-            icon: "󰛖"
-            title: "Interface font"
-            subtitle: "Used for all UI text"
-            current: Appearance.fontFamily
-            onChosen: family => Appearance.setFont(family)
-        }
-
-        FontPick {
-            icon: "󰀫"
-            title: "Monospace & icons"
-            subtitle: "Must be a Nerd-Font-patched family — every glyph comes from it"
-            current: Appearance.fontMono
-            onChosen: family => Appearance.setMono(family)
-        }
-
-        Rectangle {
+        Flow {
             Layout.fillWidth: true
-            implicitHeight: preview.implicitHeight + Theme.spacing.normal * 2
-            radius: Theme.rounding.small
-            color: Theme.colors.surfaceVariant
+            Layout.margins: Theme.spacing.tiny
+            spacing: Theme.spacing.small
 
-            ColumnLayout {
-                id: preview
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.margins: Theme.spacing.normal
-                spacing: 2
-                Text {
-                    text: "The quick brown fox jumps over the lazy dog"
-                    font.family: Theme.font.main
-                    font.pointSize: Theme.font.medium
-                    color: Theme.colors.textPrimary
-                }
-                Text {
-                    text: "mono 0123456789  󰀄 󰕾 󰂯 󰤨 󰋜 󰅐"
-                    font.family: Theme.font.mono
-                    font.pointSize: Theme.font.medium
-                    color: Theme.colors.textSecondary
+            Repeater {
+                model: Appearance.schemeNames
+                delegate: SchemeCard {
+                    required property var modelData
+                    schemeName: modelData
+                    colors: Appearance.schemes[modelData] ?? ({})
                 }
             }
         }
-    }
 
-    // rescan the wallpapers folder whenever the settings window opens or the
-    // user navigates here, so images added outside the shell show up
-    Connections {
-        target: SettingsController
-        function onOpenChanged() { if (SettingsController.open) Wallpaper.reload(); }
-        function onSectionChanged() { if (SettingsController.section === "general") Wallpaper.reload(); }
+        SettingsRow {
+            icon: "󰏘"
+            title: "Cycle schemes"
+            subtitle: "Super+Shift+T / Super+Ctrl+Shift+T — steps this list without opening Settings"
+            PillButton {
+                text: "Previous"
+                onClicked: Appearance.cycleScheme(-1)
+            }
+            PillButton {
+                text: "Next"
+                accent: true
+                onClicked: Appearance.cycleScheme(1)
+            }
+        }
+
+        SettingsRow {
+            icon: "󰉋"
+            title: "Scheme files"
+            subtitle: "~/.config/quickshell/colorschemes/ — add a .json to define your own"
+            PillButton {
+                text: "Reload"
+                onClicked: Appearance.reloadSchemes()
+            }
+        }
     }
 
     // --- wallpaper -------------------------------------------------------
     SettingsGroup {
         caption: "Wallpaper"
+        icon: "󰸉"
+        hint: Wallpaper.wallpapers.length + (Wallpaper.wallpapers.length === 1 ? " image" : " images")
 
         SettingsRow {
             icon: "󰸉"
@@ -202,6 +165,7 @@ SettingsPage {
         // thumbnail grid
         Flow {
             Layout.fillWidth: true
+            Layout.margins: Theme.spacing.tiny
             spacing: Theme.spacing.small
             visible: Wallpaper.wallpapers.length > 0
 
@@ -261,6 +225,28 @@ SettingsPage {
         }
 
         SettingsRow {
+            icon: "󰑙"
+            title: "Cycle wallpapers"
+            subtitle: "Super+Shift+W / Super+Ctrl+Shift+W, Super+Alt+W to shuffle"
+            PillButton {
+                text: "Previous"
+                enabledButton: Wallpaper.wallpapers.length > 0
+                onClicked: Wallpaper.previous()
+            }
+            PillButton {
+                text: "Next"
+                accent: true
+                enabledButton: Wallpaper.wallpapers.length > 0
+                onClicked: Wallpaper.next()
+            }
+            PillButton {
+                text: "Shuffle"
+                enabledButton: Wallpaper.wallpapers.length > 1
+                onClicked: Wallpaper.random()
+            }
+        }
+
+        SettingsRow {
             visible: Wallpaper.wallpapers.length === 0
             icon: "󰋩"
             title: "No wallpapers yet"
@@ -275,6 +261,73 @@ SettingsPage {
         onAccepted: {
             const p = selectedFile.toString().replace(/^file:\/\//, "");
             Wallpaper.addFromFile(decodeURIComponent(p));
+        }
+    }
+
+    // --- fonts -----------------------------------------------------------
+    SettingsGroup {
+        caption: "Fonts"
+        icon: "󰛖"
+
+        component FontPick: SettingsRow {
+            id: fp
+            property string current: ""
+            signal chosen(string family)
+
+            SettingsCombo {
+                Layout.preferredWidth: 220
+                model: Qt.fontFamilies()
+                // A family that isn't installed has no row to select — show the
+                // saved name rather than an empty field.
+                fallbackText: fp.current
+                Component.onCompleted: currentIndex = find(fp.current)
+                onActivated: fp.chosen(currentText)
+            }
+        }
+
+        FontPick {
+            icon: "󰛖"
+            title: "Interface font"
+            subtitle: "Used for all UI text"
+            current: Appearance.fontFamily
+            onChosen: family => Appearance.setFont(family)
+        }
+
+        FontPick {
+            icon: "󰀫"
+            title: "Monospace & icons"
+            subtitle: "Must be a Nerd-Font-patched family — every glyph comes from it"
+            current: Appearance.fontMono
+            onChosen: family => Appearance.setMono(family)
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.margins: Theme.spacing.tiny
+            implicitHeight: preview.implicitHeight + Theme.spacing.normal * 2
+            radius: Theme.rounding.small
+            color: Theme.colors.surfaceVariant
+
+            ColumnLayout {
+                id: preview
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.margins: Theme.spacing.normal
+                spacing: 2
+                Text {
+                    text: "The quick brown fox jumps over the lazy dog"
+                    font.family: Theme.font.main
+                    font.pointSize: Theme.font.medium
+                    color: Theme.colors.textPrimary
+                }
+                Text {
+                    text: "mono 0123456789  󰀄 󰕾 󰂯 󰤨 󰋜 󰅐"
+                    font.family: Theme.font.mono
+                    font.pointSize: Theme.font.medium
+                    color: Theme.colors.textSecondary
+                }
+            }
         }
     }
 }

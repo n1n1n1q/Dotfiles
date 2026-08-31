@@ -79,6 +79,10 @@ Singleton {
         setBrightness(brightness - amount)
     }
 
+    // Every glyph getBrightnessIcon() can return — a cell that draws one
+    // sizes itself from the set so it holds still as the level moves.
+    readonly property var iconStates: ["󰃠", "󰃟", "󰃞"]
+
     function getBrightnessIcon() {
         if (brightness > 0.66) return "󰃠" // High brightness
         if (brightness > 0.33) return "󰃟" // Medium brightness

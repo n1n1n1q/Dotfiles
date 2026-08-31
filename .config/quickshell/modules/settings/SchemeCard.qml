@@ -14,10 +14,16 @@ Rectangle {
 
     implicitWidth: 152
     implicitHeight: 78
-    radius: Theme.rounding.medium
-    color: mouse.containsMouse ? Theme.colors.surfaceVariant : Theme.colors.surface
-    border.width: selected ? 2 : 1
-    border.color: selected ? Theme.colors.accent : Theme.colors.border
+    radius: Theme.rounding.large
+    // Unselected cards sit flat on the section card; selection is an accent
+    // ring rather than a heavier box.
+    color: selected ? Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g,
+                              Theme.colors.accent.b, 0.14)
+        : mouse.containsMouse ? Theme.colors.surfaceVariant
+        : Qt.rgba(Theme.colors.surfaceVariant.r, Theme.colors.surfaceVariant.g,
+                  Theme.colors.surfaceVariant.b, 0.45)
+    border.width: selected ? 2 : 0
+    border.color: Theme.colors.accent
     clip: true
 
     Behavior on color { ColorAnimation { duration: Theme.animation.fast } }
@@ -31,10 +37,8 @@ Rectangle {
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: 34
-            radius: Theme.rounding.small
+            radius: Theme.rounding.medium
             color: root.colors.base ?? "#000000"
-            border.width: 1
-            border.color: Theme.colors.border
 
             Row {
                 anchors.centerIn: parent

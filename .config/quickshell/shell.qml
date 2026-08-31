@@ -7,6 +7,7 @@
 import QtQuick
 import Quickshell
 import qs.modules.bar
+import qs.modules.dashboard
 import qs.modules.decoration
 import qs.modules.desktop
 import qs.modules.osd
@@ -19,6 +20,7 @@ ShellRoot {
     DesktopLayer {}
     Bar {}
     BarEditOverlay {}
+    DashboardLayer {}
     ScreenFrame {}
     Osd {}
     NotificationPopups {}

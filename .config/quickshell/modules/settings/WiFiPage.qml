@@ -13,6 +13,8 @@ SettingsPage {
 
     // --- radio + scan ------------------------------------------------------
     SettingsGroup {
+        caption: "Wi‑Fi"
+        icon: "󰤨"
         SettingsRow {
             icon: WiFi.enabled ? "󰤨" : "󰤪"
             title: "Wi‑Fi"
@@ -47,6 +49,8 @@ SettingsPage {
 
     // --- network list -------------------------------------------------------
     SettingsGroup {
+        caption: "Networks"
+        icon: "󰤥"
         visible: WiFi.enabled
 
         Repeater {

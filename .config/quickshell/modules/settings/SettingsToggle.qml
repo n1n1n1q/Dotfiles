@@ -1,7 +1,8 @@
 import QtQuick
 import qs.config
 
-// Themed on/off switch. Drop it into a SettingsRow's trailing slot.
+// Themed on/off switch, sized down to sit inside a compact row. Drop it into a
+// SettingsRow's trailing slot.
 Rectangle {
     id: root
 
@@ -11,8 +12,8 @@ Rectangle {
     property bool busy: false
     signal toggled(bool checked)
 
-    implicitWidth: 46
-    implicitHeight: 26
+    implicitWidth: 40
+    implicitHeight: 22
     radius: height / 2
     color: checked ? Theme.colors.accent : Theme.colors.surfaceVariant
     opacity: busy ? 0.6 : 1
@@ -26,14 +27,17 @@ Rectangle {
 
     Rectangle {
         id: knob
-        width: 20
-        height: 20
+        width: root.checked ? 16 : 12
+        height: width
         radius: height / 2
-        y: 3
-        x: root.checked ? root.width - width - 3 : 3
+        anchors.verticalCenter: parent.verticalCenter
+        x: root.checked ? root.width - width - 3 : (root.height - width) / 2
         color: root.checked ? Theme.colors.bg : Theme.colors.textSecondary
 
         Behavior on x {
+            NumberAnimation { duration: Theme.animation.fast; easing.type: Easing.OutCubic }
+        }
+        Behavior on width {
             NumberAnimation { duration: Theme.animation.fast; easing.type: Easing.OutCubic }
         }
         Behavior on color {

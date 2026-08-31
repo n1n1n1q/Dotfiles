@@ -19,7 +19,7 @@ Singleton {
             selectedIndex = (Math.min(selectedIndex, players.length - 1) + 1) % players.length;
     }
 
-    // Seek to an absolute position (microseconds, same unit as `length`).
+    // Seek to an absolute position (seconds, same unit as `length`).
     function seek(pos) {
         if (activePlayer && (activePlayer.positionSupported ?? false))
             activePlayer.position = Math.max(0, pos);

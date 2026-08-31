@@ -33,6 +33,8 @@ SettingsPage {
 
     // --- output ------------------------------------------------------------
     SettingsGroup {
+        caption: "Output"
+        icon: "󰕾"
 
         VolumeControl {
             icon: "󰕾"
@@ -47,6 +49,8 @@ SettingsPage {
 
     SettingsGroup {
         visible: Audio.sinks.length > 0
+        caption: "Output devices"
+        icon: "󰓃"
 
         Repeater {
             model: Audio.sinks
@@ -61,6 +65,8 @@ SettingsPage {
 
     // --- input -----------------------------------------------------------------
     SettingsGroup {
+        caption: "Input"
+        icon: "󰍬"
 
         VolumeControl {
             icon: "󰍬"
@@ -76,6 +82,8 @@ SettingsPage {
 
     SettingsGroup {
         visible: Audio.sources.length > 0
+        caption: "Input devices"
+        icon: "󰍮"
 
         Repeater {
             model: Audio.sources
@@ -91,6 +99,8 @@ SettingsPage {
 
     // --- per-app mixer -----------------------------------------------------
     SettingsGroup {
+        caption: "Applications"
+        icon: "󰀻"
         visible: Audio.streams.length > 0
 
         Repeater {

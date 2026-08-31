@@ -62,13 +62,27 @@ Singleton {
         return catalogue.find(c => c.type === type) ?? ({ type: type, name: type, icon: "󰋙", desc: "" });
     }
 
+    // --- preset slice -------------------------------------------------------
+    // The whole of desktop.json, handed to / taken back from `Presets`.
+    function snapshot() {
+        return { "widgets": JSON.parse(JSON.stringify(adapter.widgets)) };
+    }
+
+    function applySnapshot(o) {
+        if (!o || !o.widgets) return;
+        // Same reasoning as BarConfig: an open edit session's undo snapshot
+        // would otherwise fight the preset.
+        if (editMode) commitEdit();
+        adapter.widgets = JSON.parse(JSON.stringify(o.widgets));
+    }
+
     function defaultsFor(type) {
         if (type === "clock")
             return { format24: true, showDate: true, fontScale: 1.0, align: "center" };
         if (type === "stats")
             return { showCpu: true, showRam: true, showGpu: false, scale: 1.0 };
         if (type === "media")
-            return { scale: 1.0 };
+            return { scale: 1.0, layout: "regular" };
         return {};
     }
 

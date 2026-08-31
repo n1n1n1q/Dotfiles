@@ -36,7 +36,7 @@ Singleton {
     }
 
     // Lets a niri keybind drive the window:
-    //   qs -c quickshell ipc call settings toggle
+    //   qs ipc call settings toggle
     IpcHandler {
         target: "settings"
 

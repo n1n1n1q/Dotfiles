@@ -1,7 +1,9 @@
 import QtQuick
+import QtQuick.Controls
 import qs.config
 
-// Small square icon button for inline row actions (move up/down, delete).
+// Small icon-only button for inline row actions (move up/down, delete) and for
+// the window furniture in the title bar.
 Rectangle {
     id: root
 
@@ -9,11 +11,14 @@ Rectangle {
     property bool danger: false
     property bool highlighted: false
     property bool enabledButton: true
+    property bool round: false
+    property string tooltip: ""
+    property int size: 28
     signal clicked()
 
-    implicitWidth: 28
-    implicitHeight: 28
-    radius: Theme.rounding.small
+    implicitWidth: size
+    implicitHeight: size
+    radius: round ? height / 2 : Theme.rounding.small
     opacity: enabledButton ? 1 : 0.35
     color: !enabledButton ? "transparent"
         : mouse.containsMouse ? (danger
@@ -23,6 +28,10 @@ Rectangle {
         : "transparent"
 
     Behavior on color { ColorAnimation { duration: Theme.animation.fast } }
+
+    ToolTip.visible: root.tooltip.length > 0 && mouse.containsMouse
+    ToolTip.text: root.tooltip
+    ToolTip.delay: 400
 
     Text {
         anchors.centerIn: parent

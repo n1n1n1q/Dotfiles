@@ -40,6 +40,11 @@ Singleton {
         return "󰤟"
     }
 
+    // Every glyph `icon` and `signalIcon` can return, so a cell drawing one
+    // can be sized from the set rather than from whichever state is showing
+    // — the glyphs are not all the same width. See GlyphIcon.
+    readonly property var iconStates: ["󰖪", "󰤫", "󰤨", "󰤥", "󰤢", "󰤟", "󰤯"]
+
     function signalIcon(sig) {
         if (sig > 75) return "󰤨"
         if (sig > 50) return "󰤥"

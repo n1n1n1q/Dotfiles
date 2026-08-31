@@ -8,8 +8,9 @@ SettingsPage {
     id: page
     heading: "Welcome, " + System.userName
     icon: "󰋜"
-    blurb: "The control panel for the shell. Pick an entry on the left — system "
-        + "toggles, display and input, or the look of the bar and dashboard."
+    blurb: "The control panel for the shell. The rail on the left runs in that "
+        + "order: how the shell looks, what each of its surfaces is made of, "
+        + "then the system and its devices."
 
     signal navigate(string slug)
 
@@ -21,10 +22,10 @@ SettingsPage {
 
         Repeater {
             model: [
-                { slug: "wifi",      icon: "󰤨", title: "Wi‑Fi",     desc: "Wireless networking" },
-                { slug: "sound",     icon: "󰕾", title: "Sound",     desc: "Output and input levels" },
-                { slug: "display",   icon: "󰍹", title: "Display",   desc: "Attached monitors" },
-                { slug: "bar",       icon: "󰟀", title: "Bar",       desc: "Layout of the top bar" }
+                { slug: "appearance", icon: "󰏘", title: "Appearance", desc: "Colour scheme, wallpaper and fonts" },
+                { slug: "bar",        icon: "󰟀", title: "Bar",        desc: "Layout of the top bar" },
+                { slug: "wifi",       icon: "󰤨", title: "Wi‑Fi",      desc: "Wireless networking" },
+                { slug: "sound",      icon: "󰕾", title: "Sound",      desc: "Output and input levels" }
             ]
 
             delegate: Rectangle {

@@ -6,7 +6,7 @@ import Quickshell.Io
 
 // User-facing appearance config: the active colour scheme, UI fonts, wallpaper
 // and profile picture. Persisted as JSON at ~/.config/quickshell/appearance.json
-// (written by Settings > General). Colour schemes are plain JSON files in
+// (written by Settings > Appearance). Colour schemes are plain JSON files in
 // ~/.config/quickshell/colorschemes/ — the two built-ins are seeded there on
 // first run so there's always an example to copy.
 Singleton {
@@ -28,11 +28,58 @@ Singleton {
     function setWallpaper(p)   { adapter.wallpaper = p; }
     function setAvatar(p)      { adapter.avatar = p; }
 
+    // --- preset slice -------------------------------------------------------
+    // Everything appearance.json holds, as a plain object. `Presets` stitches
+    // one of these together per config singleton into a named preset file, and
+    // hands the same shape back when one is applied.
+    function snapshot() {
+        return {
+            "scheme": adapter.scheme,
+            "fontFamily": adapter.fontFamily,
+            "fontMono": adapter.fontMono,
+            "wallpaper": adapter.wallpaper,
+            "avatar": adapter.avatar
+        };
+    }
+
+    // Keys the preset doesn't carry are left alone, so a hand-written preset
+    // can restyle the fonts without also dragging a wallpaper along.
+    function applySnapshot(o) {
+        if (!o) return;
+        if (o.scheme !== undefined) adapter.scheme = o.scheme;
+        if (o.fontFamily !== undefined) adapter.fontFamily = o.fontFamily;
+        if (o.fontMono !== undefined) adapter.fontMono = o.fontMono;
+        if (o.wallpaper !== undefined) adapter.wallpaper = o.wallpaper;
+        if (o.avatar !== undefined) adapter.avatar = o.avatar;
+    }
+
     // --- colour schemes -----------------------------------------------------
     // name -> { base, mantle, ... , blue, lavender }  (26 Catppuccin-style keys)
     property var schemes: ({})
     readonly property var schemeNames: Object.keys(schemes).sort()
     readonly property var palette: schemes[schemeName] ?? schemes["mocha"] ?? builtins.mocha
+
+    // Position of the active scheme in `schemeNames`; -1 if the saved name has
+    // no file behind it any more.
+    readonly property int schemeIndex: schemeNames.indexOf(schemeName)
+
+    // Emitted when a scheme is *stepped* to (keybind / IPC) rather than picked
+    // in Settings — the OSD listens for this and flashes a swatch pill.
+    signal schemeCycled(string name)
+
+    // Walk the installed schemes in name order, wrapping at both ends, so a
+    // keybind can retheme the shell without opening Settings:
+    //   qs ipc call scheme next
+    function cycleScheme(step) {
+        const names = schemeNames;
+        if (names.length === 0) return;
+        const n = names.length;
+        const i = schemeIndex < 0
+            ? (step >= 0 ? 0 : n - 1)
+            : ((schemeIndex + step) % n + n) % n;
+        setScheme(names[i]);
+        schemeCycled(names[i]);
+    }
 
     readonly property var builtins: ({
         "mocha": {
@@ -225,6 +272,23 @@ Singleton {
         }
     }
 
+    // Drives the scheme from a niri keybind or a script:
+    //   qs ipc call scheme next
+    IpcHandler {
+        target: "scheme"
+
+        function next(): void { root.cycleScheme(1); }
+        function prev(): void { root.cycleScheme(-1); }
+        function set(name: string): void {
+            if (root.schemes[name] === undefined) return;
+            root.setScheme(name);
+            root.schemeCycled(name);
+        }
+        function reload(): void { root.reloadSchemes(); }
+        function current(): string { return root.schemeName; }
+        function list(): string { return root.schemeNames.join("\n"); }
+    }
+
     FileView {
         id: file
         path: root.dir + "/appearance.json"
@@ -237,7 +301,7 @@ Singleton {
             id: adapter
             property string scheme: "mocha"
             property string fontFamily: "Rubik"
-            property string fontMono: "Monaspace Neon NF"
+            property string fontMono: "MonaspiceNe Nerd Font"
             property string wallpaper: ""
             property string avatar: ""
         }

@@ -8,11 +8,11 @@ import qs.services.niri
 // (end-4's ActiveWindow.qml pattern): the app id small/dim on top, the window
 // title bigger below. Text colour is static; hovering just fades in a subtle
 // background behind the block. Clicking anywhere opens / toggles the
-// on-demand DashboardWindow.
+// dashboard panel for this screen (shell.qml's DashboardLayer owns the
+// windows; this just asks the one on our own output to toggle).
 Item {
     id: root
 
-    property var dashboardWindow: null
     property var parentWindow: null
     property real barHeight: 50
 
@@ -74,21 +74,6 @@ Item {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: {
-            if (!root.dashboardWindow) {
-                let component = Qt.createComponent("../dashboard/DashboardWindow.qml")
-                if (component.status === Component.Ready) {
-                    root.dashboardWindow = component.createObject(root, {
-                        "screen": root.parentWindow?.screen,
-                        "barHeight": root.barHeight
-                    })
-                    root.dashboardWindow.show()
-                } else if (component.status === Component.Error) {
-                    console.error("Error creating dashboard:", component.errorString())
-                }
-            } else {
-                root.dashboardWindow.toggle()
-            }
-        }
+        onClicked: DashboardConfig.requestToggle(root.parentWindow?.screen?.name ?? "")
     }
 }

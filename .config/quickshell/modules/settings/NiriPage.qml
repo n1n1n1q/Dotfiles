@@ -10,6 +10,8 @@ SettingsPage {
     blurb: "The scrollable-tiling Wayland compositor this session runs on."
 
     SettingsGroup {
+        caption: "Compositor"
+        icon: "󱂬"
         SettingsRow {
             icon: "󱂬"
             title: "IPC bridge"
@@ -32,6 +34,8 @@ SettingsPage {
     }
 
     SettingsGroup {
+        caption: "Options"
+        icon: "󰒓"
 
         SettingsRow {
             icon: "󰅩"

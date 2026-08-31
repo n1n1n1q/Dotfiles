@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import qs.config
 import qs.services
+import qs.widgets
 import qs.modules.settings
 
 // A segmented block with an icon, label, live percentage, a mute toggle and a
@@ -15,22 +16,18 @@ Rectangle {
     property string subtitle: ""
     property real value: 0
     property bool muted: false
-    property string blockPosition: "single"
+    // Set by the enclosing SettingsGroup; a row without one paints its own
+    // surface so it still reads as a card on its own.
+    property bool inGroup: false
     property color accent: Theme.colors.accent
     signal moved(real v)
     signal muteToggled()
 
-    readonly property int _r: Theme.workspace.indicatorRadius
-    readonly property bool _rt: blockPosition === "top" || blockPosition === "single"
-    readonly property bool _rb: blockPosition === "bottom" || blockPosition === "single"
 
     Layout.fillWidth: true
     implicitHeight: col.implicitHeight + Theme.spacing.normal * 2
-    color: Theme.colors.surface
-    topLeftRadius: _rt ? _r : 0
-    topRightRadius: _rt ? _r : 0
-    bottomLeftRadius: _rb ? _r : 0
-    bottomRightRadius: _rb ? _r : 0
+    radius: Theme.rounding.large
+    color: inGroup ? "transparent" : Theme.colors.surface
 
     ColumnLayout {
         id: col
@@ -56,7 +53,7 @@ Rectangle {
 
                 Behavior on color { ColorAnimation { duration: Theme.animation.fast } }
 
-                Text {
+                GlyphIcon {
                     anchors.centerIn: parent
                     text: root.muted ? "󰝟" : root.icon
                     font.family: Theme.font.icon

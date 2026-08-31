@@ -87,13 +87,13 @@ Singleton {
         readonly property int xlarge: 14
         readonly property int huge: 16
         
-        // Two knobs, set in Settings > General (Appearance):
+        // Two knobs, set in Settings > Appearance:
         //   main  - the UI text font
         //   mono  - the monospace font; it MUST be Nerd-Font-patched because
         //           `icon` is an alias for it (every glyph in the shell comes
-        //           from this one family). Monaspace Neon NF is the default.
+        //           from this one family). MonaspiceNe Nerd Font is the default.
         readonly property string main: Appearance.fontFamily || "Rubik"
-        readonly property string mono: Appearance.fontMono || "Monaspace Neon NF"
+        readonly property string mono: Appearance.fontMono || "MonaspiceNe Nerd Font"
         readonly property string icon: mono
         
         readonly property int light: Font.Light
@@ -205,7 +205,7 @@ Singleton {
         // `margin` is the single knob for how far any of them sits off the
         // bar / frame.
         readonly property int margin: 8
-        readonly property int radius: rounding.xlarge   // bar-pill radius (workspace.indicatorRadius)
+        readonly property int radius: rounding.huge     // matches the section cards inside
         readonly property int padding: theme.padding.xlarge
         readonly property color background: colors.background   // same as the bar strip
         readonly property int borderWidth: 0
@@ -224,7 +224,8 @@ Singleton {
         // --- shared with BarPill (generic bar-widget capsule) --------------
         readonly property int indicatorHeight: bar.height - 12
         readonly property int indicatorPadding: spacing.small
-        readonly property int indicatorRadius: rounding.xlarge
+        // Full stadium — every bar pill is a capsule, not a rounded box.
+        readonly property int indicatorRadius: indicatorHeight / 2
         readonly property color background: colors.surface
 
         // --- workspace chips (WorkspaceIndicator) -------------------------
@@ -283,6 +284,23 @@ Singleton {
     readonly property QtObject controls: QtObject {
         readonly property int sliderHeight: 3
         readonly property int sliderHandleSize: 18
+
+        // The level bar shared by the dashboard's sliders and the OSD pill
+        // (widgets/LevelBar). One set of numbers for all of its styles, so a
+        // panel row and the pill under the bar read as the same control: a
+        // chunky filled capsule, or a handle on a thin track.
+        readonly property int levelThick: 24
+        readonly property int levelThin: 6
+        readonly property int levelHandle: 14
+        // The "icon inside" capsule is taller than the plain one: it has to
+        // hold the glyph the other styles keep beside the bar.
+        readonly property int levelInline: 36
+        // The "split" pair is the slimmest of the lot — with the level and
+        // what's left of it drawn as two capsules, the gap between them is
+        // what has to read, and a thick bar swallows it.
+        readonly property int levelSplit: 8
+        readonly property int levelGap: 6
+
         readonly property int buttonSmall: 25
         readonly property int buttonLarge: 40
         
@@ -298,6 +316,12 @@ Singleton {
         readonly property int buttonLarge: controls.buttonLarge
         readonly property int sliderHeight: controls.sliderHeight
         readonly property int sliderHandleSize: controls.sliderHandleSize
+        readonly property int levelThick: controls.levelThick
+        readonly property int levelThin: controls.levelThin
+        readonly property int levelHandle: controls.levelHandle
+        readonly property int levelInline: controls.levelInline
+        readonly property int levelSplit: controls.levelSplit
+        readonly property int levelGap: controls.levelGap
         readonly property int dashboardWidth: dashboard.width
         readonly property int dashboardHeight: dashboard.height
     }

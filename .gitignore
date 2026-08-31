@@ -6,5 +6,7 @@ repos
 .config/quickshell/appearance.json
 .config/quickshell/bar.json
 .config/quickshell/desktop.json
+.config/quickshell/dashboard.json
 .config/quickshell/colorschemes/
+.config/quickshell/presets/
 .config/quickshell/wallpapers/

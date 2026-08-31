@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import qs.config
 import qs.modules.settings
+import qs.widgets
 
 SettingsPage {
     id: page
@@ -15,6 +16,9 @@ SettingsPage {
 
     // --- edit toggle ----------------------------------------------------
     SettingsGroup {
+        caption: "Editing"
+        icon: "󰙭"
+
         SettingsRow {
             icon: "󰙭"
             title: "Edit the bar"
@@ -28,55 +32,24 @@ SettingsPage {
     }
 
     // --- bar / frame style --------------------------------------------
-    Text {
-        Layout.topMargin: Theme.spacing.small
-        text: "Style"
-        font.family: Theme.font.main
-        font.pointSize: Theme.font.medium
-        font.weight: Theme.font.semiBold
-        color: Theme.colors.textSecondary
-    }
-
     SettingsGroup {
+        caption: "Style"
+        icon: "󰏘"
+        dense: true
         SettingsRow {
             icon: "󰍹"
             title: "Position"
             subtitle: "Screen edge the bar docks to — left / right make it vertical"
-            RowLayout {
-                spacing: Theme.spacing.tiny
-                Repeater {
-                    model: [
-                        { e: "top",    g: "󱂥" },
-                        { e: "bottom", g: "󱂣" },
-                        { e: "left",   g: "󱂤" },
-                        { e: "right",  g: "󱂦" }
-                    ]
-                    delegate: Rectangle {
-                        required property var modelData
-                        readonly property bool on: BarConfig.edge === modelData.e
-                        implicitWidth: 34
-                        implicitHeight: 28
-                        radius: Theme.rounding.small
-                        color: on ? Theme.colors.accent
-                            : (em.containsMouse ? Theme.colors.surfaceVariant : Theme.colors.surface)
-                        border.width: 1
-                        border.color: on ? Theme.colors.accent : Theme.colors.border
-                        Text {
-                            anchors.centerIn: parent
-                            text: modelData.g
-                            font.family: Theme.font.icon
-                            font.pointSize: Theme.font.medium
-                            color: parent.on ? Theme.colors.bg : Theme.colors.textSecondary
-                        }
-                        MouseArea {
-                            id: em
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: BarConfig.setStyle("edge", parent.modelData.e)
-                        }
-                    }
-                }
+            SegmentedControl {
+                iconOnly: true
+                value: BarConfig.edge
+                options: [
+                    { value: "top",    icon: "󱂥" },
+                    { value: "bottom", icon: "󱂣" },
+                    { value: "left",   icon: "󱂤" },
+                    { value: "right",  icon: "󱂦" }
+                ]
+                onPicked: v => BarConfig.setStyle("edge", v)
             }
         }
         SettingsRow {
@@ -135,14 +108,27 @@ SettingsPage {
         }
     }
 
+    // --- popout cards ---------------------------------------------------
+    SettingsGroup {
+        caption: "Popouts"
+        icon: "󰝚"
+        SettingsRow {
+            icon: "󰝚"
+            title: "Now-playing layout"
+            subtitle: "Layout of the media card — a disc one spins while playing"
+            MediaLayoutPicker {
+                value: BarConfig.mediaLayout
+                onPicked: v => BarConfig.setPopout("mediaLayout", v)
+            }
+        }
+    }
+
     // --- layout view (per-group + future per-widget config) -----------
-    Text {
-        Layout.topMargin: Theme.spacing.small
-        text: "Layout"
-        font.family: Theme.font.main
-        font.pointSize: Theme.font.medium
-        font.weight: Theme.font.semiBold
-        color: Theme.colors.textSecondary
+    SectionHeader {
+        Layout.topMargin: Theme.spacing.tiny
+        title: "Layout"
+        icon: "󰕮"
+        hint: "left · centre · right"
     }
 
     component MiniToggle: Rectangle {
@@ -152,12 +138,12 @@ SettingsPage {
         property color tint: Theme.colors.textSecondary
         signal act()
         width: 26
-        height: 22
-        radius: Theme.rounding.small
+        height: 24
+        radius: height / 2
         color: mt.on ? Theme.colors.accent
-            : (mtMouse.containsMouse ? Theme.colors.surfaceVariant : Theme.colors.surface)
-        border.width: 1
-        border.color: Theme.colors.border
+            : (mtMouse.containsMouse ? Theme.colors.surfaceVariant
+               : Qt.rgba(Theme.colors.surfaceVariant.r, Theme.colors.surfaceVariant.g,
+                         Theme.colors.surfaceVariant.b, 0.5))
         Text {
             anchors.centerIn: parent
             text: mt.glyph
@@ -182,12 +168,8 @@ SettingsPage {
         Layout.fillWidth: true
         spacing: Theme.spacing.tiny
 
-        Text {
+        SettingsCaption {
             text: lane.label
-            font.family: Theme.font.main
-            font.pointSize: Theme.font.small
-            font.weight: Theme.font.semiBold
-            color: Theme.colors.textTertiary
         }
 
         Repeater {
@@ -199,7 +181,7 @@ SettingsPage {
                 readonly property var widgetIds: modelData.widgets ?? []
                 Layout.fillWidth: true
                 implicitHeight: gcCol.implicitHeight + Theme.spacing.normal * 2
-                radius: Theme.workspace.indicatorRadius
+                radius: Theme.rounding.huge
                 color: Theme.colors.surface
 
                 ColumnLayout {
@@ -306,14 +288,20 @@ SettingsPage {
     LaneView { section: "center"; label: "Centre"; groups: BarConfig.center }
     LaneView { section: "right";  label: "Right";  groups: BarConfig.right }
 
-    SettingsRow {
+    // --- reset ----------------------------------------------------------
+    SettingsGroup {
+        caption: "Reset"
         icon: "󰑏"
-        title: "Reset to default"
-        subtitle: "Restore the shipped left / centre / right layout"
-        PillButton {
-            text: "Reset"
-            danger: true
-            onClicked: BarConfig.reset()
+
+        SettingsRow {
+            icon: "󰑏"
+            title: "Reset to default"
+            subtitle: "Restore the shipped left / centre / right layout"
+            PillButton {
+                text: "Reset"
+                danger: true
+                onClicked: BarConfig.reset()
+            }
         }
     }
 }

@@ -1,8 +1,12 @@
 module qs.modules.dashboard.components
+AddPicker 1.0 AddPicker.qml
 AudioDeviceList 1.0 AudioDeviceList.qml
-CompactSlider 1.0 CompactSlider.qml
+DashboardEditDock 1.0 DashboardEditDock.qml
 DashboardHeader 1.0 DashboardHeader.qml
+DashSlider 1.0 DashSlider.qml
+DragProxy 1.0 DragProxy.qml
+DropSlot 1.0 DropSlot.qml
 ExpandableSection 1.0 ExpandableSection.qml
-ExpandableSlider 1.0 ExpandableSlider.qml
-MediaPlayer 1.0 MediaPlayer.qml
+QuickSettingsGrid 1.0 QuickSettingsGrid.qml
 QuickToggle 1.0 QuickToggle.qml
+SliderStack 1.0 SliderStack.qml

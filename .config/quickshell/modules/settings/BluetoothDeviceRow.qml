@@ -12,7 +12,9 @@ Rectangle {
     id: root
 
     required property var device
-    property string blockPosition: "single"
+    // Set by the enclosing SettingsGroup; a row without one paints its own
+    // surface so it still reads as a card on its own.
+    property bool inGroup: false
 
     readonly property bool isConnected: device.connected
     readonly property bool isPaired: device.paired || device.bonded
@@ -20,17 +22,11 @@ Rectangle {
 
     property bool expanded: false
 
-    readonly property int _r: Theme.workspace.indicatorRadius
-    readonly property bool _rt: blockPosition === "top" || blockPosition === "single"
-    readonly property bool _rb: blockPosition === "bottom" || blockPosition === "single"
 
     Layout.fillWidth: true
     implicitHeight: col.implicitHeight + Theme.spacing.small * 2
-    color: Theme.colors.surface
-    topLeftRadius: _rt ? _r : 0
-    topRightRadius: _rt ? _r : 0
-    bottomLeftRadius: _rb ? _r : 0
-    bottomRightRadius: _rb ? _r : 0
+    radius: Theme.rounding.large
+    color: inGroup ? "transparent" : Theme.colors.surface
 
     function primary() {
         if (busy)

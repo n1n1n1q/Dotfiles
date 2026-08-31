@@ -5,9 +5,9 @@ import Quickshell
 import Quickshell.Wayland
 import qs.config
 import qs.services
-import qs.services.niri
 import qs.modules.dashboard.components
 import qs.modules.notifications
+import qs.modules.osd
 import qs.modules.settings
 
 PanelWindow {
@@ -16,6 +16,11 @@ PanelWindow {
     property bool shouldShow: false
     property var parentWindow: null
     property real barHeight: 50
+
+    // Editing the panel's layout pins it open — you're arranging the thing you
+    // are looking at, and a stray click outside must not close it mid-drag.
+    readonly property bool editing: DashboardConfig.editMode
+    readonly property bool open: shouldShow || editing
 
     // Covers the whole output rather than just the card's own footprint, so a
     // plain click-outside MouseArea can dismiss it - niri has no equivalent
@@ -27,25 +32,66 @@ PanelWindow {
         bottom: true
     }
 
-    visible: shouldShow
+    visible: open
     exclusiveZone: 0
     color: "transparent"
 
-    // Never take keyboard focus - niri has nothing like Hyprland's
-    // HyprlandFocusGrab, and grabbing focus here was stealing it from
-    // whatever window was focused before the dashboard opened (and causing
-    // flaky click-to-dismiss behavior in the process). Everything in this
-    // window is mouse-driven, so it doesn't need focus at all.
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+    // Never take keyboard focus while it's just open - niri has nothing like
+    // Hyprland's HyprlandFocusGrab, and grabbing focus here was stealing it
+    // from whatever window was focused before the dashboard opened (and
+    // causing flaky click-to-dismiss behavior in the process). Everything in
+    // the panel is mouse-driven, so it doesn't need focus at all.
+    //
+    // Layout editing is the exception: it's a deliberate modal session that
+    // ends on Enter / Esc, the same as the bar editor's overlay.
+    WlrLayershell.keyboardFocus: editing
+        ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+
+    // The dashboard's own sliders show the volume / brightness level as you
+    // drag them, so hold the OSD inhibit while it's open - otherwise every
+    // drag also drops the OSD pill under the bar, saying the same thing.
+    onOpenChanged: open ? OsdController.inhibit() : OsdController.release()
+    Component.onDestruction: {
+        if (open)
+            OsdController.release()
+    }
 
     function show() {
         shouldShow = true
     }
     function hide() {
+        if (editing)
+            return
         shouldShow = false
     }
     function toggle() {
+        if (editing)
+            return
         shouldShow = !shouldShow
+    }
+
+    // Driven by the bar's window-title widget and by
+    // `qs ipc call dashboard open|hide|toggle`. An empty screen name is a
+    // broadcast; anything else has to match this panel's own output.
+    function _addressed(screenName) {
+        return screenName.length === 0 || screenName === (root.screen?.name ?? "")
+    }
+
+    Connections {
+        target: DashboardConfig
+        function onShowRequested(screenName) { if (root._addressed(screenName)) root.show() }
+        function onHideRequested(screenName) { if (root._addressed(screenName)) root.hide() }
+        function onToggleRequested(screenName) { if (root._addressed(screenName)) root.toggle() }
+    }
+
+    // Don't leave a session stuck open if Settings is closed with the edit
+    // toggle still on - the same guard BarEditOverlay keeps.
+    Connections {
+        target: SettingsController
+        function onOpenChanged() {
+            if (!SettingsController.open && DashboardConfig.editMode)
+                DashboardConfig.commitEdit();
+        }
     }
 
     Item {
@@ -59,6 +105,30 @@ PanelWindow {
             onClicked: root.hide()
         }
 
+        // Faint dim behind the card while editing, so the panel reads as modal
+        // the same way the bar editor does.
+        Rectangle {
+            anchors.fill: parent
+            visible: root.editing
+            color: Qt.rgba(0, 0, 0, 0.25)
+        }
+
+        // Enter saves, Esc drops a held tile and then ends the session.
+        Item {
+            anchors.fill: parent
+            focus: root.editing
+            Keys.onPressed: e => {
+                if (e.key === Qt.Key_Escape) {
+                    if (DashboardConfig.grabbing) DashboardConfig.cancelGrab();
+                    else DashboardConfig.cancelEdit();
+                    e.accepted = true;
+                } else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) {
+                    DashboardConfig.commitEdit();
+                    e.accepted = true;
+                }
+            }
+        }
+
         Rectangle {
             id: dashboard
 
@@ -70,7 +140,7 @@ PanelWindow {
             readonly property real openY: Theme.popup.margin
 
             x: Theme.frame.thickness + Theme.popup.margin
-            y: root.shouldShow ? openY : -height
+            y: root.open ? openY : -height
             width: Theme.sizes.dashboardWidth
             height: root.height - openY - Theme.frame.thickness - Theme.popup.margin
 
@@ -117,8 +187,8 @@ PanelWindow {
 
                         // User icon and info
                         Item {
-                            width: 48
-                            height: 48
+                            width: 40
+                            height: 40
 
                             Image {
                                 id: userIcon
@@ -191,22 +261,22 @@ PanelWindow {
 
                         ColumnLayout {
                             Layout.fillWidth: true
-                            spacing: Theme.spacing.tiny
+                            spacing: 0
 
                             Text {
                                 text: System.userName
                                 font.family: Theme.font.main
-                                font.pointSize: Theme.fontSize.large
-                                font.weight: Font.Bold
-                                color: Theme.colors.text
+                                font.pointSize: Theme.font.large
+                                font.weight: Theme.font.mediumWeight
+                                color: Theme.colors.textPrimary
                             }
 
                             Text {
                                 id: uptimeText
                                 text: "Uptime: Loading..."
                                 font.family: Theme.font.main
-                                font.pointSize: Theme.fontSize.normal
-                                color: Theme.colors.subtext0
+                                font.pointSize: Theme.font.small
+                                color: Theme.colors.textTertiary
 
                                 Timer {
                                     interval: 60000
@@ -224,149 +294,32 @@ PanelWindow {
                         }
                     }
 
-                    Rectangle {
+                    // Quick settings — a configurable grid of one- and two-cell
+                    // tiles (Settings > Dashboard, or `qs ipc call dashboard edit`).
+                    QuickSettingsGrid {
                         Layout.fillWidth: true
-                        height: 1
-                        color: Theme.colors.border
+                        ghost: dragGhost
+                        onCloseRequested: root.hide()
                     }
 
-                    // Quick Toggles Row with background
-                    Rectangle {
+                    // Sliders — configurable the same way; right-click one for
+                    // its device list.
+                    SliderStack {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 64
-                        color: Theme.colors.surface0
-                        radius: Theme.rounding.medium
-
-                        RowLayout {
-                            anchors.centerIn: parent
-                            width: parent.width - Theme.spacing.tiny * 2
-                            height: parent.height - Theme.spacing.tiny * 2
-                            spacing: 0
-
-                            Repeater {
-                                model: [
-                                    {name: "WiFi", iconName: "wifi", active: WiFi.enabled, connected: WiFi.connected},
-                                    {name: "Bluetooth", iconName: "bluetooth", active: Bluetooth.enabled, connected: Bluetooth.connected},
-                                    {name: "Screenshot", iconName: "screenshot", active: false, connected: false},
-                                    {name: "Lock", iconName: "lock", active: false, connected: false},
-                                    {name: "Record", iconName: "record", active: false, connected: false},
-                                    {name: "Settings", iconName: "settings", active: false, connected: false}
-                                ]
-
-                                Item {
-                                    required property var modelData
-
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: 48
-
-                                    QuickToggle {
-                                        anchors.centerIn: parent
-                                        width: 48
-                                        height: 48
-
-                                        name: modelData.name
-                                        iconName: modelData.iconName
-                                        active: modelData.active
-                                        connected: modelData.connected ?? false
-
-                                    onButtonClicked: {
-                                        switch(modelData.name) {
-                                            case "WiFi":
-                                                WiFi.toggleWifi()
-                                                break
-                                            case "Bluetooth":
-                                                Bluetooth.toggleBluetooth()
-                                                break
-                                            case "Screenshot":
-                                                // niri ships its own interactive screenshot UI - no
-                                                // grim/slurp/grimblast needed.
-                                                NiriService.screenshot()
-                                                root.hide()
-                                                break
-                                            case "Lock":
-                                                Quickshell.execDetached(["swaylock"])
-                                                root.hide()
-                                                break
-                                            case "Record":
-                                                Quickshell.execDetached(["wf-recorder"])
-                                                root.hide()
-                                                break
-                                            case "Settings":
-                                                SettingsController.show()
-                                                root.hide()
-                                                break
-                                        }
-                                    }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // Unified Sliders Section
-                    GroupBox {
-                        Layout.fillWidth: true
-                        title: ""
-
-                        background: Rectangle {
-                            color: Theme.colors.surface0
-                            radius: Theme.rounding.medium
-                        }
-
-                        ColumnLayout {
-                            anchors.fill: parent
-                            spacing: Theme.spacing.medium
-
-                            // Volume Slider (expandable)
-                            ExpandableSlider {
-                                sliderIcon: Audio.muted ? "󰖁" : "󰕾"
-                                sliderValue: Audio.volume
-                                isMuted: Audio.muted
-                                devices: Audio.sinks
-                                currentDevice: Audio.sink
-
-                                onValueChanged: Audio.setVolume(newValue)
-                                onDeviceSelected: Audio.setAudioSink(device)
-                            }
-
-                            // Microphone Slider (expandable)
-                            ExpandableSlider {
-                                sliderIcon: Audio.sourceMuted ? "󰍭" : (Audio.sourceVolume > 0.5 ? "󰍬" : "󰍮")
-                                sliderValue: Audio.sourceVolume
-                                isMuted: Audio.sourceMuted
-                                devices: Audio.sources
-                                currentDevice: Audio.source
-
-                                onValueChanged: Audio.setSourceVolume(newValue)
-                                onDeviceSelected: Audio.setAudioSource(device)
-                            }
-
-                            // Brightness Slider (not expandable)
-                            CompactSlider {
-                                sliderIcon: Brightness.getBrightnessIcon()
-                                sliderValue: Brightness.brightness
-                                isMuted: false
-
-                                onValueChanged: Brightness.setBrightness(newValue)
-                            }
-                        }
-                    }
-
-                    // Media Player (no background, no title)
-                    MediaPlayer {
-                        Layout.fillWidth: true
-                    }
-
-                    Rectangle {
-                        Layout.fillWidth: true
-                        height: 1
-                        color: Theme.colors.border
+                        ghost: dragGhost
                     }
 
                     // Notification centre - full history, newest first.
                     NotificationCenter {
                         Layout.fillWidth: true
+                        visible: !root.editing
                         onCloseRequested: root.hide()
+                    }
+
+                    DashboardEditDock {
+                        Layout.fillWidth: true
+                        visible: root.editing
+                        ghost: dragGhost
                     }
 
                     Item {
@@ -375,6 +328,12 @@ PanelWindow {
                     }
                 }
             }
+        }
+
+        // The drag ghost floats above the card (and above the ScrollView that
+        // the tiles were picked up in), so it lives at the top of the window.
+        DragProxy {
+            id: dragGhost
         }
     }
 }

@@ -41,12 +41,55 @@ Singleton {
     readonly property bool blackCorners: adapter.style?.blackCorners ?? true
     readonly property bool vertical: edge === "left" || edge === "right"
 
+    // --- popout cards ---------------------------------------------------
+    // Style for the bar's dropdown cards, persisted in bar.json under
+    // `popouts`. Only the media card has a knob so far: which of MediaLayout's
+    // four now-playing layouts it draws.
+    readonly property var defaultPopouts: ({ "mediaLayout": "regular" })
+    readonly property string mediaLayout: adapter.popouts?.mediaLayout ?? "regular"
+
+    function setPopout(key, val) {
+        const p = JSON.parse(JSON.stringify(adapter.popouts ?? defaultPopouts));
+        p[key] = val;
+        adapter.popouts = p;
+    }
+
     function setStyle(key, val) {
         const s = JSON.parse(JSON.stringify(adapter.style ?? defaultStyle));
         s[key] = val;
         adapter.style = s;
     }
     function resetStyle() { adapter.style = JSON.parse(JSON.stringify(defaultStyle)); }
+
+    // --- preset slice -------------------------------------------------------
+    // The whole of bar.json, handed to / taken back from `Presets`. `editMode`
+    // is runtime-only and deliberately left out: a preset restores a layout,
+    // not a half-finished edit session.
+    function snapshot() {
+        return JSON.parse(JSON.stringify({
+            "left": adapter.left,
+            "center": adapter.center,
+            "right": adapter.right,
+            "style": adapter.style ?? defaultStyle,
+            "popouts": adapter.popouts ?? defaultPopouts
+        }));
+    }
+
+    function applySnapshot(o) {
+        if (!o) return;
+        // An in-flight edit holds a snapshot of its own; cancelling it now
+        // would put the pre-preset layout back a moment later.
+        if (editMode) commitEdit();
+        if (o.left) adapter.left = JSON.parse(JSON.stringify(o.left));
+        if (o.center) adapter.center = JSON.parse(JSON.stringify(o.center));
+        if (o.right) adapter.right = JSON.parse(JSON.stringify(o.right));
+        // Style keys the preset omits fall back to the defaults rather than
+        // lingering from the setup being replaced.
+        if (o.style)
+            adapter.style = Object.assign(JSON.parse(JSON.stringify(defaultStyle)), o.style);
+        if (o.popouts)
+            adapter.popouts = Object.assign(JSON.parse(JSON.stringify(defaultPopouts)), o.popouts);
+    }
 
     // --- live "edit on the bar" mode -------------------------------------
     // A temporary mode (Settings > Bar, or `qs ipc call bar edit`): bar
@@ -367,6 +410,7 @@ Singleton {
             property var center: root.defaults.center
             property var right: root.defaults.right
             property var style: root.defaultStyle
+            property var popouts: root.defaultPopouts
         }
     }
 }

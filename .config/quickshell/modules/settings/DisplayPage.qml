@@ -10,6 +10,8 @@ SettingsPage {
     blurb: "Monitors attached to this session."
 
     SettingsGroup {
+        caption: "Monitors"
+        icon: "󰍹"
 
         Repeater {
             model: Quickshell.screens
@@ -25,6 +27,8 @@ SettingsPage {
     }
 
     SettingsGroup {
+        caption: "Options"
+        icon: "󰒓"
 
         SettingsRow {
             icon: "󰕰"

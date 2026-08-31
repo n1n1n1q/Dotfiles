@@ -25,6 +25,11 @@ Item {
     property color trackColor: Qt.rgba(progressColor.r, progressColor.g, progressColor.b, filled ? 0.25 : 0.22)
     property int size: Theme.bar.iconSize
     property string iconText: ""
+    // Every glyph `iconText` can be handed. The centre is sized from the set
+    // so it holds still when the state changes: a Nerd-Font glyph is drawn
+    // wider than the cell it measures, so a plain Text shifts as it swaps.
+    // See GlyphIcon.
+    property var iconStates: []
     property color iconColor: filled ? Theme.colors.bg : Theme.colors.textPrimary
     property int iconSize: Math.round(size * (filled ? 0.44 : 0.4))
     // How far the drawing sits inside the widget box (leaves a little air).
@@ -110,9 +115,10 @@ Item {
         }
     }
 
-    Text {
+    GlyphIcon {
         anchors.centerIn: parent
         text: root.iconText
+        glyphs: root.iconStates
         font.family: Theme.font.icon
         font.pointSize: root.iconSize
         font.weight: Font.DemiBold

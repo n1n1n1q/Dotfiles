@@ -1,10 +1,11 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls
 import qs.config
 
-// One sidebar navigation row, styled like a bar pill. Entries in a group sit
-// flush (SettingsGroup spacing 0) and only the run's ends round off, via
-// `blockPosition` — the segmented-list look.
+// One sidebar row: a glyph and a label in a full-round pill. The active entry
+// is a solid accent pill; everything else is bare until hovered. Subtitles
+// live in the tooltip so the rail stays one line per entry.
 Rectangle {
     id: root
 
@@ -12,106 +13,65 @@ Rectangle {
     property string title: ""
     property string subtitle: ""
     property bool selected: false
-    // top | middle | bottom | single — assigned by the parent SettingsGroup.
-    property string blockPosition: "single"
+    // Icon-only rail — the label fades out and the glyph centres.
+    property bool collapsed: false
     signal clicked()
 
-    readonly property int _r: Theme.workspace.indicatorRadius
-    readonly property bool _roundTop: blockPosition === "top" || blockPosition === "single"
-    readonly property bool _roundBottom: blockPosition === "bottom" || blockPosition === "single"
-
     Layout.fillWidth: true
-    implicitHeight: 56
+    implicitHeight: 38
+    radius: height / 2
 
-    // Bar-pill palette: faint resting fill, brighter on hover, accent-tinted
-    // when active.
-    readonly property color _rest: Qt.rgba(Theme.palette.surface0.r,
-                                           Theme.palette.surface0.g,
-                                           Theme.palette.surface0.b, 0.45)
-    readonly property color _accentWash: Qt.rgba(Theme.colors.accent.r,
-                                                 Theme.colors.accent.g,
-                                                 Theme.colors.accent.b, 0.16)
-    color: selected ? _accentWash
-        : mouse.containsMouse ? Theme.colors.surfaceVariant
-        : _rest
-    topLeftRadius: _roundTop ? _r : 0
-    topRightRadius: _roundTop ? _r : 0
-    bottomLeftRadius: _roundBottom ? _r : 0
-    bottomRightRadius: _roundBottom ? _r : 0
+    color: selected ? Theme.colors.accent
+        : hover.hovered ? Theme.colors.surface
+        : "transparent"
 
     Behavior on color {
         ColorAnimation { duration: Theme.animation.fast }
     }
 
-    // Accent bar on the left edge of the active entry.
-    Rectangle {
-        anchors.left: parent.left
-        anchors.verticalCenter: parent.verticalCenter
-        width: 3
-        height: parent.height - Theme.spacing.normal
-        radius: width / 2
-        color: Theme.colors.accent
-        opacity: root.selected ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: Theme.animation.fast } }
-    }
+    ToolTip.visible: hover.hovered && (root.collapsed || root.subtitle.length > 0)
+    ToolTip.text: root.collapsed && root.subtitle.length > 0
+        ? root.title + " — " + root.subtitle
+        : root.collapsed ? root.title : root.subtitle
+    ToolTip.delay: 400
+
+    HoverHandler { id: hover }
 
     RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: Theme.spacing.normal
-        anchors.rightMargin: Theme.spacing.normal
-        spacing: Theme.spacing.normal
+        anchors.leftMargin: root.collapsed ? 0 : Theme.spacing.normal
+        anchors.rightMargin: root.collapsed ? 0 : Theme.spacing.normal
+        spacing: Theme.spacing.small
 
-        Rectangle {
+        Text {
             Layout.alignment: Qt.AlignVCenter
-            implicitWidth: 34
-            implicitHeight: 34
-            radius: height / 2
-            color: root.selected ? Theme.colors.accent : Theme.colors.surfaceVariant
+            Layout.preferredWidth: root.collapsed ? root.width : 20
+            horizontalAlignment: Text.AlignHCenter
+            text: root.icon
+            font.family: Theme.font.icon
+            font.pointSize: Theme.font.large
+            color: root.selected ? Theme.colors.bg : Theme.colors.textSecondary
 
-            Behavior on color {
-                ColorAnimation { duration: Theme.animation.fast }
-            }
-
-            Text {
-                anchors.centerIn: parent
-                text: root.icon
-                font.family: Theme.font.icon
-                font.pointSize: Theme.font.large
-                color: root.selected ? Theme.colors.bg : Theme.colors.textSecondary
-            }
+            Behavior on color { ColorAnimation { duration: Theme.animation.fast } }
         }
 
-        ColumnLayout {
+        Text {
             Layout.fillWidth: true
-            Layout.alignment: Qt.AlignVCenter
-            spacing: -1
+            visible: !root.collapsed
+            opacity: root.collapsed ? 0 : 1
+            text: root.title
+            elide: Text.ElideRight
+            font.family: Theme.font.main
+            font.pointSize: Theme.font.medium
+            font.weight: root.selected ? Theme.font.mediumWeight : Theme.font.regular
+            color: root.selected ? Theme.colors.bg : Theme.colors.textPrimary
 
-            Text {
-                Layout.fillWidth: true
-                text: root.title
-                elide: Text.ElideRight
-                font.family: Theme.font.main
-                font.pointSize: Theme.bar.fontSize
-                font.weight: root.selected ? Theme.font.semiBold : Theme.font.mediumWeight
-                color: Theme.colors.textPrimary
-            }
-
-            Text {
-                visible: root.subtitle.length > 0
-                Layout.fillWidth: true
-                text: root.subtitle
-                elide: Text.ElideRight
-                font.family: Theme.font.main
-                font.pointSize: Theme.font.small
-                color: Theme.colors.textTertiary
-            }
+            Behavior on opacity { NumberAnimation { duration: Theme.animation.fast } }
         }
     }
 
     MouseArea {
-        id: mouse
         anchors.fill: parent
-        hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         onClicked: root.clicked()
     }

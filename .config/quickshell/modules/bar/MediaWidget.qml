@@ -8,7 +8,8 @@ import qs.modules.popout
 // Bar "now playing": an end-4-style filled circular gauge (wedge = track
 // position) with a music-note glyph knocked through the centre, plus the current
 // track as plain text. Always visible - "Nothing playing" when no MPRIS player
-// is active. HoverPill gives it its own hover wash inside the left cluster.
+// is active, and inert until one shows up (there is no card to pop out).
+// HoverPill gives it its own hover wash inside the left cluster.
 HoverPill {
     id: root
 
@@ -18,8 +19,8 @@ HoverPill {
     readonly property bool hasPlayer: Media.activePlayer !== null
 
     // Gauge keeps play/pause (its own MouseArea); clicking the label / dead
-    // space opens the media popout.
-    clickable: true
+    // space opens the media popout - but only while there is something to show.
+    clickable: hasPlayer
     onClicked: {
         const p = mapToItem(null, width / 2, 0);
         PopoutController.toggle("media", p.x, width, screenName);
@@ -41,6 +42,7 @@ HoverPill {
         MouseArea {
             id: mouseArea
             anchors.fill: parent
+            enabled: root.hasPlayer
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: Media.togglePlayPause()

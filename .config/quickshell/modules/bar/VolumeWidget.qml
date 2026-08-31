@@ -20,6 +20,7 @@ CircularWidget {
     progressColor: Audio.muted ? Theme.colors.error : Theme.colors.success
 
     iconText: Audio.muted ? "󰝛" : "󰎇" // nf-md-music_off / nf-md-music_note
+    iconStates: ["󰝛", "󰎇"]
 
     MouseArea {
         anchors.fill: parent

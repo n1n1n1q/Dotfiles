@@ -1,4 +1,8 @@
 module qs.widgets
+SectionHeader 1.0 SectionHeader.qml
 CircularWidget 1.0 CircularWidget.qml
 BarPill 1.0 BarPill.qml
 HoverPill 1.0 HoverPill.qml
+MediaLayout 1.0 MediaLayout.qml
+LevelBar 1.0 LevelBar.qml
+GlyphIcon 1.0 GlyphIcon.qml

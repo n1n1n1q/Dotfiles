@@ -28,6 +28,8 @@ SettingsPage {
 
     // --- adapter ---------------------------------------------------------------
     SettingsGroup {
+        caption: "Adapter"
+        icon: "󰂯"
         SettingsRow {
             icon: Bluetooth.icon
             title: "Bluetooth"
@@ -67,6 +69,8 @@ SettingsPage {
 
     // --- paired devices ------------------------------------------------------
     SettingsGroup {
+        caption: "Paired devices"
+        icon: "󰂱"
         visible: Bluetooth.enabled
 
         Repeater {
@@ -87,6 +91,8 @@ SettingsPage {
 
     // --- discovery -----------------------------------------------------------
     SettingsGroup {
+        caption: "Discovery"
+        icon: "󰐧"
         visible: Bluetooth.enabled
 
         SettingsRow {

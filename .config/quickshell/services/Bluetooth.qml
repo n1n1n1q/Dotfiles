@@ -45,6 +45,10 @@ Singleton {
         return "󰂯"                                  // bluetooth
     }
 
+    // Every glyph `icon` can return, for sizing a cell that draws it. See
+    // GlyphIcon — a Nerd-Font glyph is not as wide as its advance.
+    readonly property var iconStates: ["󰂲", "󰂱", "󰂯"]
+
     // --- actions ---------------------------------------------------------------
     function toggleBluetooth() {
         if (adapter)

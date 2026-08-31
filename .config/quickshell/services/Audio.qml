@@ -69,6 +69,13 @@ Singleton {
     readonly property real volume: sink?.audio?.volume ?? 0
     readonly property bool muted: sink?.audio?.muted ?? false
     
+    // Every glyph the shell draws for the sink and the source. An icon cell
+    // sized from the whole set keeps its width when the level or the mute
+    // changes state, instead of dragging its neighbours along with it — see
+    // GlyphIcon for why a Nerd-Font glyph's width is not its advance.
+    readonly property var volumeGlyphs: ["󰝟", "󰖁", "󰕿", "󰖀", "󰕾"]
+    readonly property var sourceGlyphs: ["󰍭", "󰍬", "󰍮"]
+    
     readonly property real sourceVolume: source?.audio?.volume ?? 0
     readonly property bool sourceMuted: source?.audio?.muted ?? false
     

@@ -22,11 +22,11 @@ Flow {
 
             implicitWidth: 132
             implicitHeight: 86
-            radius: Theme.rounding.medium
+            radius: Theme.rounding.large
             color: ma.pressed ? Theme.colors.accent
-                : ma.containsMouse ? Theme.colors.surfaceVariant : Theme.colors.surface
-            border.width: 1
-            border.color: ma.containsMouse ? Theme.colors.accent : Theme.colors.border
+                : ma.containsMouse ? Theme.colors.surfaceVariant
+                : Qt.rgba(Theme.colors.surfaceVariant.r, Theme.colors.surfaceVariant.g,
+                          Theme.colors.surfaceVariant.b, 0.45)
 
             Behavior on color { ColorAnimation { duration: Theme.animation.fast } }
 

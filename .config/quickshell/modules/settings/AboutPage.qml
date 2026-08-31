@@ -12,6 +12,8 @@ SettingsPage {
     blurb: "The shell, the machine and the people behind it."
 
     SettingsGroup {
+        caption: "Shell"
+        icon: "󰆍"
 
         SettingsRow {
             icon: "󰆍"
@@ -45,6 +47,8 @@ SettingsPage {
     }
 
     SettingsGroup {
+        caption: "This machine"
+        icon: "󰍹"
 
         SettingsRow {
             icon: "󰀄"
@@ -75,6 +79,8 @@ SettingsPage {
     }
 
     SettingsGroup {
+        caption: "Credits"
+        icon: "󰋼"
 
         SettingsRow {
             icon: "󰊤"

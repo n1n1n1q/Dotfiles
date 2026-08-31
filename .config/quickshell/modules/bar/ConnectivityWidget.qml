@@ -1,8 +1,8 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Controls
 import qs.config
 import qs.services
+import qs.widgets
 import qs.modules.settings
 
 // One compact block of three live connectivity glyphs — Wi‑Fi, Bluetooth,
@@ -25,7 +25,9 @@ Item {
     }
 
     // A live glyph — no interaction of its own; the whole block is one target.
-    component ConnIcon: Text {
+    // Each one is sized from every glyph its service can hand it, so the block
+    // keeps its width (and the bar keeps its layout) as the states change.
+    component ConnIcon: GlyphIcon {
         Layout.alignment: Qt.AlignVCenter
         font.family: Theme.font.icon
         font.pointSize: Theme.bar.fontSizeLarge + 3
@@ -38,6 +40,7 @@ Item {
         spacing: Theme.spacing.large
 
         ConnIcon {
+            glyphs: WiFi.iconStates
             text: WiFi.icon
             color: !WiFi.enabled ? Theme.colors.textTertiary
                 : WiFi.connected ? Theme.colors.textPrimary
@@ -45,6 +48,7 @@ Item {
         }
 
         ConnIcon {
+            glyphs: Bluetooth.iconStates
             text: Bluetooth.icon
             color: !Bluetooth.available || !Bluetooth.enabled ? Theme.colors.textTertiary
                 : Bluetooth.connected ? Theme.colors.accent
@@ -52,6 +56,7 @@ Item {
         }
 
         ConnIcon {
+            glyphs: Audio.volumeGlyphs
             text: {
                 if (Audio.muted || Audio.volume <= 0) return "󰝟"        // volume-mute
                 if (Audio.volume < 0.34) return "󰕿"                      // volume-low
@@ -69,20 +74,6 @@ Item {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: SettingsController.show("general")
-    }
-
-    ToolTip.visible: mouse.containsMouse
-    ToolTip.delay: 500
-    ToolTip.text: {
-        const w = !WiFi.enabled ? "Wi‑Fi off"
-            : WiFi.connected ? "Wi‑Fi  " + WiFi.ssid + " (" + WiFi.strength + "%)"
-            : "Wi‑Fi not connected";
-        const b = !Bluetooth.available ? "No Bluetooth"
-            : !Bluetooth.enabled ? "Bluetooth off"
-            : Bluetooth.connected ? "Bluetooth  " + Bluetooth.connectedDeviceCount + " connected"
-            : "Bluetooth on";
-        const s = Audio.muted ? "Volume muted" : "Volume " + Math.round(Audio.volume * 100) + "%";
-        return w + "\n" + b + "\n" + s;
+        onClicked: SettingsController.show("wifi")
     }
 }

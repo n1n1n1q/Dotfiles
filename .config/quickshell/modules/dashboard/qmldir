@@ -1,2 +1,3 @@
 module qs.modules.dashboard
+DashboardLayer 1.0 DashboardLayer.qml
 DashboardWindow 1.0 DashboardWindow.qml

@@ -10,6 +10,8 @@ SettingsPage {
     blurb: "Layouts come from the niri config; the shell reflects the live state."
 
     SettingsGroup {
+        caption: "Layouts"
+        icon: "󰌌"
 
         Repeater {
             model: NiriService.keyboardLayoutNames
@@ -25,6 +27,8 @@ SettingsPage {
     }
 
     SettingsGroup {
+        caption: "Options"
+        icon: "󰒓"
 
         SettingsRow {
             icon: "󰌏"

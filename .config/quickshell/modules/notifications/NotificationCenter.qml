@@ -2,72 +2,134 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.services
+import qs.widgets
 
 // Notification centre for the dashboard: the full `Notifications.list` history,
-// newest first, each row a NotificationCard whose close button drops it from
-// the centre. Sits inside the dashboard's own ScrollView, so it just grows -
-// no nested scrolling.
+// newest first. With DashboardConfig.notifGrouping off that's one card per
+// notification; set to "source" it's one collapsed stack per app, each opening
+// into its own run. Sits inside the dashboard's own ScrollView, so it just
+// grows - no nested scrolling.
 ColumnLayout {
     id: root
-    spacing: Theme.spacing.small
+    spacing: Theme.spacing.tiny
 
     // Emitted when a notification is clicked through to its app - the
     // dashboard should get out of the way.
     signal closeRequested()
 
-    RowLayout {
-        Layout.fillWidth: true
-        spacing: Theme.spacing.small
+    readonly property bool grouped: DashboardConfig.notifGrouped
 
-        Text {
-            text: "Notifications"
-            font.family: Theme.font.main
-            font.pointSize: Theme.fontSize.large
-            font.weight: Font.Bold
-            color: Theme.colors.text
+    // [{ appName, entries }] in the order each source last spoke - so a group
+    // rises to the top when it gets something new, and the list still reads
+    // newest-first.
+    readonly property var groups: {
+        if (!grouped)
+            return [];
+        const byApp = {};
+        const out = [];
+        for (const e of Notifications.list) {
+            const key = e.appName || "Notification";
+            if (byApp[key] === undefined) {
+                byApp[key] = { appName: key, entries: [] };
+                out.push(byApp[key]);
+            }
+            byApp[key].entries.push(e);
         }
+        return out;
+    }
 
-        Text {
+    // Which sources are dropped open, by app name. Kept here rather than in the
+    // group delegates because the Repeater below rebuilds all of them whenever
+    // a notification arrives or is dismissed.
+    property var expandedSources: ({})
+
+    function toggleSource(appName) {
+        const m = Object.assign({}, root.expandedSources);
+        m[appName] = !m[appName];
+        root.expandedSources = m;
+    }
+
+    function open(entry) {
+        Notifications.activate(entry);
+        root.closeRequested();
+    }
+
+    SectionHeader {
+        title: "Notifications"
+        icon: "󰎟"
+
+        // Count pill.
+        Rectangle {
             visible: Notifications.count > 0
-            text: Notifications.count
-            font.family: Theme.font.main
-            font.pointSize: Theme.fontSize.small
-            color: Theme.colors.textTertiary
+            implicitWidth: Math.max(20, countText.implicitWidth + Theme.spacing.small)
+            implicitHeight: 20
+            radius: height / 2
+            color: Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g,
+                           Theme.colors.accent.b, 0.22)
+
+            Text {
+                id: countText
+                anchors.centerIn: parent
+                text: Notifications.count
+                font.family: Theme.font.main
+                font.pointSize: Theme.font.small
+                color: Theme.colors.accent
+            }
         }
 
-        Item { Layout.fillWidth: true }
+        // Do Not Disturb.
+        Rectangle {
+            implicitWidth: 28
+            implicitHeight: 28
+            radius: height / 2
+            color: Notifications.doNotDisturb ? Theme.colors.accent
+                : dndMouse.containsMouse ? Theme.colors.surfaceVariant
+                : "transparent"
 
-        // Do Not Disturb
-        Text {
-            text: Notifications.doNotDisturb ? "󰂛" : "󰂚"
-            font.family: Theme.font.icon
-            font.pointSize: Theme.fontSize.large
-            color: Notifications.doNotDisturb
-                ? Theme.colors.accent : dndMouse.containsMouse
-                    ? Theme.colors.textPrimary : Theme.colors.textTertiary
+            Behavior on color { ColorAnimation { duration: Theme.animation.fast } }
+
+            Text {
+                anchors.centerIn: parent
+                text: Notifications.doNotDisturb ? "󰂛" : "󰂚"
+                font.family: Theme.font.icon
+                font.pointSize: Theme.font.medium
+                color: Notifications.doNotDisturb ? Theme.colors.bg : Theme.colors.textSecondary
+            }
 
             MouseArea {
                 id: dndMouse
                 anchors.fill: parent
-                anchors.margins: -6
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: Notifications.toggleDnd()
             }
         }
 
-        Text {
+        // Clear all.
+        Rectangle {
             visible: Notifications.count > 0
-            text: "Clear all"
-            font.family: Theme.font.main
-            font.pointSize: Theme.fontSize.small
-            color: clearMouse.containsMouse
-                ? Theme.colors.accent : Theme.colors.textSecondary
+            implicitWidth: clearText.implicitWidth + Theme.spacing.normal * 2
+            implicitHeight: 28
+            radius: height / 2
+            color: clearMouse.containsMouse ? Theme.colors.surfaceVariant
+                : Qt.rgba(Theme.colors.surfaceVariant.r, Theme.colors.surfaceVariant.g,
+                          Theme.colors.surfaceVariant.b, 0.5)
+
+            Behavior on color { ColorAnimation { duration: Theme.animation.fast } }
+
+            Text {
+                id: clearText
+                anchors.centerIn: parent
+                text: "Clear all"
+                font.family: Theme.font.main
+                font.pointSize: Theme.font.small
+                font.weight: Theme.font.mediumWeight
+                color: Theme.colors.textPrimary
+            }
 
             MouseArea {
                 id: clearMouse
                 anchors.fill: parent
-                anchors.margins: -6
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: Notifications.clear()
@@ -80,8 +142,8 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.preferredHeight: 72
         visible: Notifications.count === 0
-        radius: Theme.rounding.medium
-        color: Theme.colors.surface0
+        radius: Theme.rounding.huge
+        color: Theme.colors.surface
 
         Text {
             anchors.centerIn: parent
@@ -92,18 +154,34 @@ ColumnLayout {
         }
     }
 
+    // Flat history.
     Repeater {
-        model: Notifications.list
+        model: root.grouped ? [] : Notifications.list
 
         delegate: NotificationCard {
             required property var modelData
+            required property int index
             Layout.fillWidth: true
             entry: modelData
+            flat: true
+            showDivider: index < Notifications.list.length - 1
             onDismissRequested: Notifications.dismiss(modelData)
-            onActivated: {
-                Notifications.activate(modelData)
-                root.closeRequested()
-            }
+            onActivated: root.open(modelData)
+        }
+    }
+
+    // One stack per source.
+    Repeater {
+        model: root.grouped ? root.groups : []
+
+        delegate: NotificationGroup {
+            required property var modelData
+            Layout.fillWidth: true
+            entries: modelData.entries
+            expanded: root.expandedSources[modelData.appName] === true
+            onToggleRequested: root.toggleSource(modelData.appName)
+            onDismissRequested: entry => Notifications.dismiss(entry)
+            onActivated: entry => root.open(entry)
         }
     }
 }

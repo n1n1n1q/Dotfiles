@@ -1,78 +1,80 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls
 import qs.config
+import qs.widgets
 
-// One "sub-block" in a SettingsGroup: its own surface panel with an icon tile,
-// a title (+ optional subtitle) and a trailing control slot. SettingsGroup sets
-// `blockPosition`, which decides which corners are rounded so a stack of these
-// reads as a segmented list (ends rounded, middles square).
+// One control line: a small monochrome glyph, a label (+ optional description)
+// and a trailing slot holding the control itself. Rows are transparent — the
+// enclosing SettingsGroup paints the single rounded card they all share — and
+// only paint their own surface when dropped straight onto a page.
+//
+// A `compact` row is half-width, so two of them sit side by side in the
+// group's two-column grid, and its `subtitle` moves into a hover tooltip.
+// SettingsGroup { dense: true } flips every row it holds into that mode.
 Rectangle {
     id: root
 
     property string icon: ""
     property string title: ""
     property string subtitle: ""
-    // top | middle | bottom | single  — assigned by the parent SettingsGroup.
-    property string blockPosition: "single"
+    property bool compact: false
+    // Opt a single row out of a dense group's automatic compacting.
+    property bool wide: false
+    // Set by the enclosing SettingsGroup — see its relayout().
+    property bool inGroup: false
     property bool hoverable: false
     signal clicked()
 
     default property alias trailing: slot.data
 
-    readonly property int _r: Theme.workspace.indicatorRadius
-    readonly property bool _roundTop: blockPosition === "top" || blockPosition === "single"
-    readonly property bool _roundBottom: blockPosition === "bottom" || blockPosition === "single"
+    readonly property bool _sub: subtitle.length > 0 && !compact
 
     Layout.fillWidth: true
-    implicitHeight: Math.max(60, row.implicitHeight + Theme.spacing.normal * 2)
+    implicitHeight: Math.max(compact ? 36 : 42,
+                             row.implicitHeight + Theme.spacing.small * 2)
 
-    color: (hoverable && mouse.containsMouse) ? Theme.colors.surfaceVariant : Theme.colors.surface
-    topLeftRadius: _roundTop ? _r : 0
-    topRightRadius: _roundTop ? _r : 0
-    bottomLeftRadius: _roundBottom ? _r : 0
-    bottomRightRadius: _roundBottom ? _r : 0
+    radius: Theme.rounding.large
+    color: (hoverable && hover.hovered) ? Theme.colors.surfaceVariant
+        : inGroup ? "transparent"
+        : Theme.colors.surface
 
     Behavior on color { ColorAnimation { duration: Theme.animation.fast } }
 
-    // Hairline divider between stacked rows in a run (drawn on the bottom edge
-    // of all but the last row — no doubling at the seam).
-    Rectangle {
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        anchors.leftMargin: Theme.spacing.normal
-        anchors.rightMargin: Theme.spacing.normal
-        height: 1
-        visible: root.blockPosition === "top" || root.blockPosition === "middle"
-        color: Qt.rgba(Theme.colors.borderSubtle.r, Theme.colors.borderSubtle.g,
-                       Theme.colors.borderSubtle.b, 0.5)
+    // Compact rows trade their second line for a tooltip, so nothing the wide
+    // form said is actually lost.
+    ToolTip.visible: root.compact && root.subtitle.length > 0 && hover.hovered
+    ToolTip.text: root.subtitle
+    ToolTip.delay: 400
+
+    HoverHandler { id: hover }
+
+    // Declared before the content so trailing controls win the click.
+    MouseArea {
+        anchors.fill: parent
+        enabled: root.hoverable
+        cursorShape: root.hoverable ? Qt.PointingHandCursor : Qt.ArrowCursor
+        acceptedButtons: root.hoverable ? Qt.LeftButton : Qt.NoButton
+        onClicked: root.clicked()
     }
 
     RowLayout {
         id: row
         anchors.fill: parent
         anchors.leftMargin: Theme.spacing.normal
-        anchors.rightMargin: Theme.spacing.normal
-        anchors.topMargin: Theme.spacing.small
-        anchors.bottomMargin: Theme.spacing.small
-        spacing: Theme.spacing.normal
+        anchors.rightMargin: Theme.spacing.small
+        spacing: Theme.spacing.small
 
-        Rectangle {
+        // No accent tile — the glyph carries the row on its own, the way the
+        // reference does it, so a stack of rows stays quiet.
+        GlyphIcon {
             visible: root.icon.length > 0
             Layout.alignment: Qt.AlignVCenter
-            implicitWidth: 34
-            implicitHeight: 34
-            radius: Theme.rounding.small
-            color: Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g,
-                           Theme.colors.accent.b, 0.16)
-
-            Text {
-                anchors.centerIn: parent
-                text: root.icon
-                font.family: Theme.font.icon
-                font.pointSize: Theme.font.large
-                color: Theme.colors.accent
-            }
+            Layout.preferredWidth: 20
+            text: root.icon
+            font.family: Theme.font.icon
+            font.pointSize: Theme.font.large
+            color: Theme.colors.textSecondary
         }
 
         ColumnLayout {
@@ -86,12 +88,11 @@ Rectangle {
                 elide: Text.ElideRight
                 font.family: Theme.font.main
                 font.pointSize: Theme.font.medium
-                font.weight: Theme.font.mediumWeight
                 color: Theme.colors.textPrimary
             }
 
             Text {
-                visible: root.subtitle.length > 0
+                visible: root._sub
                 Layout.fillWidth: true
                 text: root.subtitle
                 elide: Text.ElideRight
@@ -104,17 +105,7 @@ Rectangle {
         RowLayout {
             id: slot
             Layout.alignment: Qt.AlignVCenter
-            spacing: Theme.spacing.small
+            spacing: Theme.spacing.tiny
         }
-    }
-
-    MouseArea {
-        id: mouse
-        anchors.fill: parent
-        enabled: root.hoverable
-        hoverEnabled: root.hoverable
-        cursorShape: root.hoverable ? Qt.PointingHandCursor : Qt.ArrowCursor
-        acceptedButtons: root.hoverable ? Qt.LeftButton : Qt.NoButton
-        onClicked: root.clicked()
     }
 }

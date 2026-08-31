@@ -4,6 +4,7 @@ import QtQuick.Controls
 import Quickshell
 import qs.config
 import qs.modules.settings
+import qs.widgets
 
 SettingsPage {
     id: page
@@ -24,6 +25,9 @@ SettingsPage {
 
     // --- edit mode -------------------------------------------------------
     SettingsGroup {
+        caption: "Editing"
+        icon: "󰙭"
+
         SettingsRow {
             icon: "󰙭"
             title: "Edit layout"
@@ -37,34 +41,23 @@ SettingsPage {
     }
 
     // --- add ------------------------------------------------------------
-    RowLayout {
-        Layout.fillWidth: true
-        Text {
-            Layout.fillWidth: true
-            text: "Add a widget"
-            font.family: Theme.font.main
-            font.pointSize: Theme.font.medium
-            font.weight: Theme.font.semiBold
-            color: Theme.colors.textSecondary
-        }
+    // The output the palette drops onto rides in the header's trailing slot —
+    // it belongs to the section, not to any one widget in it.
+    SectionHeader {
+        Layout.topMargin: Theme.spacing.tiny
+        title: "Add a widget"
+        icon: "󰐕"
+
         Text {
             text: "Target"
             font.family: Theme.font.main
             font.pointSize: Theme.font.small
             color: Theme.colors.textTertiary
         }
-        ComboBox {
+        SettingsCombo {
             Layout.preferredWidth: 190
             model: page.screenOptions
-            font.family: Theme.font.main
-            font.pointSize: Theme.font.small
             displayText: page.screenLabel(currentText)
-            delegate: ItemDelegate {
-                width: parent ? parent.width : 0
-                text: page.screenLabel(modelData)
-                font.family: Theme.font.main
-                font.pointSize: Theme.font.small
-            }
             Component.onCompleted: currentIndex = Math.max(0, page.screenOptions.indexOf(page.addScreen))
             onActivated: page.addScreen = currentText
         }
@@ -76,12 +69,12 @@ SettingsPage {
     }
 
     // --- placed widgets -----------------------------------------------
-    Text {
-        text: "Placed widgets"
-        font.family: Theme.font.main
-        font.pointSize: Theme.font.medium
-        font.weight: Theme.font.semiBold
-        color: Theme.colors.textSecondary
+    SectionHeader {
+        Layout.topMargin: Theme.spacing.tiny
+        title: "Placed widgets"
+        icon: "󰀻"
+        hint: DesktopConfig.widgets.length === 0 ? ""
+            : DesktopConfig.widgets.length + (DesktopConfig.widgets.length === 1 ? " widget" : " widgets")
     }
 
     SettingsRow {
@@ -102,7 +95,7 @@ SettingsPage {
 
             Layout.fillWidth: true
             implicitHeight: cardCol.implicitHeight + Theme.spacing.normal * 2
-            radius: Theme.workspace.indicatorRadius
+            radius: Theme.rounding.huge
             color: Theme.colors.surface
 
             ColumnLayout {
@@ -151,18 +144,10 @@ SettingsPage {
                         }
                     }
 
-                    ComboBox {
+                    SettingsCombo {
                         Layout.preferredWidth: 160
                         model: page.screenOptions
-                        font.family: Theme.font.main
-                        font.pointSize: Theme.font.small
                         displayText: page.screenLabel(currentText)
-                        delegate: ItemDelegate {
-                            width: parent ? parent.width : 0
-                            text: page.screenLabel(modelData)
-                            font.family: Theme.font.main
-                            font.pointSize: Theme.font.small
-                        }
                         Component.onCompleted: currentIndex = Math.max(0, page.screenOptions.indexOf(card.modelData.screen))
                         onActivated: DesktopConfig.setScreen(card.modelData.id, currentText)
                     }
@@ -242,50 +227,34 @@ SettingsPage {
                         onToggled: DesktopConfig.setProp(card.modelData.id, "showGpu", !(card.p.showGpu ?? false))
                     }
 
+                    // media
+                    MediaLayoutPicker {
+                        visible: card.modelData.type === "media"
+                        labels: false
+                        value: card.p.layout ?? "regular"
+                        onPicked: v => DesktopConfig.setProp(card.modelData.id, "layout", v)
+                    }
+
                     // size (all types)
                     RowLayout {
-                        spacing: 2
+                        id: sizeRow
                         readonly property string key: card.modelData.type === "clock" ? "fontScale" : "scale"
-                        readonly property real val: card.p[key] ?? 1.0
+                        spacing: Theme.spacing.tiny
+
                         Text {
                             text: "Size"
                             font.family: Theme.font.main
                             font.pointSize: Theme.font.small
                             color: Theme.colors.textTertiary
                         }
-                        Repeater {
-                            model: [{ g: "−", d: -0.1 }, { g: "+", d: 0.1 }]
-                            delegate: Rectangle {
-                                required property var modelData
-                                implicitWidth: 24; implicitHeight: 24
-                                radius: Theme.rounding.small
-                                color: szMouse.containsMouse ? Theme.colors.surfaceVariant : "transparent"
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: modelData.g
-                                    font.family: Theme.font.main
-                                    font.pointSize: Theme.font.large
-                                    color: Theme.colors.textSecondary
-                                }
-                                MouseArea {
-                                    id: szMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        const nv = Math.max(0.5, Math.min(2.5,
-                                            Math.round((parent.parent.val + modelData.d) * 10) / 10));
-                                        DesktopConfig.setProp(card.modelData.id, parent.parent.key, nv);
-                                    }
-                                }
-                            }
-                        }
-                        Text {
-                            text: Math.round((card.p[parent.key] ?? 1.0) * 100) + "%"
-                            font.family: Theme.font.main
-                            font.pointSize: Theme.font.small
-                            font.features: ({ "tnum": 1 })
-                            color: Theme.colors.textSecondary
+
+                        SettingsSpin {
+                            from: 50
+                            to: 250
+                            step: 10
+                            suffix: "%"
+                            value: Math.round((card.p[sizeRow.key] ?? 1.0) * 100)
+                            onStepped: v => DesktopConfig.setProp(card.modelData.id, sizeRow.key, v / 100)
                         }
                     }
                 }

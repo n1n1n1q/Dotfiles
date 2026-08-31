@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.services
 
 // Global state for the bar's anchored dropdown popouts (calendar / media /
 // system monitor). A bar widget calls `toggle(name, screenX, widgetWidth,
@@ -20,6 +21,10 @@ Singleton {
     property string screenName: ""
 
     function open(name, x, w, screen) {
+        // Nothing playing means the media card has nothing to draw - refuse the
+        // popout outright, so the bar widget and the IPC entry point agree.
+        if (name === "media" && !Media.activePlayer)
+            return;
         anchorX = x ?? 0;
         anchorWidth = w ?? 0;
         screenName = screen ?? "";
@@ -38,7 +43,18 @@ Singleton {
         open(name, x, w, screen);
     }
 
-    // qs -c quickshell ipc call popout toggle calendar
+    // A player going away mid-popout leaves the card with nothing to show, so
+    // take it down the same way `open` refuses to raise it in the first place.
+    Connections {
+        target: Media
+
+        function onActivePlayerChanged() {
+            if (root.current === "media" && Media.activePlayer === null)
+                root.close();
+        }
+    }
+
+    // qs ipc call popout toggle calendar
     IpcHandler {
         target: "popout"
 
