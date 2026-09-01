@@ -266,6 +266,25 @@ Singleton {
         readonly property color cardBackground: colors.surface
     }
     
+    // The app launcher's search card (modules/launcher). It wears the same
+    // floating-surface treatment as the dashboard and the OSD — `Theme.popup`
+    // supplies the background, radius and shadow — so these are only the
+    // measurements that are its own.
+    readonly property QtObject launcher: QtObject {
+        readonly property int width: 640
+        readonly property int padding: theme.padding.large
+        // How far below the bar the card hangs. Further off than the dashboard
+        // sits from the frame: it lands in the middle of your attention rather
+        // than tucked into a corner.
+        readonly property int topMargin: spacing.huge
+        readonly property int searchHeight: 48
+        readonly property int rowHeight: 52
+        readonly property int iconSize: 32
+        // Roughly eight rows. Past that the list scrolls rather than the card
+        // growing to fill the screen.
+        readonly property int maxListHeight: 430
+    }
+
     readonly property QtObject widget: QtObject {
         readonly property int circularSize: 36
         readonly property int circularStrokeWidth: 3
@@ -324,5 +343,6 @@ Singleton {
         readonly property int levelGap: controls.levelGap
         readonly property int dashboardWidth: dashboard.width
         readonly property int dashboardHeight: dashboard.height
+        readonly property int launcherWidth: launcher.width
     }
 }

@@ -31,7 +31,8 @@ Singleton {
         "bar": BarConfig,
         "desktop": DesktopConfig,
         "dashboard": DashboardConfig,
-        "osd": OsdConfig
+        "osd": OsdConfig,
+        "launcher": LauncherConfig
     })
 
     // name -> preset body, as last read off disk.

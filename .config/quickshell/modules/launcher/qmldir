@@ -1,0 +1,6 @@
+module qs.modules.launcher
+singleton LauncherController 1.0 LauncherController.qml
+LauncherLayer 1.0 LauncherLayer.qml
+LauncherWindow 1.0 LauncherWindow.qml
+SearchField 1.0 SearchField.qml
+ResultRow 1.0 ResultRow.qml

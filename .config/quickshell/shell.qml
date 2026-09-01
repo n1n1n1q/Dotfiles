@@ -10,6 +10,7 @@ import qs.modules.bar
 import qs.modules.dashboard
 import qs.modules.decoration
 import qs.modules.desktop
+import qs.modules.launcher
 import qs.modules.osd
 import qs.modules.notifications
 import qs.modules.popout
@@ -21,6 +22,7 @@ ShellRoot {
     Bar {}
     BarEditOverlay {}
     DashboardLayer {}
+    LauncherLayer {}
     ScreenFrame {}
     Osd {}
     NotificationPopups {}

@@ -129,6 +129,7 @@ Rectangle {
         case "lock": Quickshell.execDetached(["swaylock"]); return false;
         case "record": Quickshell.execDetached(["wf-recorder"]); return false;
         case "settings": SettingsController.show(); return false;
+        case "launcher": LauncherConfig.requestToggle(""); return false;
         }
         return true;
     }

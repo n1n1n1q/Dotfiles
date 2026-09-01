@@ -56,7 +56,8 @@ Singleton {
         { id: "lock",       name: "Lock",        icon: "󰌾", size: "small", desc: "Lock the session" },
         { id: "record",     name: "Record",      icon: "󰑊", size: "small", desc: "Start wf-recorder" },
         { id: "wallpaper",  name: "Wallpaper",   icon: "󰸉", size: "small", desc: "Step to the next wallpaper" },
-        { id: "settings",   name: "Settings",    icon: "󰒓", size: "small", desc: "Open this settings window" }
+        { id: "settings",   name: "Settings",    icon: "󰒓", size: "small", desc: "Open this settings window" },
+        { id: "launcher",   name: "Launcher",    icon: "󱓞", size: "small", desc: "Open the app launcher" }
     ]
 
     // How a slider row draws itself, in the order clicking a placed row steps

@@ -36,6 +36,7 @@ FloatingWindow {
         [
             { slug: "bar",           icon: "󰟀", title: "Bar",           subtitle: "Top bar layout",      search: "customization rice frame corners popout" },
             { slug: "dashboard",     icon: "󰕮", title: "Dashboard",     subtitle: "Tiles & sliders",     search: "customization rice panel quick settings" },
+            { slug: "launcher",      icon: "󱓞", title: "Launcher",      subtitle: "App search",          search: "run open spotlight rofi fuzzel command math web" },
             { slug: "widgets",       icon: "󰀻", title: "Widgets",       subtitle: "Desktop widgets",     search: "customization rice clock desktop stats" },
             { slug: "notifications", icon: "󰎟", title: "Notifications", subtitle: "Toasts & OSD",        search: "popup toast osd on-screen display slider volume brightness corner" },
             { slug: "presets",       icon: "󰏗", title: "Presets",       subtitle: "Saved setups",        search: "customization rice save theme profile" }
@@ -274,6 +275,7 @@ FloatingWindow {
                     AppearancePage {}
                     BarPage {}
                     DashboardPage {}
+                    LauncherPage {}
                     WidgetsPage {}
                     NotificationsPage {}
                     PresetsPage {}
