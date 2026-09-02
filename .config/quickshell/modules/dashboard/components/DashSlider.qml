@@ -64,9 +64,11 @@ ColumnLayout {
         }
         return [entry.icon];
     }
-    // Shared by the icon column and the inline copy inside the bar.
+    // Shared by the icon column and the inline copy inside the bar. A level
+    // slider's glyph isn't a "success" state — it's neutral at rest, accent
+    // while the row is open, error only when the channel is muted.
     readonly property color glyphColor: muted ? Theme.colors.error
-        : (expanded ? Theme.colors.accent : Theme.colors.success)
+        : (expanded ? Theme.colors.accent : Theme.colors.textSecondary)
     readonly property var devices: {
         switch (sliderId) {
         case "volume": return Audio.sinks;

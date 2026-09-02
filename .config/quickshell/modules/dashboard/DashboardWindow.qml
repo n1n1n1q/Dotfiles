@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Wayland
 import qs.config
 import qs.services
+import qs.widgets
 import qs.modules.dashboard.components
 import qs.modules.notifications
 import qs.modules.osd
@@ -129,6 +130,12 @@ PanelWindow {
             }
         }
 
+        SoftShadow {
+            target: dashboard
+            z: 0
+            visible: dashboard.y > -dashboard.height + 4
+        }
+
         Rectangle {
             id: dashboard
 
@@ -159,15 +166,6 @@ PanelWindow {
             // Swallows clicks so they don't fall through to the scrim behind.
             MouseArea {
                 anchors.fill: parent
-            }
-
-            // Drop shadow only - removed border glow
-            Rectangle {
-                anchors.fill: parent
-                anchors.margins: -5
-                radius: parent.radius + 5
-                color: Theme.popup.shadow
-                z: -2
             }
 
             clip: true

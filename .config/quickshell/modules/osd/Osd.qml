@@ -265,14 +265,7 @@ Scope {
                     }
                 }
 
-                // Same drop shadow as the dashboard card.
-                Rectangle {
-                    anchors.fill: parent
-                    anchors.margins: -5
-                    radius: parent.radius + 5
-                    color: Theme.popup.shadow
-                    z: -2
-                }
+                SoftShadow {}
 
                 RowLayout {
                     id: contentRow

@@ -64,6 +64,20 @@ Singleton {
         readonly property color border: palette.surface1
         readonly property color borderSubtle: palette.surface2
 
+        // Accent as a wash — the "selected / active" treatment for *large*
+        // surfaces (a full list row, a 56px toggle tile, a launcher result).
+        // A solid saturated fill at that size reads as a different, louder
+        // design language than the rest of the shell. Small controls (switch
+        // tracks, segmented buttons, the nav icon chip, circular gauges) keep
+        // the solid `accent`.
+        readonly property color accentTint: Qt.rgba(accent.r, accent.g, accent.b, 0.14)
+        readonly property color accentTintStrong: Qt.rgba(accent.r, accent.g, accent.b, 0.22)
+        // A barely-there hairline for lifting a raised surface off the one
+        // below it — separation that doesn't depend on the fill steps, which
+        // several schemes (oxocarbon, ayu, kanagawa-dragon) map nearly on top
+        // of each other.
+        readonly property color hairline: theme.mix(palette.text, palette.surface0, 0.86)
+
         // Dim text is a controlled step from full-contrast text toward the
         // *row* surface it sits on (not the scheme's own `subtext`/`overlay`
         // slots, which several non-Catppuccin built-ins map too close to the
@@ -94,6 +108,10 @@ Singleton {
     }
 
     readonly property QtObject font: QtObject {
+        // The bar + Settings run this compact ladder; the panels, popouts and
+        // toasts run one notch up (`Theme.dashboard.font*` / `Theme.popup.font*`,
+        // which are the same 9·11·12·13·14·16·18 set as each other). Two scales,
+        // not three — keep panel/popup text in lockstep.
         readonly property int tiny: 8
         readonly property int small: 9
         readonly property int normal: 10
@@ -106,12 +124,16 @@ Singleton {
         readonly property int display: 23
 
         // Two knobs, set in Settings > Appearance:
-        //   main  - the UI text font
-        //   mono  - the monospace font; it MUST be Nerd-Font-patched because
-        //           `icon` is an alias for it (every glyph in the shell comes
-        //           from this one family). MonaspiceNe Nerd Font is the default.
-        readonly property string main: Appearance.fontFamily || "Rubik"
-        readonly property string mono: Appearance.fontMono || "MonaspiceNe Nerd Font"
+        //   main  - the UI text font. Prose, labels, buttons, body copy.
+        //   mono  - the monospace font. It MUST be Nerd-Font-patched because
+        //           `icon` aliases it (every glyph in the shell is from this
+        //           one family). It is ALSO the shell's data voice: clocks,
+        //           numerals, percentages, gauge readouts, keybind chords,
+        //           the launcher's command/math rows — anything tabular or
+        //           machine-ish reads in `mono`, everything a person reads as
+        //           a sentence reads in `main`. Monaspace Neon NF is default.
+        readonly property string main: Appearance.fontFamily || "Adwaita Sans"
+        readonly property string mono: Appearance.fontMono || "Monaspace Neon NF"
         readonly property string icon: mono
         
         readonly property int light: Font.Light
@@ -162,6 +184,15 @@ Singleton {
         readonly property int xhuge: 28
         readonly property int connJoin: 5
         readonly property int full: 9999
+
+        // Semantic set — prefer these. Three tiers, nothing in between:
+        //   control  an interactive thing you press (button, chip, toggle, row)
+        //   card     a surface that holds content (a panel section, a tile)
+        //   panel    a whole floating surface (dashboard, launcher, OSD, popout)
+        // `full` for the genuinely circular, `connJoin`/`xhuge` for Settings runs.
+        readonly property int control: 12
+        readonly property int card: 16
+        readonly property int panel: 20
     }
 
     readonly property QtObject animation: QtObject {
@@ -227,11 +258,13 @@ Singleton {
         // `margin` is the single knob for how far any of them sits off the
         // bar / frame.
         readonly property int margin: 8
-        readonly property int radius: rounding.huge     // matches the section cards inside
+        readonly property int radius: rounding.panel     // every floating surface
         readonly property int padding: theme.padding.xlarge
         readonly property color background: colors.background   // same as the bar strip
-        readonly property int borderWidth: 0
-        readonly property color border: colors.border
+        // A 1px hairline so the surface still reads as lifted on schemes where
+        // its fill barely differs from the desktop behind it.
+        readonly property int borderWidth: 1
+        readonly property color border: colors.hairline
         readonly property color shadow: "#00000060"
         readonly property int osdWidth: 320
         readonly property int osdTimeout: 1500
@@ -241,10 +274,6 @@ Singleton {
         readonly property int notifWidth: 380
         readonly property int notifTimeout: 5000
 
-        // Every floating surface (toasts, OSD, bar popout cards) runs the same
-        // notch-larger type scale the dashboard uses — so nothing that hangs off
-        // the bar reads as cramped next to bar-sized text. Mirrors
-        // Theme.dashboard.font*.
         readonly property int fontTiny: 9
         readonly property int fontSmall: 11
         readonly property int fontNormal: 12
@@ -299,10 +328,6 @@ Singleton {
         readonly property color background: colors.bg
         readonly property color cardBackground: colors.surface
 
-        // The dashboard runs a notch larger than the base type scale — the same
-        // "+ a bit" bump the bar gives its own text — so the panel doesn't read
-        // as cramped next to a bar-sized shell. Dashboard components pull their
-        // sizes from here instead of Theme.font.* directly.
         readonly property int fontTiny: 9
         readonly property int fontSmall: 11
         readonly property int fontNormal: 12

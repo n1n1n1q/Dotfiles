@@ -142,18 +142,26 @@ Rectangle {
     // --- chrome ----------------------------------------------------------
     readonly property bool lit: active && !editing
 
-    radius: Theme.rounding.huge
-    color: lit ? Theme.colors.accent
+    radius: Theme.rounding.card
+    color: lit ? Theme.colors.accentTintStrong
         : (mouse.pressed ? Theme.colors.borderSubtle
         : (mouse.containsMouse ? Theme.colors.surfaceVariant
         : Qt.rgba(Theme.colors.surfaceVariant.r, Theme.colors.surfaceVariant.g,
                   Theme.colors.surfaceVariant.b, 0.45)))
 
+    // Lit = a wash plus an accent hairline, not a saturated block: a grid of
+    // 56px slabs in full accent was the loudest thing in the shell.
+    border.width: lit ? 1 : 0
+    border.color: Theme.colors.accent
+
     Behavior on color {
         ColorAnimation { duration: Theme.animation.fast; easing.type: Theme.animation.easeOut }
     }
 
-    readonly property color ink: lit ? Theme.colors.bg : Theme.colors.textPrimary
+    // Text stays at normal ink whether lit or not; only the glyph carries the
+    // accent when the toggle is on.
+    readonly property color ink: Theme.colors.textPrimary
+    readonly property color glyphInk: lit ? Theme.colors.accent : Theme.colors.textSecondary
 
     // Small tile: just the glyph, centred.
     GlyphIcon {
@@ -163,7 +171,7 @@ Rectangle {
         glyphs: tile.glyphStates
         font.family: Theme.font.icon
         font.pointSize: Theme.dashboard.fontXlarge + 2
-        color: tile.ink
+        color: tile.glyphInk
     }
 
     // Wide tile: glyph + name over status.
@@ -179,7 +187,7 @@ Rectangle {
             glyphs: tile.glyphStates
             font.family: Theme.font.icon
             font.pointSize: Theme.dashboard.fontXlarge + 2
-            color: tile.ink
+            color: tile.glyphInk
         }
 
         ColumnLayout {
@@ -203,9 +211,7 @@ Rectangle {
                 elide: Text.ElideRight
                 font.family: Theme.font.main
                 font.pointSize: Theme.dashboard.fontTiny
-                color: tile.lit
-                    ? Qt.rgba(Theme.colors.bg.r, Theme.colors.bg.g, Theme.colors.bg.b, 0.7)
-                    : Theme.colors.textTertiary
+                color: Theme.colors.textTertiary
             }
         }
     }

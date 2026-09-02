@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import qs.config
+import qs.widgets
 
 // One always-mapped, click-through overlay per screen that hosts the bar's
 // anchored dropdown cards. Follows Osd.qml's safety pattern rather than
@@ -117,14 +118,7 @@ Scope {
                     NumberAnimation { duration: Theme.animation.normal; easing.type: Easing.OutCubic }
                 }
 
-                // Soft shadow, matching every other floating surface.
-                Rectangle {
-                    anchors.fill: parent
-                    anchors.margins: -5
-                    radius: Theme.popup.radius + 5
-                    color: Theme.popup.shadow
-                    z: -2
-                }
+                SoftShadow { radius: Theme.popup.radius }
 
                 // Swallows clicks that miss the card's own controls so they
                 // don't fall through to the dismiss scrim.

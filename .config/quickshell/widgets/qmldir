@@ -7,3 +7,4 @@ MediaLayout 1.0 MediaLayout.qml
 LevelBar 1.0 LevelBar.qml
 GlyphIcon 1.0 GlyphIcon.qml
 AppTooltip 1.0 AppTooltip.qml
+SoftShadow 1.0 SoftShadow.qml

@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import qs.config
+import qs.widgets
 
 // The launcher surface for one output: a search card that drops in under the
 // bar, over a scrim that dismisses it.
@@ -91,13 +92,7 @@ PanelWindow {
             anchors.fill: parent
         }
 
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: -5
-            radius: parent.radius + 5
-            color: Theme.popup.shadow
-            z: -2
-        }
+        SoftShadow {}
 
         ColumnLayout {
             id: col

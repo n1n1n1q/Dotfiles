@@ -33,7 +33,7 @@ Rectangle {
     bottomLeftRadius: _bot ? _outer : _inner
     bottomRightRadius: _bot ? _outer : _inner
 
-    color: selected ? Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g, Theme.colors.accent.b, 0.26)
+    color: selected ? Theme.colors.accentTintStrong
         : hover.hovered ? Theme.palette.surface2
         : Theme.colors.surfaceVariant
 

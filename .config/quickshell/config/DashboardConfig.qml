@@ -22,8 +22,11 @@ Singleton {
     readonly property var sliders: adapter.sliders
     property bool ready: false
 
-    // The quick-settings grid is this many cells wide; a "large" tile eats two.
-    readonly property int columns: 5
+    // The quick-settings grid is this many cells wide; a "large" tile eats two,
+    // i.e. exactly half a row — so a wide tile always lands on a clean boundary
+    // and rows stay aligned no matter how the tiles are ordered. (A 5-wide grid
+    // made a large tile 2/5 of a row, which never lined up between rows.)
+    readonly property int columns: 4
 
     // --- notifications ---------------------------------------------------
     readonly property var defaultNotifications: ({

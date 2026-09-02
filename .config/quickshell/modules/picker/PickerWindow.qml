@@ -6,6 +6,7 @@ import Quickshell
 import Quickshell.Wayland
 import qs.config
 import qs.services
+import qs.widgets
 
 // Full-screen wallpaper / colour-scheme picker for one output: a dim backdrop
 // and a centred carousel you step through with the arrow keys (or the wheel, or
@@ -109,13 +110,7 @@ PanelWindow {
                 border.width: Theme.popup.borderWidth
                 border.color: Theme.popup.border
 
-                Rectangle {
-                    anchors.fill: parent
-                    anchors.margins: -5
-                    radius: parent.radius + 5
-                    color: Theme.popup.shadow
-                    z: -2
-                }
+                SoftShadow {}
             }
 
             // Swallow clicks so they don't reach the backdrop.

@@ -23,21 +23,32 @@ Rectangle {
     signal contextRequested(var windowPos)
 
     implicitHeight: Theme.launcher.rowHeight
-    radius: Theme.rounding.large
+    radius: Theme.rounding.control
 
     // Selected wins over hovered: the keyboard is driving, and a pointer
-    // resting somewhere else in the list shouldn't look like it is.
-    color: selected ? Theme.colors.accent
+    // resting somewhere else in the list shouldn't look like it is. Selection
+    // is a wash + an accent edge, not a saturated slab — the row stays a row.
+    color: selected ? Theme.colors.accentTint
         : (mouse.containsMouse ? Theme.colors.surfaceVariant : "transparent")
 
     Behavior on color {
         ColorAnimation { duration: Theme.animation.fast }
     }
 
-    readonly property color ink: selected ? Theme.colors.bg : Theme.colors.textPrimary
-    readonly property color inkDim: selected
-        ? Qt.rgba(Theme.colors.bg.r, Theme.colors.bg.g, Theme.colors.bg.b, 0.7)
-        : Theme.colors.textTertiary
+    // Accent marker on the leading edge of the selected row.
+    Rectangle {
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.left: parent.left
+        anchors.leftMargin: 3
+        width: 3
+        height: parent.height * 0.5
+        radius: width / 2
+        color: Theme.colors.accent
+        visible: row.selected
+    }
+
+    readonly property color ink: Theme.colors.textPrimary
+    readonly property color inkDim: Theme.colors.textTertiary
 
     MouseArea {
         id: mouse
@@ -100,7 +111,7 @@ Rectangle {
                 text: row.result.glyph
                 font.family: Theme.font.icon
                 font.pointSize: Theme.font.xlarge
-                color: row.selected ? Theme.colors.bg : Theme.colors.accent
+                color: Theme.colors.accent
             }
 
             // Colour-scheme rows carry a swatch strip in place of an icon.
@@ -154,7 +165,7 @@ Rectangle {
             text: "󰐃"
             font.family: Theme.font.icon
             font.pointSize: Theme.font.small
-            color: row.selected ? Theme.colors.bg : Theme.colors.accent
+            color: Theme.colors.accent
         }
 
         // --- what pressing Enter would do ----------------------------------
@@ -176,7 +187,7 @@ Rectangle {
             implicitWidth: verb.implicitWidth + Theme.spacing.normal * 2
             implicitHeight: 22
             radius: height / 2
-            color: Qt.rgba(Theme.colors.bg.r, Theme.colors.bg.g, Theme.colors.bg.b, 0.22)
+            color: Theme.colors.accent
 
             RowLayout {
                 id: verb

@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import qs.config
+import qs.widgets
 
 // Windows-"Win+P"-style pop-up: a centred row of big mode buttons —
 // Internal only · Extend · External only — plus a disabled "Duplicate" (niri
@@ -134,13 +135,7 @@ Scope {
                     border.width: Theme.popup.borderWidth
                     border.color: Theme.popup.border
 
-                    Rectangle {
-                        anchors.fill: parent
-                        anchors.margins: -5
-                        radius: parent.radius + 5
-                        color: Theme.popup.shadow
-                        z: -1
-                    }
+                    SoftShadow { z: -1 }
 
                     ColumnLayout {
                         id: inner
