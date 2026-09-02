@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import qs.config
 import qs.services
 import qs.widgets
+import qs.modules.popout
 
 // Bar volume indicator: an end-4-style filled circular gauge whose wedge tracks
 // Audio.volume (green, or red when muted), with a fixed music-note glyph knocked
@@ -26,6 +27,7 @@ CircularWidget {
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         onClicked: mouse => {
+            PopoutController.close()
             if (mouse.button === Qt.RightButton)
                 Audio.toggleMute()
         }

@@ -63,13 +63,13 @@ Item {
             Text {
                 text: proxy.glyph
                 font.family: Theme.font.icon
-                font.pointSize: Theme.font.small
+                font.pointSize: Theme.dashboard.fontSmall
                 color: Theme.colors.bg
             }
             Text {
                 text: proxy.label
                 font.family: Theme.font.main
-                font.pointSize: Theme.font.small
+                font.pointSize: Theme.dashboard.fontSmall
                 font.weight: Theme.font.semiBold
                 color: Theme.colors.bg
             }

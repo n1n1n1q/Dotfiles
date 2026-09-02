@@ -7,8 +7,10 @@ import qs.config
 // glyph; a "large" one spans two and adds a name / status line.
 //
 // In edit mode every tile jiggles: hold one and drag it onto the accent bar
-// that lights up at a cell edge to reorder, drop it on the dock to remove it,
-// or just click it to flip between one and two cells wide.
+// that lights up at a cell edge to reorder, or drop it on the dock to remove
+// it. Widening a tile to two cells is deliberate now — shift-click it, or hit
+// the width chip on its corner — so a fumbled drag can't silently resize it
+// (the old plain-click-to-resize on the same MouseArea that starts drags).
 ColumnLayout {
     id: root
 
@@ -25,9 +27,11 @@ ColumnLayout {
 
     Text {
         visible: root.editing
-        text: "Quick settings — drag to reorder, click to resize"
+        text: "Quick settings — drag to reorder · shift-click (or the corner chip) to make a tile wide"
+        wrapMode: Text.WordWrap
+        Layout.fillWidth: true
         font.family: Theme.font.main
-        font.pointSize: Theme.font.tiny
+        font.pointSize: Theme.dashboard.fontTiny
         color: Theme.colors.textTertiary
     }
 
@@ -108,6 +112,7 @@ ColumnLayout {
                     preventStealing: true
 
                     property bool dragging: false
+                    property bool pressShift: false
                     property point origin: Qt.point(0, 0)
 
                     function abort() {
@@ -118,6 +123,7 @@ ColumnLayout {
 
                     onPressed: mouse => {
                         dragging = false;
+                        pressShift = (mouse.modifiers & Qt.ShiftModifier) !== 0;
                         origin = Qt.point(mouse.x, mouse.y);
                     }
                     onPositionChanged: mouse => {
@@ -138,8 +144,10 @@ ColumnLayout {
                     onReleased: {
                         if (dragArea.dragging) {
                             dragArea.abort();
-                        } else {
-                            // A plain click in edit mode resizes the tile.
+                        } else if (dragArea.pressShift) {
+                            // Shift-click flips the tile between one and two
+                            // cells; a plain click does nothing so a missed
+                            // drag can't resize it by accident.
                             DashboardConfig.cycleToggleSize(cell.index);
                         }
                     }
@@ -189,7 +197,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "󰅖"
                         font.family: Theme.font.icon
-                        font.pointSize: Theme.font.tiny
+                        font.pointSize: Theme.dashboard.fontTiny
                         color: rmMouse.containsMouse ? Theme.colors.bg : Theme.colors.error
                     }
 
@@ -199,6 +207,43 @@ ColumnLayout {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: DashboardConfig.removeAt("toggles", cell.index)
+                    }
+                }
+
+                // Width chip on the top-right corner — the visible twin of
+                // shift-click. Reads "1×" / "2×"; tapping it toggles.
+                Rectangle {
+                    visible: root.editing && !DashboardConfig.grabbing
+                    implicitWidth: 22
+                    height: 18
+                    radius: 9
+                    color: wideMouse.containsMouse
+                        ? Theme.colors.accent
+                        : (cell.tsize === "large" ? Theme.colors.accent : Theme.colors.surfaceVariant)
+                    border.width: 1
+                    border.color: Theme.colors.accent
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.rightMargin: 4
+                    anchors.topMargin: 4
+                    z: 2
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: cell.tsize === "large" ? "2×" : "1×"
+                        font.family: Theme.font.main
+                        font.pointSize: Theme.dashboard.fontTiny
+                        font.weight: Theme.font.mediumWeight
+                        color: (wideMouse.containsMouse || cell.tsize === "large")
+                            ? Theme.colors.bg : Theme.colors.textSecondary
+                    }
+
+                    MouseArea {
+                        id: wideMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: DashboardConfig.cycleToggleSize(cell.index)
                     }
                 }
             }
@@ -227,7 +272,7 @@ ColumnLayout {
                     anchors.centerIn: parent
                     text: picker.open ? "󰅖" : "󰐕"
                     font.family: Theme.font.icon
-                    font.pointSize: Theme.font.medium
+                    font.pointSize: Theme.dashboard.fontMedium
                     color: picker.open || addMouse.containsMouse
                         ? Theme.colors.accent : Theme.colors.textTertiary
                 }
@@ -277,7 +322,7 @@ ColumnLayout {
         text: "No quick settings — add some in Settings › Dashboard"
         wrapMode: Text.WordWrap
         font.family: Theme.font.main
-        font.pointSize: Theme.font.small
+        font.pointSize: Theme.dashboard.fontSmall
         color: Theme.colors.textTertiary
     }
 }

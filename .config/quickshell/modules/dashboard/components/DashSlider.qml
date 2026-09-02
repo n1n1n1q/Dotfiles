@@ -136,7 +136,7 @@ ColumnLayout {
                 text: root.glyph
                 glyphs: root.glyphStates
                 font.family: Theme.font.icon
-                font.pointSize: Theme.fontSize.xlarge
+                font.pointSize: Theme.dashboard.fontXlarge
                 color: root.glyphColor
                 Layout.alignment: Qt.AlignVCenter
                 Layout.preferredWidth: 32
@@ -269,7 +269,7 @@ ColumnLayout {
                             Text {
                                 text: dev.isActive ? "󰄬" : "󰝥"
                                 font.family: Theme.font.icon
-                                font.pointSize: Theme.font.medium
+                                font.pointSize: Theme.dashboard.fontMedium
                                 color: dev.isActive ? Theme.colors.bg : Theme.colors.accent
                             }
 
@@ -278,7 +278,7 @@ ColumnLayout {
                                 text: Audio.label(dev.modelData)
                                 elide: Text.ElideMiddle
                                 font.family: Theme.font.main
-                                font.pointSize: Theme.font.small
+                                font.pointSize: Theme.dashboard.fontSmall
                                 color: dev.isActive ? Theme.colors.bg : Theme.colors.textPrimary
                             }
                         }

@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
 import qs.services.niri
+import qs.modules.popout
 
 // Per-output workspace row. A capsule (styled like the other bar widgets)
 // holding one thin vertical bar per workspace, coloured by window state, with
@@ -16,7 +17,7 @@ Rectangle {
 
     readonly property var realWs: NiriService.workspacesForOutput(outputName)
     readonly property int realCount: realWs.length
-    readonly property int count: Theme.workspace.slotCount
+    readonly property int count: BarConfig.widgetSetting("workspaces", "slotCount")
 
     readonly property var workspaces: {
         const byIdx = new Map(realWs.map(w => [w.idx, w]))
@@ -76,7 +77,10 @@ Rectangle {
                 MouseArea {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: NiriService.focusWorkspace(slot.modelData.idx)
+                    onClicked: {
+                        PopoutController.close();
+                        NiriService.focusWorkspace(slot.modelData.idx);
+                    }
                 }
             }
         }

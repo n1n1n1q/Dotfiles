@@ -41,7 +41,7 @@ GroupBox {
                     Text {
                         text: root.headerText
                         font.family: Theme.font.main
-                        font.pointSize: Theme.fontSize.large
+                        font.pointSize: Theme.dashboard.fontLarge
                         font.bold: true
                         color: Theme.colors.text
                         Layout.fillWidth: true
@@ -50,14 +50,14 @@ GroupBox {
                     Text {
                         text: root.valueText
                         font.family: Theme.font.main
-                        font.pointSize: Theme.fontSize.medium
+                        font.pointSize: Theme.dashboard.fontMedium
                         color: Theme.colors.subtext0
                     }
                     
                     Text {
                         text: expandable.expanded ? "\uf077" : "\uf078"
                         font.family: Theme.font.icon
-                        font.pointSize: Theme.fontSize.normal
+                        font.pointSize: Theme.dashboard.fontNormal
                         color: Theme.colors.accent
                     }
                 }

@@ -26,31 +26,56 @@ SettingsPage {
         }
     }
 
+    // Shown until the niri `input` block is split into an includable fragment
+    // (Settings › niri › "Split out the input block").
     SettingsGroup {
-        caption: "Options"
-        icon: "󰒓"
+        visible: !NiriConfig.inputSplit
+        caption: "Key repeat"
+        icon: "󰌏"
 
         SettingsRow {
             icon: "󰌏"
             title: "Repeat rate & delay"
-            subtitle: "Set in ~/.config/niri/config.kdl"
+            subtitle: "Enable niri config editing on the niri page to adjust these"
             Text {
-                text: "Soon"
+                text: "Set up"
                 font.family: Theme.font.main
                 font.pointSize: Theme.font.small
                 color: Theme.colors.textTertiary
             }
         }
+    }
+
+    SettingsGroup {
+        visible: NiriConfig.inputSplit
+        caption: "Key repeat"
+        icon: "󰌏"
 
         SettingsRow {
-            icon: "󰘳"
-            title: "Shortcuts"
-            subtitle: "Compositor keybinds"
-            Text {
-                text: "Soon"
-                font.family: Theme.font.main
-                font.pointSize: Theme.font.small
-                color: Theme.colors.textTertiary
+            compact: true
+            icon: "󰅐"
+            title: "Delay"
+            subtitle: "Before a held key repeats, ms"
+            SettingsSpin {
+                from: 100
+                to: 2000
+                step: 50
+                suffix: " ms"
+                value: NiriConfig.kbRepeatDelay
+                onStepped: v => NiriConfig.setInput("keyboard.repeat-delay", v)
+            }
+        }
+        SettingsRow {
+            compact: true
+            icon: "󰓅"
+            title: "Rate"
+            subtitle: "Repeats per second"
+            SettingsSpin {
+                from: 1
+                to: 100
+                step: 5
+                value: NiriConfig.kbRepeatRate
+                onStepped: v => NiriConfig.setInput("keyboard.repeat-rate", v)
             }
         }
     }

@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import qs.config
 import qs.services
+import qs.widgets
 
 // Anchored dropdown for the bar's system gauge: a sortable process list with
 // per-row kill, over a compact system-info panel (load, temps, network, disk).
@@ -37,7 +38,7 @@ Rectangle {
         Text {
             text: "Processes"
             font.family: Theme.font.main
-            font.pointSize: Theme.font.medium
+            font.pointSize: Theme.popup.fontMedium
             font.weight: Theme.font.semiBold
             color: Theme.colors.textPrimary
         }
@@ -51,7 +52,7 @@ Rectangle {
                 property string key: ""
                 property bool num: false
                 font.family: Theme.font.main
-                font.pointSize: Theme.font.tiny + 1
+                font.pointSize: Theme.popup.fontTiny + 1
                 font.weight: Theme.font.semiBold
                 color: Processes.sortKey === key ? Theme.colors.accent : Theme.colors.textTertiary
                 horizontalAlignment: num ? Text.AlignRight : Text.AlignLeft
@@ -103,19 +104,21 @@ Rectangle {
                         text: prow.modelData.name
                         elide: Text.ElideRight
                         font.family: Theme.font.main
-                        font.pointSize: Theme.font.small
+                        font.pointSize: Theme.popup.fontSmall
                         color: Theme.colors.textPrimary
-                        ToolTip.visible: rowHover.hovered && hovered
-                        ToolTip.text: prow.modelData.cmd
                         HoverHandler { id: cmdHover }
                         property bool hovered: cmdHover.hovered
+                        AppTooltip {
+                            visible: rowHover.hovered && parent.hovered
+                            text: prow.modelData.cmd
+                        }
                     }
                     Text {
                         Layout.preferredWidth: 52
                         horizontalAlignment: Text.AlignRight
                         text: prow.modelData.cpu.toFixed(1)
                         font.family: Theme.font.main
-                        font.pointSize: Theme.font.small
+                        font.pointSize: Theme.popup.fontSmall
                         font.features: ({ "tnum": 1 })
                         color: prow.modelData.cpu > 60 ? Theme.colors.error
                             : prow.modelData.cpu > 25 ? Theme.colors.warning
@@ -126,7 +129,7 @@ Rectangle {
                         horizontalAlignment: Text.AlignRight
                         text: root.fmtBytes(prow.modelData.mem)
                         font.family: Theme.font.main
-                        font.pointSize: Theme.font.small
+                        font.pointSize: Theme.popup.fontSmall
                         font.features: ({ "tnum": 1 })
                         color: Theme.colors.textSecondary
                     }
@@ -141,7 +144,7 @@ Rectangle {
                             anchors.centerIn: parent
                             text: "󰅖"
                             font.family: Theme.font.icon
-                            font.pointSize: Theme.font.small
+                            font.pointSize: Theme.popup.fontSmall
                             color: killHover.hovered ? Theme.colors.bg : Theme.colors.textTertiary
                         }
                         HoverHandler { id: killHover }
@@ -154,8 +157,10 @@ Rectangle {
                                     Processes.kill(prow.modelData.pid);
                             }
                         }
-                        ToolTip.visible: killHover.hovered
-                        ToolTip.text: "Kill " + prow.modelData.pid + "  ·  right-click to force"
+                        AppTooltip {
+                            visible: killHover.hovered
+                            text: "Kill " + prow.modelData.pid + "  ·  right-click to force"
+                        }
                     }
                 }
             }
@@ -165,7 +170,7 @@ Rectangle {
                 visible: procList.count === 0
                 text: "Reading processes…"
                 font.family: Theme.font.main
-                font.pointSize: Theme.font.small
+                font.pointSize: Theme.popup.fontSmall
                 color: Theme.colors.textTertiary
             }
         }
@@ -197,13 +202,13 @@ Rectangle {
                     Text {
                         text: st.label
                         font.family: Theme.font.main
-                        font.pointSize: Theme.font.tiny
+                        font.pointSize: Theme.popup.fontTiny
                         color: Theme.colors.textTertiary
                     }
                     Text {
                         text: st.value
                         font.family: Theme.font.main
-                        font.pointSize: Theme.font.small
+                        font.pointSize: Theme.popup.fontSmall
                         font.weight: Theme.font.semiBold
                         font.features: ({ "tnum": 1 })
                         color: Theme.colors.textPrimary
@@ -212,7 +217,7 @@ Rectangle {
                         visible: text.length > 0
                         text: st.sub
                         font.family: Theme.font.main
-                        font.pointSize: Theme.font.tiny
+                        font.pointSize: Theme.popup.fontTiny
                         color: Theme.colors.textTertiary
                     }
                 }

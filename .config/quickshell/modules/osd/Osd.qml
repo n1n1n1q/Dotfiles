@@ -19,7 +19,7 @@ import qs.widgets
 Scope {
     id: root
 
-    // "volume" | "brightness" | "language" | "wallpaper" | "scheme" | "preset"
+    // "volume" | "brightness" | "language" | "wallpaper" | "scheme" | "preset" | "dnd"
     property string mode: "volume"
 
     // Name carried by the last preset-applied signal — the pill's caption in
@@ -78,6 +78,13 @@ Scope {
         function onKeyboardLayoutIdxChanged() { if (root.ready) root.trigger("language") }
     }
 
+    // Do Not Disturb toggled from a keybind / the dashboard / IPC — the pill is
+    // the only confirmation, since the toggle can be flipped from anywhere.
+    Connections {
+        target: Notifications
+        function onDoNotDisturbChanged() { if (root.ready) root.trigger("dnd") }
+    }
+
     // Stepped through from a keybind / IPC. No `ready` gate: these only ever
     // fire on a deliberate step, never while services settle at startup, and
     // picking in Settings goes through `select` / `setScheme` instead — the
@@ -129,7 +136,7 @@ Scope {
     // GlyphIcon: these glyphs are drawn wider than the cell they measure.
     readonly property var iconStates: Audio.volumeGlyphs
         .concat(Brightness.iconStates)
-        .concat(["󰌌", "󰸉", "󰏘", "󰏗"])
+        .concat(["󰌌", "󰸉", "󰏘", "󰏗", "󰂛", "󰂚"])
 
     readonly property string icon: {
         if (mode === "brightness")
@@ -142,6 +149,8 @@ Scope {
             return "󰏘"
         if (mode === "preset")
             return "󰏗"
+        if (mode === "dnd")
+            return Notifications.doNotDisturb ? "󰂛" : "󰂚"
         if (Audio.muted || Audio.volume <= 0.01)
             return "󰖁"
         if (Audio.volume <= 0.33)
@@ -162,6 +171,8 @@ Scope {
             return "Colour scheme"
         if (mode === "preset")
             return "Preset"
+        if (mode === "dnd")
+            return "Do Not Disturb"
         return Audio.muted ? "Muted" : "Volume"
     }
 
@@ -173,6 +184,8 @@ Scope {
             return Appearance.schemeName
         if (mode === "preset")
             return root.presetName
+        if (mode === "dnd")
+            return Notifications.doNotDisturb ? "On — popups silenced" : "Off"
         if (mode === "wallpaper")
             return Wallpaper.current.length === 0
                 ? "Folder is empty"
@@ -283,7 +296,7 @@ Scope {
                             text: root.icon
                             glyphs: root.iconStates
                             font.family: Theme.font.icon
-                            font.pointSize: Theme.font.xlarge + 4
+                            font.pointSize: Theme.popup.fontXlarge + 4
                             color: Theme.colors.textPrimary
                         }
 
@@ -319,7 +332,7 @@ Scope {
                                 text: root.label
                                 elide: Text.ElideRight
                                 font.family: Theme.font.main
-                                font.pointSize: Theme.font.small
+                                font.pointSize: Theme.popup.fontSmall
                                 color: Theme.colors.textSecondary
                             }
 
@@ -327,7 +340,7 @@ Scope {
                                 visible: root.counter.length > 0
                                 text: root.counter
                                 font.family: Theme.font.main
-                                font.pointSize: Theme.font.small
+                                font.pointSize: Theme.popup.fontSmall
                                 color: Theme.colors.textSecondary
                             }
                         }
@@ -357,7 +370,7 @@ Scope {
                             text: root.caption
                             elide: Text.ElideMiddle
                             font.family: Theme.font.main
-                            font.pointSize: Theme.font.large
+                            font.pointSize: Theme.popup.fontLarge
                             font.weight: Theme.font.mediumWeight
                             color: Theme.colors.textPrimary
                         }

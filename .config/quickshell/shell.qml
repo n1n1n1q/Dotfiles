@@ -10,9 +10,12 @@ import qs.modules.bar
 import qs.modules.dashboard
 import qs.modules.decoration
 import qs.modules.desktop
+import qs.modules.display
 import qs.modules.launcher
+import qs.modules.lock
 import qs.modules.osd
 import qs.modules.notifications
+import qs.modules.picker
 import qs.modules.popout
 import qs.modules.settings
 import qs.services
@@ -23,15 +26,24 @@ ShellRoot {
     BarEditOverlay {}
     DashboardLayer {}
     LauncherLayer {}
+    PickerLayer {}
     ScreenFrame {}
     Osd {}
     NotificationPopups {}
     BarPopout {}
     SettingsWindow {}
+    Lock {}
+    DisplayMenu {}
 
     // Touch the Wallpaper singleton so it loads at startup and restores the
     // saved wallpaper through awww.
     QtObject {
         Component.onCompleted: Wallpaper.reload()
+    }
+
+    // Touch GoogleCalendar so its startup sync timer arms even before the
+    // calendar popout is first opened.
+    QtObject {
+        Component.onCompleted: GoogleCalendar.syncedAt
     }
 }

@@ -16,6 +16,7 @@ SettingsPage {
         icon: "󰆍"
 
         SettingsRow {
+            compact: true
             icon: "󰆍"
             title: "Quickshell"
             subtitle: "Desktop shell runtime"
@@ -28,6 +29,7 @@ SettingsPage {
         }
 
         SettingsRow {
+            compact: true
             icon: "󱂬"
             title: "Compositor"
             subtitle: "niri · scrollable-tiling Wayland"
@@ -51,19 +53,31 @@ SettingsPage {
         icon: "󰍹"
 
         SettingsRow {
+            compact: true
             icon: "󰀄"
             title: "User"
-            subtitle: System.userName
+            Text {
+                text: System.userName
+                font.family: Theme.font.main
+                font.pointSize: Theme.font.small
+                color: Theme.colors.textSecondary
+            }
         }
 
         SettingsRow {
+            compact: true
             icon: "󰍹"
             title: "Outputs"
-            subtitle: {
-                let names = [];
-                for (const s of Quickshell.screens)
-                    names.push(s.name);
-                return names.join(", ");
+            Text {
+                text: {
+                    let names = [];
+                    for (const s of Quickshell.screens)
+                        names.push(s.name);
+                    return names.join(", ");
+                }
+                font.family: Theme.font.main
+                font.pointSize: Theme.font.small
+                color: Theme.colors.textSecondary
             }
         }
 

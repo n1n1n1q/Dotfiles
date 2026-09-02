@@ -9,29 +9,122 @@ SettingsPage {
     id: page
     heading: "Bar"
     icon: "󰟀"
-    blurb: "Turn on edit mode to rearrange the bar: a full-screen editor opens "
-        + "with the bar and a widget pool. Hold a widget and drag it onto an "
-        + "insert marker; drop one back on the pool to remove it. Enter saves, "
-        + "Esc cancels. Layout lives at ~/.config/quickshell/bar.json."
+    blurb: "The bar is groups of widgets in three regions. Rearrange it in the "
+        + "full-screen editor, tune each widget below, and style the frame it "
+        + "sits in. Layout lives at ~/.config/quickshell/bar.json."
 
-    // --- edit toggle ----------------------------------------------------
+    property bool layoutOpen: false
+    property bool inactiveOpen: false
+
+    // ============================================================
+    //  1 · Layout — the editor toggle + an inline group arranger
+    // ============================================================
     SettingsGroup {
-        caption: "Editing"
-        icon: "󰙭"
+        caption: "Layout"
+        icon: "󰕮"
 
         SettingsRow {
             icon: "󰙭"
             title: "Edit the bar"
-            subtitle: "Opens the full-screen layout editor — hold-drag widgets "
-                + "from the pool onto the bar, drop them back to remove."
+            subtitle: "Opens the full-screen editor — hold-drag widgets between "
+                + "the bar and the pool, drop one back on the pool to remove it"
             SettingsToggle {
                 checked: BarConfig.editMode
                 onToggled: v => v ? BarConfig.beginEdit() : BarConfig.commitEdit()
             }
         }
+
+        SettingsRow {
+            icon: "󱇈"
+            title: "Arrange groups"
+            subtitle: "Per-group background, centre pin and delete, across the "
+                + "left / centre / right regions"
+            hoverable: true
+            onClicked: page.layoutOpen = !page.layoutOpen
+            Text {
+                text: page.layoutOpen ? "󰅃" : "󰅀"
+                font.family: Theme.font.icon
+                font.pointSize: Theme.font.medium
+                color: Theme.colors.textTertiary
+            }
+        }
+
+        // The three lanes, revealed by "Arrange groups".
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.leftMargin: Theme.spacing.small
+            Layout.topMargin: page.layoutOpen ? Theme.spacing.tiny : 0
+            spacing: Theme.spacing.small
+            visible: page.layoutOpen
+
+            LaneView { section: "left";   label: "Left";   groups: BarConfig.left }
+            LaneView { section: "center"; label: "Centre"; groups: BarConfig.center }
+            LaneView { section: "right";  label: "Right";  groups: BarConfig.right }
+        }
     }
 
-    // --- bar / frame style --------------------------------------------
+    // ============================================================
+    //  2 · Widget settings — one drawer per widget on the bar,
+    //      with the rest tucked into an "inactive" section
+    // ============================================================
+    SettingsGroup {
+        caption: "Widget settings"
+        icon: "󰒓"
+        hint: "config is kept even when a widget is off the bar"
+
+        Repeater {
+            model: page._configurable(BarConfig.activeWidgetIds)
+            delegate: WidgetConfig {
+                required property var modelData
+                wid: modelData
+            }
+        }
+
+        SettingsRow {
+            visible: page._configurable(BarConfig.activeWidgetIds).length === 0
+            icon: "󰝦"
+            title: "No configurable widgets on the bar"
+            subtitle: "Widgets with options light up here once they're placed"
+        }
+
+        // --- inactive drawer ---------------------------------------
+        SettingsRow {
+            visible: page._inactiveConfigurable().length > 0
+            icon: "󰘓"
+            title: "Widgets not on the bar"
+            subtitle: page._inactiveConfigurable().length
+                + (page._inactiveConfigurable().length === 1 ? " widget" : " widgets")
+                + " — their settings are still here"
+            hoverable: true
+            onClicked: page.inactiveOpen = !page.inactiveOpen
+            Text {
+                text: page.inactiveOpen ? "󰅃" : "󰅀"
+                font.family: Theme.font.icon
+                font.pointSize: Theme.font.medium
+                color: Theme.colors.textTertiary
+            }
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.leftMargin: Theme.spacing.small
+            spacing: Theme.spacing.tiny
+            visible: page.inactiveOpen
+
+            Repeater {
+                model: page.inactiveOpen ? page._inactiveConfigurable() : []
+                delegate: WidgetConfig {
+                    required property var modelData
+                    wid: modelData
+                    inactive: true
+                }
+            }
+        }
+    }
+
+    // ============================================================
+    //  3 · Style — bar / frame appearance
+    // ============================================================
     SettingsGroup {
         caption: "Style"
         icon: "󰏘"
@@ -108,29 +201,129 @@ SettingsPage {
         }
     }
 
-    // --- popout cards ---------------------------------------------------
-    SettingsGroup {
-        caption: "Popouts"
-        icon: "󰝚"
-        SettingsRow {
-            icon: "󰝚"
-            title: "Now-playing layout"
-            subtitle: "Layout of the media card — a disc one spins while playing"
-            MediaLayoutPicker {
-                value: BarConfig.mediaLayout
-                onPicked: v => BarConfig.setPopout("mediaLayout", v)
+    // ------------------------------------------------------------------
+    //  helpers
+    // ------------------------------------------------------------------
+    function _configurable(ids) {
+        return (ids ?? []).filter(id => (BarConfig.widget(id).settings ?? []).length > 0);
+    }
+    function _inactiveConfigurable() {
+        const active = BarConfig.activeWidgetIds;
+        return BarConfig.catalogue
+            .filter(c => (c.settings ?? []).length > 0 && active.indexOf(c.id) === -1)
+            .map(c => c.id);
+    }
+
+    // ------------------------------------------------------------------
+    //  one widget's collapsible settings drawer
+    // ------------------------------------------------------------------
+    component WidgetConfig: ColumnLayout {
+        id: wc
+        property string wid: ""
+        property bool inactive: false
+        readonly property var cat: BarConfig.widget(wid)
+        readonly property var schema: cat.settings ?? []
+        property bool open: false
+
+        Layout.fillWidth: true
+        spacing: Theme.spacing.tiny
+
+        // header
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: 46
+            radius: Theme.rounding.large
+            color: hdrHover.hovered ? Theme.palette.surface2
+                : Qt.rgba(Theme.colors.surfaceVariant.r, Theme.colors.surfaceVariant.g,
+                          Theme.colors.surfaceVariant.b, wc.inactive ? 0.35 : 0.55)
+            Behavior on color { ColorAnimation { duration: Theme.animation.fast } }
+
+            HoverHandler { id: hdrHover }
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: wc.open = !wc.open
+            }
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: Theme.spacing.medium
+                anchors.rightMargin: Theme.spacing.medium
+                spacing: Theme.spacing.small
+
+                Text {
+                    text: wc.cat.icon
+                    font.family: Theme.font.icon
+                    font.pointSize: Theme.font.large
+                    color: wc.inactive ? Theme.colors.textTertiary : Theme.colors.textSecondary
+                }
+                Text {
+                    Layout.fillWidth: true
+                    text: wc.cat.name
+                    elide: Text.ElideRight
+                    font.family: Theme.font.main
+                    font.pointSize: Theme.font.medium
+                    color: wc.inactive ? Theme.colors.textSecondary : Theme.colors.textPrimary
+                }
+                Text {
+                    text: wc.schema.length + (wc.schema.length === 1 ? " option" : " options")
+                    font.family: Theme.font.main
+                    font.pointSize: Theme.font.small
+                    color: Theme.colors.textTertiary
+                }
+                Text {
+                    text: wc.open ? "󰅃" : "󰅀"
+                    font.family: Theme.font.icon
+                    font.pointSize: Theme.font.medium
+                    color: Theme.colors.textTertiary
+                }
+            }
+        }
+
+        // body
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.leftMargin: Theme.spacing.medium
+            spacing: Theme.spacing.tiny
+            visible: wc.open
+
+            Repeater {
+                model: wc.open ? wc.schema : []
+                delegate: SettingsRow {
+                    id: optRow
+                    required property var modelData
+                    readonly property var val: BarConfig.widgetSetting(wc.wid, modelData.key)
+                    compact: modelData.type !== "mediaLayout"
+                    title: modelData.label
+
+                    SettingsToggle {
+                        visible: optRow.modelData.type === "toggle"
+                        checked: optRow.val === true
+                        onToggled: v => BarConfig.setWidgetSetting(wc.wid, optRow.modelData.key, v)
+                    }
+                    SettingsSpin {
+                        visible: optRow.modelData.type === "spin"
+                        from: optRow.modelData.min ?? 0
+                        to: optRow.modelData.max ?? 100
+                        step: optRow.modelData.step ?? 1
+                        suffix: optRow.modelData.suffix ?? ""
+                        value: optRow.modelData.type === "spin" ? optRow.val : 0
+                        onStepped: v => BarConfig.setWidgetSetting(wc.wid, optRow.modelData.key, v)
+                    }
+                    MediaLayoutPicker {
+                        visible: optRow.modelData.type === "mediaLayout"
+                        labels: false
+                        value: optRow.modelData.type === "mediaLayout" ? optRow.val : "regular"
+                        onPicked: v => BarConfig.setWidgetSetting(wc.wid, optRow.modelData.key, v)
+                    }
+                }
             }
         }
     }
 
-    // --- layout view (per-group + future per-widget config) -----------
-    SectionHeader {
-        Layout.topMargin: Theme.spacing.tiny
-        title: "Layout"
-        icon: "󰕮"
-        hint: "left · centre · right"
-    }
-
+    // ------------------------------------------------------------------
+    //  group arranger (unchanged mechanics, just lives inside "Layout")
+    // ------------------------------------------------------------------
     component MiniToggle: Rectangle {
         id: mt
         property string glyph: ""
@@ -245,17 +438,6 @@ SettingsPage {
                                         font.pointSize: Theme.font.small
                                         color: Theme.colors.textPrimary
                                     }
-                                    // future: per-widget settings
-                                    Text {
-                                        text: "󰒓"
-                                        font.family: Theme.font.icon
-                                        font.pointSize: Theme.font.tiny
-                                        color: Theme.colors.textTertiary
-                                        opacity: 0.5
-                                        ToolTip.visible: cogHover.hovered
-                                        ToolTip.text: "Per-widget settings coming soon"
-                                        HoverHandler { id: cogHover }
-                                    }
                                     Text {
                                         text: "󰅖"
                                         font.family: Theme.font.icon
@@ -280,27 +462,6 @@ SettingsPage {
                         }
                     }
                 }
-            }
-        }
-    }
-
-    LaneView { section: "left";   label: "Left";   groups: BarConfig.left }
-    LaneView { section: "center"; label: "Centre"; groups: BarConfig.center }
-    LaneView { section: "right";  label: "Right";  groups: BarConfig.right }
-
-    // --- reset ----------------------------------------------------------
-    SettingsGroup {
-        caption: "Reset"
-        icon: "󰑏"
-
-        SettingsRow {
-            icon: "󰑏"
-            title: "Reset to default"
-            subtitle: "Restore the shipped left / centre / right layout"
-            PillButton {
-                text: "Reset"
-                danger: true
-                onClicked: BarConfig.reset()
             }
         }
     }

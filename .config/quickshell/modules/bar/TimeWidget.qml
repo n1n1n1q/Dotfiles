@@ -19,16 +19,20 @@ HoverPill {
         PopoutController.toggle("calendar", p.x, width, screenName);
     }
 
+    readonly property bool showDate: BarConfig.widgetSetting("clock", "showDate")
+    readonly property bool showSeconds: BarConfig.widgetSetting("clock", "showSeconds")
+
     Text {
         Layout.alignment: Qt.AlignVCenter
         font.family: Theme.font.main
         font.pointSize: Theme.bar.fontSize
         font.weight: Theme.font.semiBold
         color: Theme.colors.textPrimary
-        text: Time.timeString
+        text: root.showSeconds ? Time.format("hh:mm:ss") : Time.timeString
     }
 
     Text {
+        visible: root.showDate
         Layout.alignment: Qt.AlignVCenter
         font.family: Theme.font.main
         font.pointSize: Theme.bar.fontSize + 2
@@ -37,6 +41,7 @@ HoverPill {
     }
 
     Text {
+        visible: root.showDate
         Layout.alignment: Qt.AlignVCenter
         font.family: Theme.font.main
         font.pointSize: Theme.bar.fontSize

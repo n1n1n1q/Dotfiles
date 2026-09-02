@@ -6,6 +6,7 @@ import qs.services
 import qs.services.niri
 import qs.widgets
 import qs.modules.settings
+import qs.modules.lock
 
 // One cell of the quick-settings grid. `toggleId` picks the behaviour out of
 // DashboardConfig's catalogue; `size` decides whether it draws just the glyph
@@ -27,7 +28,7 @@ Rectangle {
     signal activated()
 
     readonly property var entry: DashboardConfig.toggleEntry(toggleId)
-    readonly property bool stateful: ["wifi", "bluetooth", "dnd", "mute", "micMute"]
+    readonly property bool stateful: ["wifi", "bluetooth", "dnd", "mute", "micMute", "caffeine"]
         .indexOf(toggleId) !== -1
 
     // --- live state ------------------------------------------------------
@@ -38,6 +39,7 @@ Rectangle {
         case "dnd": return Notifications.doNotDisturb;
         case "mute": return Audio.muted;
         case "micMute": return Audio.sourceMuted;
+        case "caffeine": return Caffeine.active;
         }
         return false;
     }
@@ -92,6 +94,8 @@ Rectangle {
             return Audio.muted ? "Muted" : Audio.label(Audio.sink);
         case "micMute":
             return Audio.sourceMuted ? "Muted" : Audio.label(Audio.source);
+        case "caffeine":
+            return Caffeine.active ? "Sleep & idle-lock held off" : "Normal power management";
         }
         return entry.desc ?? "";
     }
@@ -124,9 +128,10 @@ Rectangle {
         case "dnd": Notifications.toggleDnd(); return true;
         case "mute": Audio.toggleMute(); return true;
         case "micMute": Audio.toggleSourceMute(); return true;
+        case "caffeine": Caffeine.toggle(); return true;
         case "wallpaper": Wallpaper.next(); return true;
         case "screenshot": NiriService.screenshot(); return false;
-        case "lock": Quickshell.execDetached(["swaylock"]); return false;
+        case "lock": LockController.lock(); return false;
         case "record": Quickshell.execDetached(["wf-recorder"]); return false;
         case "settings": SettingsController.show(); return false;
         case "launcher": LauncherConfig.requestToggle(""); return false;
@@ -157,7 +162,7 @@ Rectangle {
         text: tile.glyph
         glyphs: tile.glyphStates
         font.family: Theme.font.icon
-        font.pointSize: Theme.font.xlarge + 2
+        font.pointSize: Theme.dashboard.fontXlarge + 2
         color: tile.ink
     }
 
@@ -173,7 +178,7 @@ Rectangle {
             text: tile.glyph
             glyphs: tile.glyphStates
             font.family: Theme.font.icon
-            font.pointSize: Theme.font.xlarge + 2
+            font.pointSize: Theme.dashboard.fontXlarge + 2
             color: tile.ink
         }
 
@@ -186,7 +191,7 @@ Rectangle {
                 text: tile.label
                 elide: Text.ElideRight
                 font.family: Theme.font.main
-                font.pointSize: Theme.font.normal
+                font.pointSize: Theme.dashboard.fontNormal
                 font.weight: Theme.font.mediumWeight
                 color: tile.ink
             }
@@ -197,7 +202,7 @@ Rectangle {
                 text: tile.subLabel
                 elide: Text.ElideRight
                 font.family: Theme.font.main
-                font.pointSize: Theme.font.tiny
+                font.pointSize: Theme.dashboard.fontTiny
                 color: tile.lit
                     ? Qt.rgba(Theme.colors.bg.r, Theme.colors.bg.g, Theme.colors.bg.b, 0.7)
                     : Theme.colors.textTertiary

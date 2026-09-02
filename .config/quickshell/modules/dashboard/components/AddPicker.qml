@@ -39,7 +39,7 @@ ColumnLayout {
                 text: picker.entries.length > 0
                     ? "Add to the panel" : "Everything is already in the panel"
                 font.family: Theme.font.main
-                font.pointSize: Theme.font.tiny
+                font.pointSize: Theme.dashboard.fontTiny
                 color: Theme.colors.textTertiary
             }
 
@@ -73,14 +73,14 @@ ColumnLayout {
                             Text {
                                 text: chip.modelData.icon ?? "󰋙"
                                 font.family: Theme.font.icon
-                                font.pointSize: Theme.font.medium
+                                font.pointSize: Theme.dashboard.fontMedium
                                 color: chipMouse.containsMouse
                                     ? Theme.colors.bg : Theme.colors.accent
                             }
                             Text {
                                 text: chip.modelData.name ?? ""
                                 font.family: Theme.font.main
-                                font.pointSize: Theme.font.small
+                                font.pointSize: Theme.dashboard.fontSmall
                                 color: chipMouse.containsMouse
                                     ? Theme.colors.bg : Theme.colors.textPrimary
                             }

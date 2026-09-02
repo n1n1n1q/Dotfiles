@@ -42,20 +42,35 @@ Singleton {
         readonly property color lavender: theme._p.lavender ?? "#b4befe"
     }
 
+    // Linear blend between two colours (t: 0 -> c1, 1 -> c2), alpha forced
+    // opaque. Used to derive readable dim-text shades that don't depend on a
+    // scheme's `subtext`/`overlay` slots being well-separated from its
+    // surfaces — several of the non-Catppuccin built-ins map those loosely
+    // and the dim text ended up unreadable on the elevated row surfaces.
+    function mix(c1, c2, t) {
+        return Qt.rgba(c1.r + (c2.r - c1.r) * t,
+                       c1.g + (c2.g - c1.g) * t,
+                       c1.b + (c2.b - c1.b) * t, 1);
+    }
+
     readonly property QtObject colors: QtObject {
         readonly property color bg: palette.base
         readonly property color fg: palette.text
         readonly property color accent: palette.blue
         readonly property color accentAlt: palette.sapphire
-        
+
         readonly property color surface: palette.surface0
         readonly property color surfaceVariant: palette.surface1
         readonly property color border: palette.surface1
         readonly property color borderSubtle: palette.surface2
-        
+
+        // Dim text is a controlled step from full-contrast text toward the
+        // *row* surface it sits on (not the scheme's own `subtext`/`overlay`
+        // slots, which several non-Catppuccin built-ins map too close to the
+        // surfaces) — so it stays legible on every scheme.
         readonly property color textPrimary: palette.text
-        readonly property color textSecondary: palette.subtext0
-        readonly property color textTertiary: palette.overlay0
+        readonly property color textSecondary: theme.mix(palette.text, palette.surface1, 0.20)
+        readonly property color textTertiary: theme.mix(palette.text, palette.surface1, 0.40)
         
         readonly property color success: palette.green
         readonly property color warning: palette.yellow
@@ -86,7 +101,10 @@ Singleton {
         readonly property int large: 12
         readonly property int xlarge: 14
         readonly property int huge: 16
-        
+        // Big display sizes — page titles in the (full-screen) Settings window.
+        readonly property int title: 18
+        readonly property int display: 23
+
         // Two knobs, set in Settings > Appearance:
         //   main  - the UI text font
         //   mono  - the monospace font; it MUST be Nerd-Font-patched because
@@ -139,6 +157,10 @@ Singleton {
         readonly property int large: 12
         readonly property int xlarge: 16
         readonly property int huge: 20
+        // Material-3 "expressive" grouped-list radii — big outer corners on a
+        // run of connected rects, tiny ones where they meet.
+        readonly property int xhuge: 28
+        readonly property int connJoin: 5
         readonly property int full: 9999
     }
 
@@ -218,6 +240,18 @@ Singleton {
         // notifTimeout unless the notification is Critical.
         readonly property int notifWidth: 380
         readonly property int notifTimeout: 5000
+
+        // Every floating surface (toasts, OSD, bar popout cards) runs the same
+        // notch-larger type scale the dashboard uses — so nothing that hangs off
+        // the bar reads as cramped next to bar-sized text. Mirrors
+        // Theme.dashboard.font*.
+        readonly property int fontTiny: 9
+        readonly property int fontSmall: 11
+        readonly property int fontNormal: 12
+        readonly property int fontMedium: 13
+        readonly property int fontLarge: 14
+        readonly property int fontXlarge: 16
+        readonly property int fontHuge: 18
     }
 
     readonly property QtObject workspace: QtObject {
@@ -256,14 +290,26 @@ Singleton {
     }
     
     readonly property QtObject dashboard: QtObject {
-        readonly property int width: 420
+        readonly property int width: 460
         readonly property int height: 700
         readonly property int margin: spacing.medium
         readonly property int padding: spacing.large
         readonly property int itemSpacing: spacing.medium
-        
+
         readonly property color background: colors.bg
         readonly property color cardBackground: colors.surface
+
+        // The dashboard runs a notch larger than the base type scale — the same
+        // "+ a bit" bump the bar gives its own text — so the panel doesn't read
+        // as cramped next to a bar-sized shell. Dashboard components pull their
+        // sizes from here instead of Theme.font.* directly.
+        readonly property int fontTiny: 9
+        readonly property int fontSmall: 11
+        readonly property int fontNormal: 12
+        readonly property int fontMedium: 13
+        readonly property int fontLarge: 14
+        readonly property int fontXlarge: 16
+        readonly property int fontHuge: 18
     }
     
     // The app launcher's search card (modules/launcher). It wears the same

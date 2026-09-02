@@ -14,18 +14,28 @@ import qs.widgets
 // on Bar, the OSD pill on Notifications.
 SettingsPage {
     id: page
-    heading: "Appearance"
+    heading: "General"
     icon: "󰏘"
-    blurb: "Profile, colour scheme, wallpaper and fonts. Schemes are JSON files "
-        + "in ~/.config/quickshell/colorschemes/; wallpapers are images in "
-        + "~/.config/quickshell/wallpapers/."
+    blurb: "Profile, colour scheme, wallpaper, fonts — and presets that save the "
+        + "whole lot under a name. Schemes live in ~/.config/quickshell/colorschemes/, "
+        + "wallpapers in ~/.config/quickshell/wallpapers/, presets in "
+        + "~/.config/quickshell/presets/."
 
     // rescan the wallpapers folder whenever the settings window opens or the
     // user navigates here, so images added outside the shell show up
     Connections {
         target: SettingsController
         function onOpenChanged() { if (SettingsController.open) Wallpaper.reload(); }
-        function onSectionChanged() { if (SettingsController.section === "appearance") Wallpaper.reload(); }
+        function onSectionChanged() { if (SettingsController.section === "general") Wallpaper.reload(); }
+    }
+
+    function saveTypedPreset() {
+        const n = Presets.sanitize(presetNameField.text);
+        if (n.length === 0)
+            return;
+        Presets.save(n);
+        presetNameField.text = "";
+        presetNameField.focus = false;
     }
 
     // --- profile ---------------------------------------------------------
@@ -328,6 +338,133 @@ SettingsPage {
                     color: Theme.colors.textSecondary
                 }
             }
+        }
+    }
+
+    // --- sliders --------------------------------------------------------
+    SettingsGroup {
+        caption: "Sliders"
+        icon: "󰡵"
+
+        SettingsRow {
+            icon: "󰕾"
+            title: "Slider style"
+            subtitle: "How every level slider draws — the dashboard rows and "
+                + "the OSD pill under the bar"
+            SegmentedControl {
+                value: Appearance.sliderStyle
+                options: DashboardConfig.sliderStyles
+                onPicked: v => Appearance.setSliderStyle(v)
+            }
+        }
+
+        SettingsRow {
+            icon: "󰈈"
+            title: "Preview"
+            LevelBar {
+                Layout.alignment: Qt.AlignVCenter
+                Layout.preferredWidth: 200
+                Layout.preferredHeight: implicitHeight
+                value: 0.62
+                style: Appearance.sliderStyle
+                icon: "󰕾"
+                animated: true
+            }
+        }
+    }
+
+    // --- presets -------------------------------------------------------
+    // Was its own nav page; folded in here since a preset is "everything on
+    // this page (plus the bar and desktop widgets), saved together".
+    SettingsGroup {
+        caption: "Presets"
+        icon: "󰏗"
+        hint: Presets.count + (Presets.count === 1 ? " preset" : " presets")
+
+        SettingsRow {
+            icon: "󰆓"
+            title: "Save current setup"
+            subtitle: {
+                const n = Presets.sanitize(presetNameField.text);
+                if (n.length === 0)
+                    return "Scheme, fonts, wallpaper, avatar, bar layout and desktop widgets — one named preset";
+                if (Presets.exists(n))
+                    return "“" + n + "” already exists — saving replaces it";
+                return "Saves as “" + n + "”";
+            }
+
+            Rectangle {
+                Layout.preferredWidth: 190
+                implicitHeight: 32
+                radius: height / 2
+                color: Theme.colors.surfaceVariant
+
+                TextField {
+                    id: presetNameField
+                    anchors.fill: parent
+                    anchors.leftMargin: Theme.spacing.normal
+                    anchors.rightMargin: Theme.spacing.normal
+                    verticalAlignment: Text.AlignVCenter
+                    placeholderText: "Preset name"
+                    color: Theme.colors.textPrimary
+                    placeholderTextColor: Theme.colors.textTertiary
+                    font.family: Theme.font.main
+                    font.pointSize: Theme.font.small
+                    background: Item {}
+                    onAccepted: page.saveTypedPreset()
+                }
+            }
+
+            PillButton {
+                text: Presets.exists(presetNameField.text) ? "Overwrite" : "Save"
+                accent: true
+                enabledButton: Presets.sanitize(presetNameField.text).length > 0
+                onClicked: page.saveTypedPreset()
+            }
+        }
+
+        SettingsRow {
+            visible: Presets.canUndo
+            icon: "󰕌"
+            title: "Undo apply"
+            subtitle: "Put back the setup that was live before the last preset"
+            PillButton {
+                text: "Undo"
+                onClicked: Presets.undo()
+            }
+        }
+
+        SettingsRow {
+            icon: "󰉋"
+            title: "Preset files"
+            subtitle: "~/.config/quickshell/presets/ — drop a .json in; qs ipc call preset apply <name>"
+            PillButton {
+                text: "Reload"
+                onClicked: Presets.reload()
+            }
+        }
+
+        Flow {
+            Layout.fillWidth: true
+            Layout.margins: Theme.spacing.tiny
+            spacing: Theme.spacing.small
+            visible: Presets.count > 0
+
+            Repeater {
+                model: Presets.names
+                delegate: PresetCard {
+                    required property var modelData
+                    presetName: modelData
+                    body: Presets.presets[modelData] ?? ({})
+                }
+            }
+        }
+
+        SettingsRow {
+            visible: Presets.count === 0
+            icon: "󰏗"
+            title: "No presets yet"
+            subtitle: "Get the shell looking right, then name it above and save"
         }
     }
 }

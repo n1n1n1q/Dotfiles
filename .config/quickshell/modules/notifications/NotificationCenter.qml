@@ -72,7 +72,7 @@ ColumnLayout {
                 anchors.centerIn: parent
                 text: Notifications.count
                 font.family: Theme.font.main
-                font.pointSize: Theme.font.small
+                font.pointSize: Theme.dashboard.fontSmall
                 color: Theme.colors.accent
             }
         }
@@ -92,7 +92,7 @@ ColumnLayout {
                 anchors.centerIn: parent
                 text: Notifications.doNotDisturb ? "󰂛" : "󰂚"
                 font.family: Theme.font.icon
-                font.pointSize: Theme.font.medium
+                font.pointSize: Theme.dashboard.fontMedium
                 color: Notifications.doNotDisturb ? Theme.colors.bg : Theme.colors.textSecondary
             }
 
@@ -122,7 +122,7 @@ ColumnLayout {
                 anchors.centerIn: parent
                 text: "Clear all"
                 font.family: Theme.font.main
-                font.pointSize: Theme.font.small
+                font.pointSize: Theme.dashboard.fontSmall
                 font.weight: Theme.font.mediumWeight
                 color: Theme.colors.textPrimary
             }
@@ -137,19 +137,17 @@ ColumnLayout {
         }
     }
 
-    // Empty state
-    Rectangle {
+    // Empty state — no ground of its own, just the line.
+    Item {
         Layout.fillWidth: true
-        Layout.preferredHeight: 72
+        Layout.preferredHeight: 64
         visible: Notifications.count === 0
-        radius: Theme.rounding.huge
-        color: Theme.colors.surface
 
         Text {
             anchors.centerIn: parent
             text: Notifications.doNotDisturb ? "Do Not Disturb is on" : "No notifications"
             font.family: Theme.font.main
-            font.pointSize: Theme.fontSize.small
+            font.pointSize: Theme.dashboard.fontSmall
             color: Theme.colors.textTertiary
         }
     }
@@ -164,6 +162,7 @@ ColumnLayout {
             Layout.fillWidth: true
             entry: modelData
             flat: true
+            large: true
             showDivider: index < Notifications.list.length - 1
             onDismissRequested: Notifications.dismiss(modelData)
             onActivated: root.open(modelData)

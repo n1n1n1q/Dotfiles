@@ -111,7 +111,12 @@ PanelWindow {
                 id: search
                 Layout.fillWidth: true
                 onAccepted: LauncherController.activate()
-                onDismissed: LauncherController.hide()
+                onDismissed: {
+                    if (ctxMenu.open)
+                        ctxMenu.open = false;
+                    else
+                        LauncherController.hide();
+                }
             }
 
             // --- results ------------------------------------------------------
@@ -142,6 +147,12 @@ PanelWindow {
                     result: modelData
                     selected: index === LauncherController.selected
                     onActivated: LauncherController.activate(index)
+                    onContextRequested: pos => {
+                        ctxMenu.appId = modelData.appId ?? "";
+                        ctxMenu._px = pos.x;
+                        ctxMenu._py = pos.y;
+                        ctxMenu.open = ctxMenu.appId.length > 0;
+                    }
                 }
             }
 
@@ -231,6 +242,16 @@ PanelWindow {
 
                 Item { Layout.fillWidth: true }
             }
+        }
+    }
+
+    // Right-click menu for an app row (pin / hide). Fills the window so it can
+    // be positioned in window coords and dismissed by an outside click.
+    LauncherContextMenu {
+        id: ctxMenu
+        onDismissed: {
+            open = false;
+            search.takeFocus();
         }
     }
 }

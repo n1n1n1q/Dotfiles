@@ -53,6 +53,7 @@ Singleton {
         { id: "mute",       name: "Mute output", icon: "󰖁", size: "small", desc: "Mute the default sink" },
         { id: "micMute",    name: "Mute mic",    icon: "󰍭", size: "small", desc: "Mute the default source" },
         { id: "screenshot", name: "Screenshot",  icon: "󰄀", size: "small", desc: "niri's interactive screenshot UI" },
+        { id: "caffeine",   name: "Keep awake",  icon: "󰅶", size: "small", desc: "Hold off sleep, screen-blank and idle-lock" },
         { id: "lock",       name: "Lock",        icon: "󰌾", size: "small", desc: "Lock the session" },
         { id: "record",     name: "Record",      icon: "󰑊", size: "small", desc: "Start wf-recorder" },
         { id: "wallpaper",  name: "Wallpaper",   icon: "󰸉", size: "small", desc: "Step to the next wallpaper" },
@@ -121,6 +122,7 @@ Singleton {
             { "id": "mute",       "size": "small" },
             { "id": "micMute",    "size": "small" },
             { "id": "screenshot", "size": "small" },
+            { "id": "caffeine",   "size": "small" },
             { "id": "lock",       "size": "small" },
             { "id": "settings",   "size": "small" }
         ],

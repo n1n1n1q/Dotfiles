@@ -21,7 +21,7 @@ ColumnLayout {
         visible: root.editing
         text: "Sliders — drag to reorder, click to change style"
         font.family: Theme.font.main
-        font.pointSize: Theme.font.tiny
+        font.pointSize: Theme.dashboard.fontTiny
         color: Theme.colors.textTertiary
     }
 
@@ -72,7 +72,8 @@ ColumnLayout {
                         DashSlider {
                             Layout.fillWidth: true
                             sliderId: rowItem.modelData.id
-                            style: rowItem.modelData.style ?? "progress"
+                            // One global style now — Settings › Appearance.
+                            style: Appearance.sliderStyle
                             editing: root.editing
                         }
                     }
@@ -128,8 +129,6 @@ ColumnLayout {
                         onReleased: {
                             if (dragArea.dragging)
                                 dragArea.abort();
-                            else
-                                DashboardConfig.cycleSliderStyle(rowItem.index);
                         }
                         onCanceled: dragArea.abort()
                     }
@@ -153,7 +152,7 @@ ColumnLayout {
                         }
                     }
 
-                    // Style pill + remove, only while editing.
+                    // Remove button, only while editing.
                     Row {
                         anchors.right: parent.right
                         anchors.top: parent.top
@@ -161,23 +160,6 @@ ColumnLayout {
                         spacing: Theme.spacing.tiny
                         visible: root.editing && !DashboardConfig.grabbing
                         z: 2
-
-                        Rectangle {
-                            width: styleLabel.implicitWidth + Theme.spacing.small * 2
-                            height: 18
-                            radius: 9
-                            color: Theme.colors.accent
-
-                            Text {
-                                id: styleLabel
-                                anchors.centerIn: parent
-                                text: DashboardConfig.sliderStyleLabel(rowItem.modelData.style)
-                                font.family: Theme.font.main
-                                font.pointSize: Theme.font.tiny
-                                font.weight: Theme.font.semiBold
-                                color: Theme.colors.bg
-                            }
-                        }
 
                         Rectangle {
                             width: 18
@@ -191,7 +173,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: "󰅖"
                                 font.family: Theme.font.icon
-                                font.pointSize: Theme.font.tiny
+                                font.pointSize: Theme.dashboard.fontTiny
                                 color: rmMouse.containsMouse ? Theme.colors.bg : Theme.colors.error
                             }
 
@@ -229,7 +211,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: root.count === 0 ? "Add a slider" : (picker.open ? "󰅖" : "󰐕")
                         font.family: root.count === 0 ? Theme.font.main : Theme.font.icon
-                        font.pointSize: Theme.font.small
+                        font.pointSize: Theme.dashboard.fontSmall
                         color: picker.open || addMouse.containsMouse
                             ? Theme.colors.accent : Theme.colors.textTertiary
                     }

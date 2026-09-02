@@ -9,6 +9,9 @@ repos
 .config/quickshell/dashboard.json
 .config/quickshell/launcher.json
 .config/quickshell/launcher-usage.json
+.config/quickshell/lock.json
 .config/quickshell/colorschemes/
 .config/quickshell/presets/
 .config/quickshell/wallpapers/
+.config/quickshell/google.json
+.config/quickshell/google/

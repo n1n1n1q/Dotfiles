@@ -9,7 +9,8 @@ import qs.config
 Item {
     id: root
 
-    required property var model          // { id, type, screen, x, y, props }
+    required property var model          // { id, type, screen, x, y, props, posByScreen? }
+    required property string screenName  // the output this instance is drawn on
     property Item area: null             // drag coordinate space (DesktopLayer content)
     property var publishGuides: null     // function([{o:"v"|"h", p:px}])
     property var otherRects: null        // function() -> [{x,y,w,h}]
@@ -19,10 +20,16 @@ Item {
     readonly property bool selected: DesktopConfig.selectedId === model.id
     readonly property string scaleKey: model.type === "clock" ? "fontScale" : "scale"
 
-    property real localX: model.x
-    property real localY: model.y
+    // Position is per-output for `screen: "all"` widgets (see DesktopConfig.posFor).
+    readonly property var pos: DesktopConfig.posFor(model, screenName)
+    property real localX: pos.x
+    property real localY: pos.y
     property real scaleOverride: -1
-    onModelChanged: { localX = model.x; localY = model.y; }
+    onModelChanged: {
+        const p = DesktopConfig.posFor(model, screenName);
+        localX = p.x;
+        localY = p.y;
+    }
 
     // props with a live size override applied while the corner is dragged
     readonly property var effProps: {
@@ -201,7 +208,7 @@ Item {
         }
         onReleased: {
             if (root.publishGuides) root.publishGuides([]);
-            DesktopConfig.move(root.model.id, root.localX, root.localY);
+            DesktopConfig.moveOn(root.model.id, root.screenName, root.localX, root.localY);
         }
     }
 

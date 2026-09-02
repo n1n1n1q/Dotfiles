@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Effects
 import qs.config
 import qs.services
 
@@ -28,16 +29,41 @@ Item {
     // needs something for its slivers to peek out from behind.
     property bool flat: false
     property bool showDivider: false
+    // Dashboard cards run on the larger dashboard type scale and swap the
+    // corner close button for the diagonal swipe-to-delete strip on the right.
+    property bool large: false
 
     signal activated()
     signal dismissRequested()
     signal actionInvoked()
 
     readonly property int hang: 10
-    // The close button only appears once the pointer has settled.
-    readonly property bool closeReady: showClose && hover.hovered && dwell.armed
+    // The close button only appears once the pointer has settled — and only on
+    // toasts; dashboard cards delete through the red strip instead.
+    readonly property bool closeReady: showClose && !large && hover.hovered && dwell.armed
 
-    implicitHeight: layout.implicitHeight + Theme.padding.large * 2 + hang
+    // Type scale: the notch-larger floating-surface scale for both toasts and
+    // the centre / stacks, so a toast reads the same size as the panel row it
+    // becomes. `large` still governs the delete strip and button, not the type.
+    readonly property int fSummary: large ? Theme.dashboard.fontNormal : Theme.popup.fontNormal
+    readonly property int fBody: large ? Theme.dashboard.fontSmall : Theme.popup.fontSmall
+    readonly property int fMeta: large ? Theme.dashboard.fontTiny : Theme.popup.fontTiny
+    readonly property int fIconLetter: large ? Theme.dashboard.fontLarge : Theme.popup.fontMedium
+
+    // Flashes red and collapses while its swipe-out plays. Owned by the service
+    // (see Notifications._deleting) so a Repeater rebuild from an unrelated
+    // dismiss can't strand a half-deleted card.
+    readonly property bool deleting: Notifications.isDeleting(card.entry)
+
+    readonly property int fullHeight: layout.implicitHeight + Theme.padding.large * 2 + hang
+    // Collapse to nothing as it fades so the rows below slide up into the gap
+    // instead of the list jumping once the entry is finally dropped.
+    implicitHeight: deleting ? 0 : fullHeight
+    clip: deleting
+
+    opacity: deleting ? 0 : 1
+    Behavior on opacity { NumberAnimation { duration: Theme.animation.normal } }
+    Behavior on implicitHeight { NumberAnimation { duration: Theme.animation.normal; easing.type: Easing.OutCubic } }
 
     HoverHandler { id: hover }
 
@@ -58,12 +84,14 @@ Item {
         anchors.rightMargin: card.hang
 
         radius: card.flat ? Theme.rounding.large : Theme.rounding.huge
-        color: card.flat
-            ? (hover.hovered ? Qt.rgba(Theme.colors.surfaceVariant.r,
-                                       Theme.colors.surfaceVariant.g,
-                                       Theme.colors.surfaceVariant.b, 0.4)
-                             : "transparent")
-            : (hover.hovered ? Theme.colors.surfaceVariant : Theme.colors.surface)
+        color: card.deleting
+            ? Theme.colors.error
+            : card.flat
+              ? (hover.hovered ? Qt.rgba(Theme.colors.surfaceVariant.r,
+                                         Theme.colors.surfaceVariant.g,
+                                         Theme.colors.surfaceVariant.b, 0.4)
+                               : "transparent")
+              : (hover.hovered ? Theme.colors.surfaceVariant : Theme.colors.surface)
         border.width: card.entry.critical ? 1 : 0
         border.color: Theme.colors.error
 
@@ -106,8 +134,8 @@ Item {
             // back to the source's initial.
             Rectangle {
                 Layout.alignment: Qt.AlignTop
-                Layout.preferredWidth: 34
-                Layout.preferredHeight: 34
+                Layout.preferredWidth: card.large ? 40 : 34
+                Layout.preferredHeight: card.large ? 40 : 34
                 radius: Theme.rounding.medium
                 color: Qt.rgba(Theme.colors.surfaceVariant.r, Theme.colors.surfaceVariant.g,
                                Theme.colors.surfaceVariant.b, 0.5)
@@ -118,7 +146,7 @@ Item {
                     visible: icon.status !== Image.Ready
                     text: (card.entry.appName || "?").charAt(0).toUpperCase()
                     font.family: Theme.font.main
-                    font.pointSize: Theme.font.medium
+                    font.pointSize: card.fIconLetter
                     font.weight: Theme.font.mediumWeight
                     color: Theme.colors.textSecondary
                 }
@@ -131,7 +159,10 @@ Item {
                     fillMode: Image.PreserveAspectCrop
                     sourceSize.width: 68
                     sourceSize.height: 68
-                    asynchronous: true
+                    // Synchronous: a themed-icon name resolves through Qt's SVG
+                    // icon engine, which crashes when hit from the async image
+                    // thread (see Tray.qml).
+                    asynchronous: false
                 }
             }
 
@@ -149,7 +180,7 @@ Item {
                             ? card.entry.summary : card.entry.appName
                         elide: Text.ElideRight
                         font.family: Theme.font.main
-                        font.pointSize: Theme.font.normal
+                        font.pointSize: card.fSummary
                         font.weight: Theme.font.semiBold
                         color: Theme.colors.textPrimary
                     }
@@ -157,7 +188,7 @@ Item {
                     Text {
                         text: Notifications.timeText(card.entry.time)
                         font.family: Theme.font.main
-                        font.pointSize: Theme.font.small
+                        font.pointSize: card.fBody
                         color: Theme.colors.textTertiary
                     }
                 }
@@ -172,7 +203,7 @@ Item {
                     elide: Text.ElideRight
                     onLinkActivated: link => Qt.openUrlExternally(link)
                     font.family: Theme.font.main
-                    font.pointSize: Theme.font.small
+                    font.pointSize: card.fBody
                     color: Theme.colors.textSecondary
                 }
 
@@ -180,7 +211,7 @@ Item {
                     visible: card.entry.appName.length > 0
                     text: card.entry.appName
                     font.family: Theme.font.main
-                    font.pointSize: Theme.font.tiny
+                    font.pointSize: card.fMeta
                     color: Theme.colors.textTertiary
                 }
 
@@ -199,7 +230,7 @@ Item {
                             required property var modelData
 
                             implicitWidth: actionLabel.implicitWidth + Theme.padding.large * 2
-                            implicitHeight: 26
+                            implicitHeight: card.large ? 30 : 26
                             radius: height / 2
                             color: actionMouse.containsMouse
                                 ? Theme.colors.surfaceVariant
@@ -213,7 +244,7 @@ Item {
                                 text: actionBtn.modelData.text && actionBtn.modelData.text.length > 0
                                     ? actionBtn.modelData.text : actionBtn.modelData.identifier
                                 font.family: Theme.font.main
-                                font.pointSize: Theme.font.small
+                                font.pointSize: card.fBody
                                 color: Theme.colors.textPrimary
                             }
 
@@ -230,6 +261,86 @@ Item {
                         }
                     }
                 }
+            }
+        }
+
+        // Swipe-to-delete affordance: a diagonal ( \ ) red wash bleeding in
+        // from the right edge. Fades in while the card is hovered, deepens
+        // under its own pointer, and on click flashes the whole card red and
+        // dismisses it. Replaces the corner close button on dashboard cards.
+
+        // Masks the strip to the card's own rounded corners — plain `clip`
+        // only clips to the bounding box, which left the red squaring off the
+        // body's top-right / bottom-right radius.
+        Rectangle {
+            id: delStripMask
+            anchors.fill: delStrip
+            visible: false
+            layer.enabled: true
+            color: "black"
+            topRightRadius: body.radius
+            bottomRightRadius: body.radius
+        }
+
+        Item {
+            id: delStrip
+            visible: card.large && card.showClose
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.right: parent.right
+            width: 84
+            opacity: card.deleting ? 0 : (delMouse.containsMouse ? 1 : (hover.hovered ? 0.6 : 0))
+            Behavior on opacity { NumberAnimation { duration: Theme.animation.fast } }
+
+            layer.enabled: true
+            layer.smooth: true
+            layer.effect: MultiEffect {
+                maskEnabled: true
+                maskSource: delStripMask
+            }
+
+            // A tall rectangle turned -45° so its vertical gradient runs along
+            // the "\" diagonal — transparent at the top-left, red at the
+            // bottom-right corner of the card.
+            Rectangle {
+                width: (delStrip.width + delStrip.height) * 1.6
+                height: width
+                anchors.centerIn: parent
+                rotation: -45
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: "transparent" }
+                    GradientStop { position: 0.55; color: "transparent" }
+                    GradientStop {
+                        position: 1.0
+                        color: Qt.rgba(Theme.colors.error.r, Theme.colors.error.g,
+                                       Theme.colors.error.b, 0.9)
+                    }
+                }
+            }
+
+            Text {
+                anchors.right: parent.right
+                anchors.rightMargin: Theme.padding.large
+                anchors.verticalCenter: parent.verticalCenter
+                text: "󰩹"
+                font.family: Theme.font.icon
+                font.pointSize: card.fSummary
+                color: Theme.colors.bg
+                opacity: delMouse.containsMouse ? 1 : 0
+                Behavior on opacity { NumberAnimation { duration: Theme.animation.fast } }
+            }
+
+            MouseArea {
+                id: delMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                // A slight drag on the strip must still delete, not get eaten
+                // by the dashboard ScrollView's Flickable as the start of a
+                // scroll — that was why an expanded group's cards "wouldn't
+                // delete".
+                preventStealing: true
+                onClicked: card.dismissRequested()
             }
         }
     }

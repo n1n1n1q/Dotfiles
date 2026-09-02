@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Notifications
+import qs.config
 import qs.services.niri
 
 // Notification daemon + store.
@@ -32,7 +33,36 @@ Singleton {
     property bool doNotDisturb: false
     property int _seq: 1
 
+    // Entries the centre is currently playing its swipe-out on. The real removal
+    // is deferred and batched here rather than on a per-card Timer: the centre's
+    // Repeater rebuilds every delegate whenever `list` changes, so a timer owned
+    // by the card gets torn down (and the delete lost) the moment any *other*
+    // card is dismissed or a new notification lands. This list is reactive, the
+    // entry refs are stable, and `list` itself doesn't move until the flush — so
+    // the flashing cards survive.
+    property var _deleting: []
+
     readonly property int count: list.length
+
+    function isDeleting(entry) { return root._deleting.indexOf(entry) >= 0 }
+
+    Timer {
+        id: flushDelete
+        interval: Theme.animation.normal
+        onTriggered: {
+            const gone = root._deleting
+            root._deleting = []
+            for (const e of gone) {
+                if (e.notification) {
+                    e.notification.tracked = false
+                    e.notification.dismiss()
+                }
+            }
+            root.list = root.list.filter(e => gone.indexOf(e) < 0)
+            root.popups = root.popups.filter(e => gone.indexOf(e) < 0)
+            root._save()
+        }
+    }
 
     NotificationServer {
         id: server
@@ -82,6 +112,7 @@ Singleton {
     function _forget(entry) {
         root.popups = root.popups.filter(e => e !== entry)
         root.list = root.list.filter(e => e !== entry)
+        root._deleting = root._deleting.filter(e => e !== entry)
         root._save()
     }
 
@@ -97,15 +128,14 @@ Singleton {
             || NiriService.focusApp(entry.appName)
     }
 
-    // Removed from the centre - drop it and tell the app we're done.
+    // Removed from the centre. Marks the entry for removal and lets the card
+    // play its swipe-out; `flushDelete` does the actual drop (and tells the app
+    // we're done) a beat later, batching anything else dismissed in the gap.
     function dismiss(entry) {
-        root.popups = root.popups.filter(e => e !== entry)
-        root.list = root.list.filter(e => e !== entry)
-        if (entry.notification) {
-            entry.notification.tracked = false
-            entry.notification.dismiss()
-        }
-        root._save()
+        if (root._deleting.indexOf(entry) >= 0)
+            return
+        root._deleting = [...root._deleting, entry]
+        flushDelete.restart()
     }
 
     function clear() {
@@ -117,6 +147,7 @@ Singleton {
         }
         root.list = []
         root.popups = []
+        root._deleting = []
         root._save()
     }
 

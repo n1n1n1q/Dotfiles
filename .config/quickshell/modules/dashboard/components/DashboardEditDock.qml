@@ -49,7 +49,7 @@ Rectangle {
                 ? "Drop on a marker to place · drop here to remove · Esc to cancel"
                 : "Drag a tile in · click a placed one to resize or restyle it"
             font.family: Theme.font.main
-            font.pointSize: Theme.font.tiny
+            font.pointSize: Theme.dashboard.fontTiny
             color: Theme.colors.textSecondary
         }
 
@@ -96,7 +96,7 @@ Rectangle {
             anchors.centerIn: parent
             text: db.label
             font.family: Theme.font.main
-            font.pointSize: Theme.font.small
+            font.pointSize: Theme.dashboard.fontSmall
             font.weight: Theme.font.semiBold
             color: db.accent ? Theme.colors.bg : Theme.colors.textPrimary
         }
@@ -123,7 +123,7 @@ Rectangle {
             visible: pool.entries.length === 0
             text: pool.emptyText
             font.family: Theme.font.main
-            font.pointSize: Theme.font.tiny
+            font.pointSize: Theme.dashboard.fontTiny
             color: Theme.colors.textTertiary
         }
 
@@ -163,13 +163,13 @@ Rectangle {
                         Text {
                             text: poolTile.modelData.icon ?? "󰋙"
                             font.family: Theme.font.icon
-                            font.pointSize: Theme.font.medium
+                            font.pointSize: Theme.dashboard.fontMedium
                             color: poolTile.picked ? Theme.colors.bg : Theme.colors.accent
                         }
                         Text {
                             text: poolTile.modelData.name ?? ""
                             font.family: Theme.font.main
-                            font.pointSize: Theme.font.small
+                            font.pointSize: Theme.dashboard.fontSmall
                             color: poolTile.picked ? Theme.colors.bg : Theme.colors.textPrimary
                         }
                     }

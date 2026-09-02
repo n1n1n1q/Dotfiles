@@ -14,13 +14,18 @@ import qs.services
 Singleton {
     id: root
 
-    // "" | "calendar" | "media" | "sysmon"
+    // "" | "calendar" | "media" | "sysmon" | "traymenu"
     property string current: ""
     property real anchorX: 0
     property real anchorWidth: 0
     property string screenName: ""
+    // Extra per-open data a card needs beyond the anchor (e.g. traymenu's
+    // SystemTrayItem). Not cleared on close() - BarPopout keeps the last
+    // non-empty one alive the same way it keeps `current` around, so the
+    // card has something to render while it fades out.
+    property var payload: null
 
-    function open(name, x, w, screen) {
+    function open(name, x, w, screen, data) {
         // Nothing playing means the media card has nothing to draw - refuse the
         // popout outright, so the bar widget and the IPC entry point agree.
         if (name === "media" && !Media.activePlayer)
@@ -28,6 +33,7 @@ Singleton {
         anchorX = x ?? 0;
         anchorWidth = w ?? 0;
         screenName = screen ?? "";
+        payload = data ?? null;
         current = name;
     }
 
@@ -35,12 +41,16 @@ Singleton {
         current = "";
     }
 
-    function toggle(name, x, w, screen) {
-        if (current === name && screenName === (screen ?? "")) {
+    function toggle(name, x, w, screen, data) {
+        // Toggle shut only when it's truly the *same* popout — for `traymenu`
+        // that means the same tray item, so right-clicking a different icon
+        // switches the menu instead of just closing the open one.
+        const samePayload = data === undefined || data === null || payload === data;
+        if (current === name && screenName === (screen ?? "") && samePayload) {
             close();
             return;
         }
-        open(name, x, w, screen);
+        open(name, x, w, screen, data);
     }
 
     // A player going away mid-popout leaves the card with nothing to show, so

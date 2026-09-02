@@ -114,6 +114,7 @@ Scope {
                     delegate: DesktopWidget {
                         required property var modelData
                         model: modelData
+                        screenName: win.modelData.name
                         area: contentArea
                         shiftHeld: win.shiftHeld
                         opacity: modelData.id === DesktopConfig.grabbedId ? 0.6 : 1

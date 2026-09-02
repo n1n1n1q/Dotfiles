@@ -5,6 +5,8 @@ import Quickshell
 import qs.config
 import qs.services
 import qs.services.niri
+import qs.modules.picker
+import qs.modules.settings
 import "calc.js" as Calc
 
 // What the launcher is currently searching for, and what it found.
@@ -45,6 +47,8 @@ Singleton {
         // A prefix means "only this" — the whole point of typing one is to
         // stop the apps from crowding out what you're actually after.
         if (root.mode) {
+            if (root.mode.list)
+                return root._listMode(root.mode.id, q);
             const only = root._extra(root.mode.id, q);
             return only ? [only] : [];
         }
@@ -71,6 +75,9 @@ Singleton {
         if (web)
             out.push(web);
 
+        for (const a of root._actions(q))
+            out.push(a);
+
         return out;
     }
 
@@ -91,8 +98,82 @@ Singleton {
             "icon": Apps.iconSource(action && action.icon ? action : entry),
             "glyph": "",
             "mono": false,
+            "favorite": !action && LauncherConfig.isFavorite(entry.id),
+            "appId": action ? "" : (entry.id ?? ""),
             "run": () => Apps.launch(entry, action)
         };
+    }
+
+    // --- wallpaper / theme list modes -------------------------------------
+    // The `;w` / `;t` prefixes list the folder / the installed schemes as rows
+    // you apply straight from the launcher, cover art / swatch and all.
+    function _listMode(id, q) {
+        const needle = q.toLowerCase();
+        const cap = LauncherConfig.maxResults;
+
+        if (id === "wallpaper") {
+            return Wallpaper.wallpapers
+                .map(p => ({ path: p,
+                             base: p.split("/").pop().replace(/\.[^.]+$/, "") }))
+                .filter(w => needle.length === 0
+                    || w.base.toLowerCase().includes(needle))
+                .slice(0, cap)
+                .map(w => ({
+                    "kind": "wallpaper", "name": w.base,
+                    "sub": w.path === Wallpaper.current ? "Current" : "",
+                    "type": "Wallpaper", "verb": "Apply",
+                    "icon": w.path, "glyph": "", "mono": false,
+                    "run": () => Wallpaper.select(w.path)
+                }));
+        }
+
+        if (id === "theme") {
+            return Appearance.schemeNames
+                .filter(n => needle.length === 0
+                    || n.toLowerCase().includes(needle))
+                .slice(0, cap)
+                .map(n => ({
+                    "kind": "theme",
+                    "name": n.charAt(0).toUpperCase() + n.slice(1),
+                    "sub": n === Appearance.schemeName ? "Current" : "",
+                    "type": "Theme", "verb": "Apply",
+                    "icon": "", "glyph": "", "mono": false,
+                    "swatch": ["red", "peach", "green", "blue", "mauve"]
+                        .map(k => (Appearance.schemes[n] ?? {})[k] ?? "#888888"),
+                    "run": () => Appearance.setScheme(n)
+                }));
+        }
+
+        return [];
+    }
+
+    // --- shell action rows -----------------------------------------------
+    // Appended after the app list (like the command / web extras) when the
+    // query brushes past one of their keywords — a way to reach the pickers
+    // and Settings without leaving the launcher.
+    function _actions(q) {
+        const s = q.toLowerCase();
+        const out = [];
+        const add = (name, sub, glyph, run) => out.push({
+            "kind": "action", "name": name, "sub": sub,
+            "type": "Shell", "verb": "Open",
+            "icon": "", "glyph": glyph, "mono": false, "run": run
+        });
+
+        if (/wall|bg|background/.test(s))
+            add("Wallpaper picker", "Browse and set the wallpaper", "󰸉",
+                () => PickerController.show("wallpaper", ""));
+        if (/theme|scheme|colou?r/.test(s))
+            add("Theme picker", "Browse and switch the colour scheme", "󰏘",
+                () => PickerController.show("theme", ""));
+        if (/random|shuffle|wall|bg/.test(s))
+            add("Random wallpaper", "Jump to a random one", "󰒟",
+                () => Wallpaper.random());
+        if (/settings|preferences|config|control/.test(s))
+            add("Settings", "Open the settings window", "󰒓",
+                () => SettingsController.show());
+
+        return out;
     }
 
     // One of the three non-app modes, or null when there's nothing to show —

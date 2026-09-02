@@ -4,22 +4,22 @@ import QtQuick.Controls
 import Quickshell
 import qs.config
 
-// The settings window: a floating xdg-toplevel (not a layer-shell surface, so
-// toggling `visible` is safe here). Qt's titlebar is suppressed via
-// QT_WAYLAND_DISABLE_WINDOWDECORATION in shell.qml — the in-window X closes it.
+// The settings window: a regular floating xdg-toplevel (not a layer-shell
+// surface, so toggling `visible` is safe here). Qt's titlebar is suppressed via
+// QT_WAYLAND_DISABLE_WINDOWDECORATION in shell.qml — the floating X closes it.
 // One instance lives in shell.qml; SettingsController drives it.
 //
-// Layout follows end-4's: a slim title strip across the top, a narrow icon+label
-// rail down the left that collapses to icons, and the page itself carrying no
-// title of its own — section headers do that work.
+// Layout takes after Caelestia's "Nexus": a wide icon+label rail down the left
+// with a big search field above it, and the page filling the rest — the page
+// carries its own large title, no global title strip.
 FloatingWindow {
     id: root
 
     visible: SettingsController.open
     title: "Shell Settings"
-    implicitWidth: 1000
-    implicitHeight: 660
-    minimumSize: Qt.size(760, 520)
+    implicitWidth: 1120
+    implicitHeight: 740
+    minimumSize: Qt.size(840, 560)
     color: Theme.bar.background
 
     onVisibleChanged: if (!visible && SettingsController.open) SettingsController.open = false
@@ -29,27 +29,29 @@ FloatingWindow {
     // order (`sections`) must match the StackLayout children below.
     readonly property var navGroups: [
         [ { slug: "welcome", icon: "󰋜", title: "Home", subtitle: "Overview", search: "welcome start" } ],
-        // What the shell looks like, then what each of its surfaces is made of.
-        [
-            { slug: "appearance", icon: "󰏘", title: "Appearance", subtitle: "Colours, wallpaper, fonts", search: "general theme colour color scheme font avatar profile picture background look" }
-        ],
-        [
-            { slug: "bar",           icon: "󰟀", title: "Bar",           subtitle: "Top bar layout",      search: "customization rice frame corners popout" },
-            { slug: "dashboard",     icon: "󰕮", title: "Dashboard",     subtitle: "Tiles & sliders",     search: "customization rice panel quick settings" },
-            { slug: "launcher",      icon: "󱓞", title: "Launcher",      subtitle: "App search",          search: "run open spotlight rofi fuzzel command math web" },
-            { slug: "widgets",       icon: "󰀻", title: "Widgets",       subtitle: "Desktop widgets",     search: "customization rice clock desktop stats" },
-            { slug: "notifications", icon: "󰎟", title: "Notifications", subtitle: "Toasts & OSD",        search: "popup toast osd on-screen display slider volume brightness corner" },
-            { slug: "presets",       icon: "󰏗", title: "Presets",       subtitle: "Saved setups",        search: "customization rice save theme profile" }
-        ],
+        // Connectivity up top — the pages reached for most often.
         [
             { slug: "wifi",      icon: "󰤨", title: "Wi‑Fi",     subtitle: "Wireless networking", search: "system network" },
             { slug: "bluetooth", icon: "󰂯", title: "Bluetooth", subtitle: "Devices & pairing",   search: "system" },
-            { slug: "sound",     icon: "󰕾", title: "Sound",     subtitle: "Output & input",       search: "system audio volume" }
+            { slug: "sound",     icon: "󰕾", title: "Sound",     subtitle: "Output & input",       search: "system audio volume" },
+            { slug: "calendar",  icon: "󰃭", title: "Calendar",  subtitle: "Google account & tasks", search: "google calendar tasks events sync account todo oauth agenda gmail" }
+        ],
+        // What the shell looks like, then what each of its surfaces is made of.
+        [
+            { slug: "general", icon: "󰏘", title: "General", subtitle: "Colours, wallpaper, fonts, presets", search: "appearance theme colour color scheme font avatar profile picture background look preset save profile rice" }
+        ],
+        [
+            { slug: "bar",           icon: "󰟀", title: "Bar",           subtitle: "Top bar layout",      search: "customization rice frame corners popout" },
+            { slug: "launcher",      icon: "󱓞", title: "Launcher",      subtitle: "App search",          search: "run open spotlight rofi fuzzel command math web" },
+            { slug: "widgets",       icon: "󰀻", title: "Widgets",       subtitle: "Desktop widgets",     search: "customization rice clock desktop stats" },
+            { slug: "notifications", icon: "󰎟", title: "Notifications", subtitle: "Toasts & OSD",        search: "popup toast osd on-screen display slider volume brightness corner" }
         ],
         [
             { slug: "display",  icon: "󰍹", title: "Display",  subtitle: "Monitors",        search: "monitor screen" },
             { slug: "keyboard", icon: "󰌌", title: "Keyboard", subtitle: "Layout & input",  search: "input layout" },
-            { slug: "niri",     icon: "󱂬", title: "niri",     subtitle: "Compositor",      search: "compositor input" }
+            { slug: "keybinds", icon: "󰥻", title: "Keybinds", subtitle: "Keyboard shortcuts", search: "shortcut hotkey bind key niri" },
+            { slug: "niri",     icon: "󱂬", title: "niri",     subtitle: "Compositor",      search: "compositor input" },
+            { slug: "lock",     icon: "󰌾", title: "Lock screen", subtitle: "Idle & security", search: "lock idle swayidle sleep suspend password screensaver security timeout" }
         ],
         [ { slug: "about", icon: "󰋽", title: "About", subtitle: "Shell & credits", search: "version credits" } ]
     ]
@@ -63,9 +65,6 @@ FloatingWindow {
     }
 
     property string query: ""
-    property bool railCollapsed: false
-
-    readonly property int railWidth: railCollapsed ? 60 : 208
 
     function sectionIndex(slug) {
         for (let i = 0; i < sections.length; i++)
@@ -82,217 +81,188 @@ FloatingWindow {
     }
 
     Rectangle {
+        id: shell
         anchors.fill: parent
         color: Theme.bar.background
 
-        ColumnLayout {
+        // Click anywhere that isn't a control → drop the search field's focus.
+        // Sits behind the content (clicks on real controls hit those first).
+        MouseArea {
             anchors.fill: parent
-            spacing: 0
+            z: -1
+            onPressed: mouse => { searchInput.focus = false; mouse.accepted = false; }
+        }
 
-            // --- title strip ------------------------------------------------
-            Item {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 46
+        RowLayout {
+            anchors.fill: parent
+            anchors.margins: Theme.spacing.xlarge
+            spacing: Theme.spacing.xlarge
 
-                Text {
-                    anchors.centerIn: parent
-                    text: "Settings"
-                    font.family: Theme.font.main
-                    font.pointSize: Theme.font.large
-                    font.weight: Theme.font.mediumWeight
-                    color: Theme.colors.textPrimary
-                }
-
-                // The window has no titlebar of its own — this is the way out.
-                IconButton {
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.rightMargin: Theme.spacing.normal
-                    icon: "󰅖"
-                    round: true
-                    size: 32
-                    onClicked: SettingsController.hide()
-                }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
+            // --- navigation rail -------------------------------------------
+            ColumnLayout {
                 Layout.fillHeight: true
-                spacing: 0
+                Layout.fillWidth: false
+                Layout.preferredWidth: Math.round(Math.max(258, Math.min(330, shell.width * 0.26)))
+                spacing: Theme.spacing.large
 
-                // --- navigation rail ---------------------------------------
-                Item {
-                    Layout.preferredWidth: root.railWidth
-                    Layout.fillHeight: true
+                // Search field
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 52
+                    radius: Theme.rounding.full
+                    color: Theme.colors.surface
+                    border.width: 1
+                    border.color: searchInput.activeFocus ? Theme.colors.accent : Theme.colors.borderSubtle
 
-                    Behavior on Layout.preferredWidth {
-                        NumberAnimation {
-                            duration: Theme.animation.normal
-                            easing.type: Easing.OutCubic
+                    Behavior on border.color { ColorAnimation { duration: Theme.animation.fast } }
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: Theme.spacing.large
+                        anchors.rightMargin: Theme.spacing.normal
+                        spacing: Theme.spacing.small
+
+                        Text {
+                            text: "󰍉"
+                            font.family: Theme.font.icon
+                            font.pointSize: Theme.font.large
+                            color: Theme.colors.textTertiary
                         }
+
+                        TextField {
+                            id: searchInput
+                            Layout.fillWidth: true
+                            placeholderText: "Search settings"
+                            color: Theme.colors.textPrimary
+                            placeholderTextColor: Theme.colors.textTertiary
+                            font.family: Theme.font.main
+                            font.pointSize: Theme.font.medium
+                            leftPadding: 0
+                            rightPadding: 0
+                            background: Item {}
+                            onTextChanged: root.query = text
+                            onAccepted: focus = false
+                            // Esc clears the query first, then drops focus —
+                            // only closing the window once the field is empty
+                            // and unfocused (see the Shortcut below).
+                            Keys.onEscapePressed: event => {
+                                if (text.length > 0) text = "";
+                                else focus = false;
+                                event.accepted = true;
+                            }
+                        }
+                    }
+                }
+
+                // Entry list — scrolls only when it overflows.
+                Flickable {
+                    id: navFlick
+
+                    readonly property bool scrollable: contentHeight > height
+
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
+                    contentWidth: width
+                    contentHeight: navCol.implicitHeight
+                    boundsBehavior: Flickable.StopAtBounds
+                    interactive: scrollable
+
+                    ScrollBar.vertical: ScrollBar {
+                        id: navScroll
+                        policy: ScrollBar.AsNeeded
+                        visible: navFlick.scrollable
                     }
 
                     ColumnLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: Theme.spacing.small
-                        anchors.rightMargin: Theme.spacing.small
-                        anchors.topMargin: Theme.spacing.tiny
-                        anchors.bottomMargin: Theme.spacing.small
-                        spacing: Theme.spacing.small
+                        id: navCol
+                        width: navFlick.width - (navScroll.visible ? navScroll.width + Theme.spacing.small : 0)
+                        spacing: Theme.spacing.tiny
 
-                        // Collapse control, plus the search box while there is
-                        // room for it.
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: Theme.spacing.tiny
+                        Repeater {
+                            model: root.navGroups
 
-                            IconButton {
-                                icon: "󰍜"
-                                round: true
-                                size: 34
-                                tooltip: root.railCollapsed ? "Expand" : "Collapse"
-                                onClicked: root.railCollapsed = !root.railCollapsed
-                            }
+                            delegate: ColumnLayout {
+                                id: navGroupItem
+                                required property var modelData
+                                required property int index
+                                readonly property var entries: modelData
 
-                            Rectangle {
                                 Layout.fillWidth: true
-                                visible: !root.railCollapsed
-                                implicitHeight: 34
-                                radius: height / 2
-                                color: Theme.colors.surface
-
-                                RowLayout {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: Theme.spacing.normal
-                                    anchors.rightMargin: Theme.spacing.small
-                                    spacing: Theme.spacing.tiny
-
-                                    Text {
-                                        text: "󰍉"
-                                        font.family: Theme.font.icon
-                                        font.pointSize: Theme.font.normal
-                                        color: Theme.colors.textTertiary
-                                    }
-
-                                    TextField {
-                                        Layout.fillWidth: true
-                                        placeholderText: "Search"
-                                        color: Theme.colors.textPrimary
-                                        placeholderTextColor: Theme.colors.textTertiary
-                                        font.family: Theme.font.main
-                                        font.pointSize: Theme.font.small
-                                        leftPadding: 0
-                                        rightPadding: 0
-                                        background: Item {}
-                                        onTextChanged: root.query = text
-                                    }
-                                }
-                            }
-                        }
-
-                        // Entry list. Scrolls only when it overflows a short
-                        // window.
-                        Flickable {
-                            id: navFlick
-
-                            readonly property bool scrollable: contentHeight > height
-
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            clip: true
-                            contentWidth: width
-                            contentHeight: navCol.implicitHeight
-                            boundsBehavior: Flickable.StopAtBounds
-                            // A live Flickable steals the press from whatever is
-                            // under it once the pointer drifts past the drag
-                            // threshold — which reads as a nav entry that simply
-                            // didn't take the click. Nothing to scroll, nothing
-                            // to drag.
-                            interactive: scrollable
-
-                            // The Basic style keeps the scrollbar mapped and
-                            // interactive whenever the policy isn't AlwaysOff —
-                            // it only fades the *handle* out — so by default it
-                            // owns a dead strip down the right edge of every nav
-                            // row. Hide it when it can't scroll, and keep the
-                            // rows out from under it when it can.
-                            ScrollBar.vertical: ScrollBar {
-                                id: navScroll
-                                policy: ScrollBar.AsNeeded
-                                visible: navFlick.scrollable
-                            }
-
-                            ColumnLayout {
-                                id: navCol
-                                width: navFlick.width - (navScroll.visible ? navScroll.width : 0)
-                                spacing: 2
+                                Layout.topMargin: index === 0 ? 0 : Theme.spacing.medium
+                                // Entries in a group sit close so their
+                                // segmented rounding reads as one block.
+                                spacing: Theme.spacing.tiny
 
                                 Repeater {
-                                    model: root.navGroups
+                                    model: navGroupItem.entries
 
-                                    delegate: ColumnLayout {
+                                    delegate: NavEntry {
                                         required property var modelData
                                         required property int index
-
-                                        Layout.fillWidth: true
-                                        Layout.topMargin: index === 0 ? 0 : Theme.spacing.small
-                                        spacing: 2
-
-                                        Repeater {
-                                            model: modelData
-
-                                            delegate: NavEntry {
-                                                required property var modelData
-                                                visible: root.matches(modelData)
-                                                icon: modelData.icon
-                                                title: modelData.title
-                                                subtitle: modelData.subtitle
-                                                collapsed: root.railCollapsed
-                                                selected: SettingsController.section === modelData.slug
-                                                onClicked: SettingsController.section = modelData.slug
-                                            }
-                                        }
+                                        visible: root.matches(modelData)
+                                        icon: modelData.icon
+                                        title: modelData.title
+                                        subtitle: modelData.subtitle
+                                        selected: SettingsController.section === modelData.slug
+                                        blockPosition: root.query.length > 0
+                                                || navGroupItem.entries.length === 1 ? "single"
+                                            : index === 0 ? "top"
+                                            : index === navGroupItem.entries.length - 1 ? "bottom"
+                                            : "middle"
+                                        onClicked: SettingsController.section = modelData.slug
                                     }
                                 }
                             }
                         }
                     }
                 }
+            }
 
-                // --- content ------------------------------------------------
+            // --- content --------------------------------------------------
+            Item {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+
                 StackLayout {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    Layout.leftMargin: Theme.spacing.small
-                    Layout.rightMargin: Theme.spacing.medium
-                    Layout.topMargin: Theme.spacing.tiny
-                    Layout.bottomMargin: Theme.spacing.small
+                    anchors.fill: parent
                     currentIndex: root.sectionIndex(SettingsController.section)
 
+                    // Order MUST match the flattened `sections` list above.
                     WelcomePage {
                         onNavigate: slug => SettingsController.section = slug
                     }
-                    AppearancePage {}
-                    BarPage {}
-                    DashboardPage {}
-                    LauncherPage {}
-                    WidgetsPage {}
-                    NotificationsPage {}
-                    PresetsPage {}
                     WiFiPage {}
                     BluetoothPage {}
                     SoundPage {}
+                    CalendarPage {}
+                    GeneralPage {}
+                    BarPage {}
+                    LauncherPage {}
+                    WidgetsPage {}
+                    NotificationsPage {}
                     DisplayPage {}
                     KeyboardPage {}
+                    KeybindsPage {}
                     NiriPage {}
+                    LockPage {}
                     AboutPage {}
+                }
+
+                // Floating close button, over the top-right of the content.
+                IconButton {
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    icon: "󰅖"
+                    round: true
+                    size: 40
+                    onClicked: SettingsController.hide()
                 }
             }
         }
     }
 
-    Shortcut {
-        sequence: "Escape"
-        onActivated: SettingsController.hide()
-    }
+    // Escape does NOT close the window (too easy to lose your place mid-edit) —
+    // it only clears / unfocuses the search field, handled on the field itself.
+    // Close with the X or by toggling the keybind.
 }

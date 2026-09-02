@@ -37,6 +37,12 @@ Item {
 
     readonly property int pad: Math.round((compact ? 12 : Theme.popup.padding) * sc)
     readonly property int gap: Math.round((compact ? 10 : Theme.spacing.medium) * sc)
+
+    // Text scale: the desktop widget keeps the base type scale; the bar popout
+    // matches the bar's own text so it reads as an extension of it.
+    readonly property int fTitle: Math.round((compact ? Theme.font.large : Theme.bar.fontSize) * sc)
+    readonly property int fMeta:  Math.round((compact ? Theme.font.normal : Theme.font.medium) * sc)
+    readonly property int fTime:  Math.round((compact ? Theme.font.small : Theme.font.normal) * sc)
     readonly property int artSize: Math.round(
         (vertical ? (compact ? 112 : 150) : (compact ? 62 : 104)) * sc)
 
@@ -218,7 +224,7 @@ Item {
                 text: root.has ? Media.title : "Nothing playing"
                 elide: Text.ElideRight
                 font.family: Theme.font.main
-                font.pointSize: Math.round(Theme.font.large * root.sc)
+                font.pointSize: root.fTitle
                 font.weight: Theme.font.semiBold
                 color: Theme.colors.textPrimary
             }
@@ -232,7 +238,7 @@ Item {
                     : [Media.artist, Media.album].filter(s => s && s.length > 0).join("  ·  ")
                 elide: Text.ElideRight
                 font.family: Theme.font.main
-                font.pointSize: Math.round(Theme.font.normal * root.sc)
+                font.pointSize: root.fMeta
                 color: Theme.colors.textSecondary
             }
 
@@ -290,7 +296,7 @@ Item {
                     Text {
                         text: root.fmt(seek.pressed ? seek.value * Media.length : Media.position)
                         font.family: Theme.font.main
-                        font.pointSize: Math.round(Theme.font.small * root.sc)
+                        font.pointSize: root.fTime
                         font.features: ({ "tnum": 1 })
                         color: Theme.colors.textSecondary
                     }
@@ -298,7 +304,7 @@ Item {
                     Text {
                         text: root.fmt(Media.length)
                         font.family: Theme.font.main
-                        font.pointSize: Math.round(Theme.font.small * root.sc)
+                        font.pointSize: root.fTime
                         font.features: ({ "tnum": 1 })
                         color: Theme.colors.textSecondary
                     }

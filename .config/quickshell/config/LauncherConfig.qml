@@ -11,8 +11,8 @@ import Quickshell.Io
 //     "maxResults": 10,
 //     "frecency": true,
 //     "showExtras": true,
-//     "terminal": "alacritty",
-//     "webSearchUrl": "https://duckduckgo.com/?q=",
+//     "terminal": "kitty",
+//     "webSearchUrl": "https://www.google.com/search?q=",
 //     "prefixes": { "command": ">", "math": "=", "web": "?" }
 //   }
 //
@@ -33,6 +33,43 @@ Singleton {
     function setShowExtras(v) { adapter.showExtras = v; }
     function setTerminal(t)   { adapter.terminal = t; }
     function setWebSearchUrl(u) { adapter.webSearchUrl = u; }
+
+    // --- favourites & exclusions ------------------------------------------
+    // Two lists of .desktop ids: `favorites` lead the list when the launcher
+    // opens with no query (and win ties once you type); `hidden` never show at
+    // all. Both are edited by right-clicking a launcher row, or from
+    // Settings > Launcher. A `property var` only notifies on reassignment, so
+    // every mutator clones → changes → reassigns (the BarConfig convention).
+    readonly property var favoriteIds: adapter.favorites ?? []
+    readonly property var hiddenIds: adapter.hidden ?? []
+
+    function isFavorite(id) { return favoriteIds.indexOf(id) >= 0; }
+    function isHidden(id)   { return hiddenIds.indexOf(id) >= 0; }
+
+    function toggleFavorite(id) {
+        if (!id || id.length === 0) return;
+        const l = favoriteIds.slice();
+        const i = l.indexOf(id);
+        if (i >= 0) l.splice(i, 1); else l.push(id);
+        adapter.favorites = l;
+    }
+    function removeFavorite(id) {
+        const l = favoriteIds.filter(x => x !== id);
+        if (l.length !== favoriteIds.length) adapter.favorites = l;
+    }
+    function toggleHidden(id) {
+        if (!id || id.length === 0) return;
+        const l = hiddenIds.slice();
+        const i = l.indexOf(id);
+        if (i >= 0) l.splice(i, 1); else l.push(id);
+        adapter.hidden = l;
+        // A hidden app can't also be a favourite.
+        if (i < 0) removeFavorite(id);
+    }
+    function removeHidden(id) {
+        const l = hiddenIds.filter(x => x !== id);
+        if (l.length !== hiddenIds.length) adapter.hidden = l;
+    }
 
     // --- the non-app modes --------------------------------------------------
     // A query opening with one of these characters is *only* that mode — the
@@ -55,6 +92,16 @@ Singleton {
             id: "web", prefix: adapter.prefixes?.web ?? "?",
             name: "Web search", icon: "󰖟", verb: "Search",
             desc: "Open the search engine below with the rest of the line"
+        },
+        {
+            id: "wallpaper", prefix: adapter.prefixes?.wallpaper ?? ";w",
+            name: "Wallpaper", icon: "󰸉", verb: "Apply", list: true,
+            desc: "Pick a wallpaper from the folder"
+        },
+        {
+            id: "theme", prefix: adapter.prefixes?.theme ?? ";t",
+            name: "Theme", icon: "󰏘", verb: "Apply", list: true,
+            desc: "Switch the colour scheme"
         }
     ]
 
@@ -93,9 +140,12 @@ Singleton {
         "maxResults": 10,
         "frecency": true,
         "showExtras": true,
-        "terminal": "alacritty",
-        "webSearchUrl": "https://duckduckgo.com/?q=",
-        "prefixes": { "command": ">", "math": "=", "web": "?" }
+        "terminal": "kitty",
+        "webSearchUrl": "https://www.google.com/search?q=",
+        "prefixes": { "command": ">", "math": "=", "web": "?",
+                      "wallpaper": ";w", "theme": ";t" },
+        "favorites": [],
+        "hidden": []
     })
 
     function reset() {
@@ -105,6 +155,8 @@ Singleton {
         adapter.terminal = defaults.terminal;
         adapter.webSearchUrl = defaults.webSearchUrl;
         adapter.prefixes = JSON.parse(JSON.stringify(defaults.prefixes));
+        adapter.favorites = [];
+        adapter.hidden = [];
     }
 
     // --- preset slice -------------------------------------------------------
@@ -115,7 +167,9 @@ Singleton {
             "showExtras": adapter.showExtras,
             "terminal": adapter.terminal,
             "webSearchUrl": adapter.webSearchUrl,
-            "prefixes": adapter.prefixes ?? defaults.prefixes
+            "prefixes": adapter.prefixes ?? defaults.prefixes,
+            "favorites": adapter.favorites ?? [],
+            "hidden": adapter.hidden ?? []
         }));
     }
 
@@ -129,6 +183,8 @@ Singleton {
         if (o.prefixes)
             adapter.prefixes = Object.assign(
                 JSON.parse(JSON.stringify(defaults.prefixes)), o.prefixes);
+        if (o.favorites !== undefined) adapter.favorites = o.favorites.slice();
+        if (o.hidden !== undefined) adapter.hidden = o.hidden.slice();
     }
 
     // There is one launcher per screen, so opening it goes through these
@@ -175,6 +231,8 @@ Singleton {
             property string terminal: root.defaults.terminal
             property string webSearchUrl: root.defaults.webSearchUrl
             property var prefixes: root.defaults.prefixes
+            property var favorites: []
+            property var hidden: []
         }
     }
 }

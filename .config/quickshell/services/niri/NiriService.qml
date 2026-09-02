@@ -67,8 +67,30 @@ Singleton {
             .sort((a, b) => a.idx - b.idx)
     }
 
+    // The workspace currently shown on a given output (niri keeps one `is_active`
+    // per output; `is_focused` is the single global one).
+    function activeWorkspaceForOutput(outputName) {
+        return workspaces.find(w => w.output === outputName && w.is_active) ?? null
+    }
+
     function windowCountForWorkspace(workspaceId) {
         return windows.filter(w => w.workspace_id === workspaceId).length
+    }
+
+    // Windows on one workspace in left-to-right / top-to-bottom visual order:
+    // tiled windows by their `pos_in_scrolling_layout` ([column, row], both
+    // 1-based), then floating windows after them, oldest id first as a stable
+    // tiebreak.
+    function windowsForWorkspace(workspaceId) {
+        const col = w => w.layout?.pos_in_scrolling_layout?.[0] ?? 1e9
+        const row = w => w.layout?.pos_in_scrolling_layout?.[1] ?? 0
+        return windows
+            .filter(w => w.workspace_id === workspaceId)
+            .sort((a, b) =>
+                (a.is_floating ? 1 : 0) - (b.is_floating ? 1 : 0)
+                || col(a) - col(b)
+                || row(a) - row(b)
+                || a.id - b.id)
     }
 
     function isWorkspaceOccupied(workspaceId) {

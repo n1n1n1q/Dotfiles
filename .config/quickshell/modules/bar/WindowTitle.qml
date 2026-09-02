@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.services.niri
+import qs.modules.popout
 
 // Left-of-bar focused-window label, and the dashboard toggle (replaced the
 // old gear ConfigButton). Two stacked lines with a tight negative leading
@@ -17,7 +18,7 @@ Item {
     property real barHeight: 50
 
     readonly property int hPad: Theme.spacing.normal
-    readonly property int maxTextWidth: 440
+    readonly property int maxTextWidth: BarConfig.widgetSetting("windowTitle", "maxWidth")
     readonly property string appId: NiriService.activeWindowAppId
     readonly property string title: NiriService.activeWindowTitle
 
@@ -74,6 +75,9 @@ Item {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: DashboardConfig.requestToggle(root.parentWindow?.screen?.name ?? "")
+        onClicked: {
+            PopoutController.close();
+            DashboardConfig.requestToggle(root.parentWindow?.screen?.name ?? "");
+        }
     }
 }

@@ -21,12 +21,17 @@ Singleton {
     readonly property string fontMono: adapter.fontMono
     readonly property string wallpaper: adapter.wallpaper
     readonly property string avatar: adapter.avatar
+    // How every level slider in the shell draws — the dashboard rows and the
+    // OSD pill both read this (one of DashboardConfig.sliderStyles).
+    readonly property string sliderStyle:
+        DashboardConfig.sliderStyleEntry(adapter.sliderStyle).value
 
     function setScheme(name)   { adapter.scheme = name; }
     function setFont(family)   { adapter.fontFamily = family; }
     function setMono(family)   { adapter.fontMono = family; }
     function setWallpaper(p)   { adapter.wallpaper = p; }
     function setAvatar(p)      { adapter.avatar = p; }
+    function setSliderStyle(s) { adapter.sliderStyle = DashboardConfig.sliderStyleEntry(s).value; }
 
     // --- preset slice -------------------------------------------------------
     // Everything appearance.json holds, as a plain object. `Presets` stitches
@@ -38,7 +43,8 @@ Singleton {
             "fontFamily": adapter.fontFamily,
             "fontMono": adapter.fontMono,
             "wallpaper": adapter.wallpaper,
-            "avatar": adapter.avatar
+            "avatar": adapter.avatar,
+            "sliderStyle": adapter.sliderStyle
         };
     }
 
@@ -51,6 +57,7 @@ Singleton {
         if (o.fontMono !== undefined) adapter.fontMono = o.fontMono;
         if (o.wallpaper !== undefined) adapter.wallpaper = o.wallpaper;
         if (o.avatar !== undefined) adapter.avatar = o.avatar;
+        if (o.sliderStyle !== undefined) root.setSliderStyle(o.sliderStyle);
     }
 
     // --- colour schemes -----------------------------------------------------
@@ -191,6 +198,94 @@ Singleton {
             "peach": "#e69875", "yellow": "#dbbc7f", "green": "#a7c080",
             "teal": "#83c092", "sky": "#7fbbb3", "sapphire": "#7fbbb3",
             "blue": "#7fbbb3", "lavender": "#d699b6"
+        },
+        "kanagawa": {
+            "base": "#1f1f28", "mantle": "#16161d", "crust": "#181820",
+            "surface0": "#223249", "surface1": "#2a2a37", "surface2": "#363646",
+            "overlay0": "#54546d", "overlay1": "#727169", "overlay2": "#938aa9",
+            "subtext0": "#c8c093", "subtext1": "#dcd7ba", "text": "#dcd7ba",
+            "rosewater": "#d7c4a1", "flamingo": "#e46876", "pink": "#d27e99",
+            "mauve": "#957fb8", "red": "#c34043", "maroon": "#ff5d62",
+            "peach": "#ffa066", "yellow": "#e6c384", "green": "#98bb6c",
+            "teal": "#7aa89f", "sky": "#7fb4ca", "sapphire": "#658594",
+            "blue": "#7e9cd8", "lavender": "#9cabca"
+        },
+        "kanagawa-dragon": {
+            "base": "#181616", "mantle": "#12120f", "crust": "#0d0c0c",
+            "surface0": "#223249", "surface1": "#282727", "surface2": "#393836",
+            "overlay0": "#625e5a", "overlay1": "#737c73", "overlay2": "#a6a69c",
+            "subtext0": "#c5c9c5", "subtext1": "#c8c093", "text": "#c5c9c5",
+            "rosewater": "#c4b28a", "flamingo": "#c4746e", "pink": "#a292a3",
+            "mauve": "#8992a7", "red": "#c4746e", "maroon": "#e46876",
+            "peach": "#b6927b", "yellow": "#c4b28a", "green": "#8a9a7b",
+            "teal": "#8ea4a2", "sky": "#8ba4b0", "sapphire": "#658594",
+            "blue": "#8ba4b0", "lavender": "#a292a3"
+        },
+        "solarized": {
+            "base": "#002b36", "mantle": "#00252e", "crust": "#001f27",
+            "surface0": "#073642", "surface1": "#0e4b59", "surface2": "#15596b",
+            "overlay0": "#586e75", "overlay1": "#657b83", "overlay2": "#839496",
+            "subtext0": "#93a1a1", "subtext1": "#a6b6b6", "text": "#eee8d5",
+            "rosewater": "#eee8d5", "flamingo": "#e5b5a0", "pink": "#d33682",
+            "mauve": "#6c71c4", "red": "#dc322f", "maroon": "#cb4b16",
+            "peach": "#cb4b16", "yellow": "#b58900", "green": "#859900",
+            "teal": "#2aa198", "sky": "#2aa198", "sapphire": "#268bd2",
+            "blue": "#268bd2", "lavender": "#6c71c4"
+        },
+        "solarized-light": {
+            "base": "#fdf6e3", "mantle": "#f4edda", "crust": "#eee8d5",
+            "surface0": "#eee8d5", "surface1": "#e0dab6", "surface2": "#d3cb9e",
+            "overlay0": "#93a1a1", "overlay1": "#839496", "overlay2": "#657b83",
+            "subtext0": "#586e75", "subtext1": "#4a5f66", "text": "#073642",
+            "rosewater": "#586e75", "flamingo": "#cb4b16", "pink": "#d33682",
+            "mauve": "#6c71c4", "red": "#dc322f", "maroon": "#cb4b16",
+            "peach": "#cb4b16", "yellow": "#b58900", "green": "#859900",
+            "teal": "#2aa198", "sky": "#2aa198", "sapphire": "#268bd2",
+            "blue": "#268bd2", "lavender": "#6c71c4"
+        },
+        "gruvbox-light": {
+            "base": "#fbf1c7", "mantle": "#f2e5bc", "crust": "#ebdbb2",
+            "surface0": "#ebdbb2", "surface1": "#d5c4a1", "surface2": "#bdae93",
+            "overlay0": "#a89984", "overlay1": "#928374", "overlay2": "#7c6f64",
+            "subtext0": "#665c54", "subtext1": "#504945", "text": "#3c3836",
+            "rosewater": "#504945", "flamingo": "#af3a03", "pink": "#b16286",
+            "mauve": "#8f3f71", "red": "#cc241d", "maroon": "#9d0006",
+            "peach": "#d65d0e", "yellow": "#d79921", "green": "#98971a",
+            "teal": "#689d6a", "sky": "#458588", "sapphire": "#076678",
+            "blue": "#458588", "lavender": "#b16286"
+        },
+        "onedark": {
+            "base": "#282c34", "mantle": "#21252b", "crust": "#1b1f23",
+            "surface0": "#31363f", "surface1": "#3b4048", "surface2": "#4b5263",
+            "overlay0": "#5c6370", "overlay1": "#6b7280", "overlay2": "#828997",
+            "subtext0": "#a0a8b7", "subtext1": "#b6beca", "text": "#abb2bf",
+            "rosewater": "#e5c07b", "flamingo": "#e06c75", "pink": "#c678dd",
+            "mauve": "#c678dd", "red": "#e06c75", "maroon": "#be5046",
+            "peach": "#d19a66", "yellow": "#e5c07b", "green": "#98c379",
+            "teal": "#56b6c2", "sky": "#56b6c2", "sapphire": "#61afef",
+            "blue": "#61afef", "lavender": "#c678dd"
+        },
+        "ayu": {
+            "base": "#0b0e14", "mantle": "#0d1017", "crust": "#080a0f",
+            "surface0": "#131721", "surface1": "#1c212b", "surface2": "#272d38",
+            "overlay0": "#3d4149", "overlay1": "#565b66", "overlay2": "#787b80",
+            "subtext0": "#acb1bb", "subtext1": "#bfbdb6", "text": "#bfbdb6",
+            "rosewater": "#f5d7a7", "flamingo": "#f28779", "pink": "#d2a6ff",
+            "mauve": "#d2a6ff", "red": "#f26d78", "maroon": "#f28779",
+            "peach": "#ff8f40", "yellow": "#ffb454", "green": "#aad94c",
+            "teal": "#95e6cb", "sky": "#5ac2d9", "sapphire": "#39bae6",
+            "blue": "#59c2ff", "lavender": "#73b8ff"
+        },
+        "oxocarbon": {
+            "base": "#161616", "mantle": "#131313", "crust": "#0f0f0f",
+            "surface0": "#262626", "surface1": "#333333", "surface2": "#393939",
+            "overlay0": "#525252", "overlay1": "#6f6f6f", "overlay2": "#8d8d8d",
+            "subtext0": "#a8a8a8", "subtext1": "#c6c6c6", "text": "#f2f4f8",
+            "rosewater": "#ffd6e8", "flamingo": "#ff7eb6", "pink": "#ff7eb6",
+            "mauve": "#be95ff", "red": "#ee5396", "maroon": "#ff7eb6",
+            "peach": "#3ddbd9", "yellow": "#08bdba", "green": "#42be65",
+            "teal": "#3ddbd9", "sky": "#82cfff", "sapphire": "#33b1ff",
+            "blue": "#78a9ff", "lavender": "#be95ff"
         }
     })
 
@@ -304,6 +399,7 @@ Singleton {
             property string fontMono: "MonaspiceNe Nerd Font"
             property string wallpaper: ""
             property string avatar: ""
+            property string sliderStyle: "progress"
         }
     }
 }

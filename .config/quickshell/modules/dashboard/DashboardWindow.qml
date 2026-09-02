@@ -36,16 +36,11 @@ PanelWindow {
     exclusiveZone: 0
     color: "transparent"
 
-    // Never take keyboard focus while it's just open - niri has nothing like
-    // Hyprland's HyprlandFocusGrab, and grabbing focus here was stealing it
-    // from whatever window was focused before the dashboard opened (and
-    // causing flaky click-to-dismiss behavior in the process). Everything in
-    // the panel is mouse-driven, so it doesn't need focus at all.
-    //
-    // Layout editing is the exception: it's a deliberate modal session that
-    // ends on Enter / Esc, the same as the bar editor's overlay.
-    WlrLayershell.keyboardFocus: editing
-        ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+    // Grab keyboard focus while open so Escape closes it (and Enter / Esc drive
+    // layout editing) — same as the launcher overlay. niri hands focus back to
+    // the previously focused window when it closes.
+    WlrLayershell.keyboardFocus: open
+        ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
     // The dashboard's own sliders show the volume / brightness level as you
     // drag them, so hold the OSD inhibit while it's open - otherwise every
@@ -113,16 +108,21 @@ PanelWindow {
             color: Qt.rgba(0, 0, 0, 0.25)
         }
 
-        // Enter saves, Esc drops a held tile and then ends the session.
+        // Esc closes the panel; while editing, Esc drops a held tile / ends the
+        // session and Enter saves it.
         Item {
             anchors.fill: parent
-            focus: root.editing
+            focus: root.open
             Keys.onPressed: e => {
                 if (e.key === Qt.Key_Escape) {
-                    if (DashboardConfig.grabbing) DashboardConfig.cancelGrab();
-                    else DashboardConfig.cancelEdit();
+                    if (root.editing) {
+                        if (DashboardConfig.grabbing) DashboardConfig.cancelGrab();
+                        else DashboardConfig.cancelEdit();
+                    } else {
+                        root.hide();
+                    }
                     e.accepted = true;
-                } else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) {
+                } else if (root.editing && (e.key === Qt.Key_Return || e.key === Qt.Key_Enter)) {
                     DashboardConfig.commitEdit();
                     e.accepted = true;
                 }
@@ -173,12 +173,25 @@ PanelWindow {
             clip: true
 
             ScrollView {
+                id: dashScroll
                 anchors.fill: parent
                 anchors.margins: Theme.padding.xlarge
                 clip: true
+                contentWidth: availableWidth
+                // Reserve real width for the vertical scrollbar instead of
+                // letting it overlay the content — the Basic style's scrollbar
+                // keeps an interactive hit-strip even at 0 opacity, which was
+                // swallowing the notification cards' right-edge swipe-to-delete
+                // the moment an expanded group made the list overflow.
+                rightPadding: dashVBar.visible ? dashVBar.width + Theme.spacing.tiny : 0
+                ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+                ScrollBar.vertical: ScrollBar {
+                    id: dashVBar
+                    policy: ScrollBar.AsNeeded
+                }
 
                 ColumnLayout {
-                    width: dashboard.width - Theme.padding.xlarge * 2
+                    width: dashScroll.availableWidth
                     spacing: Theme.spacing.large
 
                     RowLayout {
@@ -253,7 +266,7 @@ PanelWindow {
                                 anchors.centerIn: parent
                                 text: "󰀄" // nf-md-account
                                 font.family: Theme.font.icon
-                                font.pointSize: Theme.font.xlarge
+                                font.pointSize: Theme.dashboard.fontXlarge
                                 color: Theme.colors.accent
                                 visible: userIcon.status !== Image.Ready
                             }
@@ -266,7 +279,7 @@ PanelWindow {
                             Text {
                                 text: System.userName
                                 font.family: Theme.font.main
-                                font.pointSize: Theme.font.large
+                                font.pointSize: Theme.dashboard.fontLarge
                                 font.weight: Theme.font.mediumWeight
                                 color: Theme.colors.textPrimary
                             }
@@ -275,7 +288,7 @@ PanelWindow {
                                 id: uptimeText
                                 text: "Uptime: Loading..."
                                 font.family: Theme.font.main
-                                font.pointSize: Theme.font.small
+                                font.pointSize: Theme.dashboard.fontSmall
                                 color: Theme.colors.textTertiary
 
                                 Timer {
@@ -290,6 +303,38 @@ PanelWindow {
                                         uptimeText.text = `Uptime: ${hours}h ${minutes}m`
                                     }
                                 }
+                            }
+                        }
+
+                        // Edit the panel's layout in place — hidden while a
+                        // session is already running (the dock has its own
+                        // Done / Cancel).
+                        Rectangle {
+                            Layout.alignment: Qt.AlignVCenter
+                            visible: !root.editing
+                            implicitWidth: 32
+                            implicitHeight: 32
+                            radius: height / 2
+                            color: editPenMouse.containsMouse
+                                ? Theme.colors.surfaceVariant : "transparent"
+
+                            Behavior on color { ColorAnimation { duration: Theme.animation.fast } }
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "󰏫"
+                                font.family: Theme.font.icon
+                                font.pointSize: Theme.dashboard.fontMedium
+                                color: editPenMouse.containsMouse
+                                    ? Theme.colors.accent : Theme.colors.textSecondary
+                            }
+
+                            MouseArea {
+                                id: editPenMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: DashboardConfig.beginEdit()
                             }
                         }
                     }

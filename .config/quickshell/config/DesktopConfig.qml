@@ -135,12 +135,67 @@ Singleton {
     function remove(id) {
         _commit(_clone().filter(w => w.id !== id));
     }
+
+    // --- by-type helpers (Settings > Widgets is a plain on/off per type) ---
+    function hasType(type) { return adapter.widgets.some(w => w.type === type); }
+    function firstOfType(type) { return adapter.widgets.find(w => w.type === type) ?? null; }
+    function removeType(type) { _commit(_clone().filter(w => w.type !== type)); }
+
+    // Turn a type on: one instance, on every display, near the centre of the
+    // primary output (nudged so a second type doesn't land exactly on it).
+    function enableType(type) {
+        if (!type || hasType(type)) return "";
+        const s = Quickshell.screens.length > 0 ? Quickshell.screens[0] : null;
+        const n = adapter.widgets.length;
+        const x = (s ? s.width / 2 - 100 : 200) + n * 28;
+        const y = (s ? s.height / 2 - 60 : 160) + n * 28;
+        return addAt(type, "all", x, y);
+    }
+
+    function setPropForType(type, key, val) {
+        const a = _clone();
+        for (const w of a) {
+            if (w.type !== type) continue;
+            if (!w.props) w.props = {};
+            w.props[key] = val;
+        }
+        _commit(a);
+    }
+    function setScreenForType(type, screen) {
+        const a = _clone();
+        for (const w of a) if (w.type === type) w.screen = screen;
+        _commit(a);
+    }
     function move(id, x, y) {
         const a = _clone();
         const w = _find(a, id);
         if (!w) return;
         w.x = Math.round(x);
         w.y = Math.round(y);
+        _commit(a);
+    }
+
+    // Where a widget sits on a given output. A widget shown on every screen
+    // (`screen: "all"`) keeps a per-output override map (`posByScreen`) so it
+    // can sit in a different spot on each monitor; `x`/`y` are the fallback for
+    // any screen without one. A single-screen widget just uses `x`/`y`.
+    function posFor(w, screenName) {
+        if (w && w.posByScreen && w.posByScreen[screenName])
+            return w.posByScreen[screenName];
+        return { x: w ? w.x : 0, y: w ? w.y : 0 };
+    }
+    function moveOn(id, screenName, x, y) {
+        const a = _clone();
+        const w = _find(a, id);
+        if (!w) return;
+        const rx = Math.round(x), ry = Math.round(y);
+        if (w.screen === "all" && screenName && screenName.length > 0) {
+            if (!w.posByScreen) w.posByScreen = ({});
+            w.posByScreen[screenName] = { x: rx, y: ry };
+        } else {
+            w.x = rx;
+            w.y = ry;
+        }
         _commit(a);
     }
     function setScreen(id, screen) {

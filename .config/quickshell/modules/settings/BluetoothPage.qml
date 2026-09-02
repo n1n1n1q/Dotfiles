@@ -46,6 +46,7 @@ SettingsPage {
 
         SettingsRow {
             visible: Bluetooth.enabled
+            compact: true
             icon: "󰈈"
             title: "Discoverable"
             subtitle: "Let nearby devices find this machine"
@@ -57,6 +58,7 @@ SettingsPage {
 
         SettingsRow {
             visible: Bluetooth.enabled
+            compact: true
             icon: "󰌷"
             title: "Pairable"
             subtitle: "Accept new pairing requests"

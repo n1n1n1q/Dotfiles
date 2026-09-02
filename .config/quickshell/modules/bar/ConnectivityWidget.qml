@@ -4,6 +4,7 @@ import qs.config
 import qs.services
 import qs.widgets
 import qs.modules.settings
+import qs.modules.popout
 
 // One compact block of three live connectivity glyphs — Wi‑Fi, Bluetooth,
 // sound. Each glyph reacts to its service (signal strength, BT state, volume /
@@ -40,6 +41,7 @@ Item {
         spacing: Theme.spacing.large
 
         ConnIcon {
+            visible: BarConfig.widgetSetting("connectivity", "showWifi")
             glyphs: WiFi.iconStates
             text: WiFi.icon
             color: !WiFi.enabled ? Theme.colors.textTertiary
@@ -48,6 +50,7 @@ Item {
         }
 
         ConnIcon {
+            visible: BarConfig.widgetSetting("connectivity", "showBluetooth")
             glyphs: Bluetooth.iconStates
             text: Bluetooth.icon
             color: !Bluetooth.available || !Bluetooth.enabled ? Theme.colors.textTertiary
@@ -56,6 +59,7 @@ Item {
         }
 
         ConnIcon {
+            visible: BarConfig.widgetSetting("connectivity", "showSound")
             glyphs: Audio.volumeGlyphs
             text: {
                 if (Audio.muted || Audio.volume <= 0) return "󰝟"        // volume-mute
@@ -74,6 +78,9 @@ Item {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: SettingsController.show("wifi")
+        onClicked: {
+            PopoutController.close();
+            SettingsController.show("wifi");
+        }
     }
 }

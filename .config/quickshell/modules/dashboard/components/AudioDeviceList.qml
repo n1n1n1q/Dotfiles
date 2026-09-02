@@ -24,7 +24,7 @@ Rectangle {
         Text {
             text: "\udb81\udd7e Output Devices"
             font.family: Theme.font.icon
-            font.pointSize: Theme.fontSize.normal
+            font.pointSize: Theme.dashboard.fontNormal
             font.bold: true
             color: Theme.colors.accent
             Layout.bottomMargin: Theme.spacing.tiny
@@ -58,7 +58,7 @@ Rectangle {
                         text: parent.parent.isActive ? "\uf00c" : "\uf111"
                         font.family: Theme.font.icon
                         color: parent.parent.isActive ? Theme.colors.base : Theme.colors.accent
-                        font.pointSize: Theme.fontSize.xlarge
+                        font.pointSize: Theme.dashboard.fontXlarge
                         font.bold: true
                         Layout.alignment: Qt.AlignVCenter
                     }
@@ -67,7 +67,7 @@ Rectangle {
                         text: modelData.description || modelData.name || "Unknown Device"
                         color: parent.parent.isActive ? Theme.colors.base : Theme.colors.text
                         font.family: Theme.font.main
-                        font.pointSize: Theme.fontSize.normal
+                        font.pointSize: Theme.dashboard.fontNormal
                         elide: Text.ElideMiddle
                         Layout.fillWidth: true
                         Layout.alignment: Qt.AlignVCenter

@@ -6,4 +6,8 @@ singleton DesktopConfig 1.0 DesktopConfig.qml
 singleton DashboardConfig 1.0 DashboardConfig.qml
 singleton OsdConfig 1.0 OsdConfig.qml
 singleton LauncherConfig 1.0 LauncherConfig.qml
+singleton LockConfig 1.0 LockConfig.qml
+singleton GoogleConfig 1.0 GoogleConfig.qml
 singleton Presets 1.0 Presets.qml
+singleton NiriConfig 1.0 NiriConfig.qml
+singleton NiriKeybinds 1.0 NiriKeybinds.qml

@@ -15,7 +15,7 @@ Rectangle {
     implicitWidth: 40
     implicitHeight: 22
     radius: height / 2
-    color: checked ? Theme.colors.accent : Theme.colors.surfaceVariant
+    color: checked ? Theme.colors.accent : Theme.palette.surface2
     opacity: busy ? 0.6 : 1
 
     Behavior on color {

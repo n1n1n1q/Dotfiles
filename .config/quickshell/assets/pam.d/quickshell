@@ -1,0 +1,11 @@
+#%PAM-1.0
+
+# Password auth for the quickshell lock screen (modules/lock). Mirrors what a
+# minimal locker needs: faillock bookkeeping around a single pam_unix check.
+# No root or /etc changes required — Quickshell.Services.Pam reads this file
+# directly via PamContext.configDirectory.
+
+auth    required                    pam_faillock.so     preauth
+auth    [success=1 default=bad]     pam_unix.so         nullok
+auth    [default=die]               pam_faillock.so     authfail
+auth    required                    pam_faillock.so     authsucc

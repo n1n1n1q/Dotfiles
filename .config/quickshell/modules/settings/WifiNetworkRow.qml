@@ -26,10 +26,18 @@ Rectangle {
     onHasErrorChanged: if (hasError) expanded = true
 
 
+    // Segmented rounding — set by the enclosing SettingsGroup.relayout().
+    property string blockPosition: "single"   // top | middle | bottom | single
+    readonly property int _outer: Theme.rounding.xhuge
+    readonly property int _inner: Theme.rounding.connJoin
+
     Layout.fillWidth: true
     implicitHeight: col.implicitHeight + Theme.spacing.small * 2
-    radius: Theme.rounding.large
-    color: inGroup ? "transparent" : Theme.colors.surface
+    topLeftRadius: (blockPosition === "top" || blockPosition === "single") ? _outer : _inner
+    topRightRadius: topLeftRadius
+    bottomLeftRadius: (blockPosition === "bottom" || blockPosition === "single") ? _outer : _inner
+    bottomRightRadius: bottomLeftRadius
+    color: Theme.colors.surfaceVariant
 
     function submit() {
         if (network.enterprise)
@@ -62,7 +70,7 @@ Rectangle {
                     implicitWidth: 34
                     implicitHeight: 34
                     radius: Theme.rounding.small
-                    color: root.isActive ? Theme.colors.accent : Theme.colors.surfaceVariant
+                    color: root.isActive ? Theme.colors.accent : Theme.palette.surface2
 
                     Text {
                         anchors.centerIn: parent

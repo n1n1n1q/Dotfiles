@@ -28,21 +28,37 @@ Scope {
                     || (PopoutController.screenName === ""
                         && modelData.name === (Quickshell.screens[0]?.name ?? "")))
 
-            // Remember the last non-empty card so it can animate out after the
-            // controller clears `current` (Loader would otherwise unload it
-            // instantly). Only swaps while a new card is actually requested.
+            // Remember the last non-empty card (+ its payload) so it can
+            // animate out after the controller clears `current` (Loader would
+            // otherwise unload it instantly). Only swaps while a new card is
+            // actually requested.
             property string shownName: ""
+            property var shownPayload: null
             Connections {
                 target: PopoutController
                 function onCurrentChanged() {
-                    if (PopoutController.current !== "")
+                    if (PopoutController.current !== "") {
                         win.shownName = PopoutController.current;
+                        win.shownPayload = PopoutController.payload;
+                    }
+                }
+                // A switch between two of the same card kind (e.g. right-click a
+                // different tray icon) leaves `current` unchanged — pick up the
+                // new payload here.
+                function onPayloadChanged() {
+                    if (PopoutController.current !== "")
+                        win.shownPayload = PopoutController.payload;
                 }
             }
 
             WlrLayershell.layer: WlrLayer.Top
             WlrLayershell.namespace: "quickshell:popout"
-            WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+            // OnDemand, not Exclusive: a light dropdown shouldn't yank keyboard
+            // focus off whatever window you were in (that also made a second
+            // right-click on another tray icon feel dead). Escape still closes
+            // it once the card itself has been clicked/focused.
+            WlrLayershell.keyboardFocus: win.active
+                ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
             exclusiveZone: 0
             color: "transparent"
             visible: true
@@ -60,6 +76,17 @@ Scope {
             mask: Region {
                 width: win.active ? win.width : 0
                 height: win.active ? win.height : 0
+            }
+
+            Item {
+                anchors.fill: parent
+                focus: win.active
+                Keys.onPressed: e => {
+                    if (e.key === Qt.Key_Escape) {
+                        PopoutController.close();
+                        e.accepted = true;
+                    }
+                }
             }
 
             // Click-outside-to-close scrim.
@@ -115,6 +142,7 @@ Scope {
                         case "calendar": return calendarComp;
                         case "media":    return mediaComp;
                         case "sysmon":   return sysmonComp;
+                        case "traymenu": return traymenuComp;
                         default:         return null;
                         }
                     }
@@ -123,6 +151,7 @@ Scope {
                 Component { id: calendarComp; CalendarCard {} }
                 Component { id: mediaComp;    MediaCard {} }
                 Component { id: sysmonComp;   SystemMonitorCard {} }
+                Component { id: traymenuComp; TrayMenuCard { item: win.shownPayload } }
             }
         }
     }

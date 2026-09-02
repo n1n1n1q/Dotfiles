@@ -137,56 +137,20 @@ SettingsPage {
         hint: "volume & brightness"
 
         SettingsRow {
-            icon: "󰕾"
-            title: "Level bar style"
-            subtitle: "How the pill that drops under the bar draws a level — "
-                + "the same styles the dashboard's sliders wear. “Icon inside” "
-                + "moves the glyph into the bar and drops it from the card"
-            SegmentedControl {
-                value: OsdConfig.sliderStyle
-                // The same catalogue the dashboard's slider rows step through,
-                // so the two pickers can never drift apart.
-                options: DashboardConfig.sliderStyles
-                onPicked: v => OsdConfig.setSliderStyle(v)
-            }
-        }
-
-        // The pill is gone in a second and a half, so the choice is shown here
-        // rather than left to be judged from memory.
-        SettingsRow {
             icon: "󰈈"
-            title: "Preview"
-            subtitle: "The bar as the pill will draw it"
+            title: "Level bar style"
+            subtitle: "Now a single shell-wide choice — set it in "
+                + "Settings › Appearance › Slider style"
             LevelBar {
                 Layout.alignment: Qt.AlignVCenter
                 Layout.preferredWidth: 180
                 Layout.preferredHeight: implicitHeight
                 value: 0.65
-                style: OsdConfig.sliderStyle
+                style: Appearance.sliderStyle
                 icon: "󰕾"
                 animated: true
             }
         }
     }
 
-    // --- reset -----------------------------------------------------------
-    SettingsGroup {
-        caption: "Reset"
-        icon: "󰑏"
-
-        SettingsRow {
-            icon: "󰑏"
-            title: "Reset to default"
-            subtitle: "Top-right corner, no grouping, short close delay and the "
-                + "shipped OSD style"
-            PillButton {
-                text: "Reset"
-                danger: true
-                onClicked: {
-                    DashboardConfig.resetNotifications();
-                    OsdConfig.reset();
-                }
-            }
-        }
-    }
 }

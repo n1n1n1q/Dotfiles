@@ -1,0 +1,3 @@
+module qs.modules.display
+singleton DisplayController 1.0 DisplayController.qml
+DisplayMenu 1.0 DisplayMenu.qml

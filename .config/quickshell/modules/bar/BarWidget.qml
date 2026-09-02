@@ -17,6 +17,7 @@ Loader {
         switch (widgetType) {
         case "windowTitle": return cWindowTitle;
         case "workspaces":  return cWorkspaces;
+        case "workspaceApps": return cWorkspaceApps;
         case "systemStats": return cSystemStats;
         case "media":       return cMedia;
         case "clock":       return cClock;
@@ -24,17 +25,20 @@ Loader {
         case "volume":      return cVolume;
         case "connectivity": return cConnectivity;
         case "tray":        return cTray;
+        case "spacer":      return cSpacer;
         default:            return null;
         }
     }
 
     Component { id: cWindowTitle; WindowTitle { parentWindow: root.panelWindow; barHeight: Theme.bar.height } }
     Component { id: cWorkspaces;  WorkspaceIndicator { outputName: root.screenName } }
+    Component { id: cWorkspaceApps; WorkspaceApps { outputName: root.screenName } }
     Component { id: cSystemStats; SystemStats { screenName: root.screenName } }
     Component { id: cMedia;       MediaWidget { screenName: root.screenName } }
     Component { id: cClock;       TimeWidget { screenName: root.screenName } }
     Component { id: cBattery;     BatteryWidget {} }
     Component { id: cVolume;      VolumeWidget {} }
     Component { id: cConnectivity; ConnectivityWidget {} }
-    Component { id: cTray;        Tray {} }
+    Component { id: cTray;        Tray { screenName: root.screenName } }
+    Component { id: cSpacer;      SpacerWidget {} }
 }

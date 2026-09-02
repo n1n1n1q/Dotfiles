@@ -27,7 +27,7 @@ RowLayout {
         radius: height / 2
         opacity: canPress ? 1 : 0.3
         color: btnMouse.containsMouse && canPress ? Theme.colors.accent
-                                                  : Theme.colors.surfaceVariant
+                                                  : Theme.palette.surface2
 
         Behavior on color { ColorAnimation { duration: Theme.animation.fast } }
 

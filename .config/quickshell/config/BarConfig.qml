@@ -41,17 +41,49 @@ Singleton {
     readonly property bool blackCorners: adapter.style?.blackCorners ?? true
     readonly property bool vertical: edge === "left" || edge === "right"
 
-    // --- popout cards ---------------------------------------------------
-    // Style for the bar's dropdown cards, persisted in bar.json under
-    // `popouts`. Only the media card has a knob so far: which of MediaLayout's
-    // four now-playing layouts it draws.
-    readonly property var defaultPopouts: ({ "mediaLayout": "regular" })
-    readonly property string mediaLayout: adapter.popouts?.mediaLayout ?? "regular"
+    // --- per-widget settings ------------------------------------------
+    // Every bar widget can carry its own config, persisted in bar.json under
+    // `widgetSettings` as `{ <widgetId>: { <key>: value } }`. The schema for
+    // each widget lives on its `catalogue` entry (`.settings`); a value not
+    // stored falls back to that schema's `default`. Config for a widget that
+    // isn't currently on the bar is kept untouched — drop the widget back in
+    // and its settings are exactly where you left them.
+    function widgetSetting(id, key) {
+        const w = adapter.widgetSettings?.[id];
+        if (w && w[key] !== undefined)
+            return w[key];
+        // Legacy: the media layout used to live under `popouts.mediaLayout`.
+        if (id === "media" && key === "layout" && adapter.popouts?.mediaLayout !== undefined)
+            return adapter.popouts.mediaLayout;
+        const s = (widget(id).settings ?? []).find(x => x.key === key);
+        return s ? s.default : undefined;
+    }
+    function setWidgetSetting(id, key, val) {
+        const m = JSON.parse(JSON.stringify(adapter.widgetSettings ?? ({})));
+        if (!m[id]) m[id] = ({});
+        m[id][key] = val;
+        adapter.widgetSettings = m;
+    }
+    function resetWidgetSettings(id) {
+        const m = JSON.parse(JSON.stringify(adapter.widgetSettings ?? ({})));
+        delete m[id];
+        adapter.widgetSettings = m;
+    }
 
-    function setPopout(key, val) {
-        const p = JSON.parse(JSON.stringify(adapter.popouts ?? defaultPopouts));
-        p[key] = val;
-        adapter.popouts = p;
+    // The media card + desktop widget read this one directly.
+    readonly property string mediaLayout: widgetSetting("media", "layout")
+
+    // Every widget id that currently sits somewhere on the bar. Drives which
+    // widgets get a live config panel vs. the "inactive" drawer.
+    readonly property var activeWidgetIds: {
+        adapter.left; adapter.center; adapter.right;   // deps
+        const seen = [];
+        for (const sec of [adapter.left, adapter.center, adapter.right])
+            for (const g of (sec ?? []))
+                for (const w of (g.widgets ?? []))
+                    if (seen.indexOf(w) === -1)
+                        seen.push(w);
+        return seen;
     }
 
     function setStyle(key, val) {
@@ -71,7 +103,7 @@ Singleton {
             "center": adapter.center,
             "right": adapter.right,
             "style": adapter.style ?? defaultStyle,
-            "popouts": adapter.popouts ?? defaultPopouts
+            "widgetSettings": adapter.widgetSettings ?? ({})
         }));
     }
 
@@ -87,8 +119,10 @@ Singleton {
         // lingering from the setup being replaced.
         if (o.style)
             adapter.style = Object.assign(JSON.parse(JSON.stringify(defaultStyle)), o.style);
-        if (o.popouts)
-            adapter.popouts = Object.assign(JSON.parse(JSON.stringify(defaultPopouts)), o.popouts);
+        if (o.widgetSettings)
+            adapter.widgetSettings = JSON.parse(JSON.stringify(o.widgetSettings));
+        else if (o.popouts?.mediaLayout !== undefined)   // legacy preset
+            adapter.widgetSettings = ({ "media": { "layout": o.popouts.mediaLayout } });
     }
 
     // --- live "edit on the bar" mode -------------------------------------
@@ -169,16 +203,55 @@ Singleton {
     }
 
     // --- widget catalogue (metadata for the Settings UI) ------------------
+    // `settings` — the per-widget config schema. Each entry is one control:
+    //   { key, label, type: "toggle" | "spin" | "mediaLayout", default,
+    //     min?, max?, step?, suffix? }
     readonly property var catalogue: [
-        { id: "windowTitle", name: "Window title",  desc: "Focused window's app id + title; opens the dashboard on click", icon: "󰖯" },
-        { id: "workspaces",  name: "Workspaces",    desc: "niri workspace indicator — click a slot to switch",             icon: "󰇘" },
-        { id: "systemStats", name: "System monitor", desc: "CPU / RAM / GPU ring gauges with tinted percentages",           icon: "󰾆" },
-        { id: "media",       name: "Media",         desc: "Now-playing title with a play / pause gauge",                   icon: "󰝚" },
-        { id: "clock",       name: "Clock",         desc: "Time and date",                                                 icon: "󰅐" },
-        { id: "battery",     name: "Battery",       desc: "Charge %, time remaining, charging pulse",                       icon: "󰁽" },
+        { id: "windowTitle", name: "Window title",  desc: "Focused window's app id + title; opens the dashboard on click", icon: "󰖯",
+          settings: [
+            { key: "maxWidth", label: "Maximum width", type: "spin", default: 440, min: 220, max: 680, step: 20, suffix: " px" }
+          ] },
+        { id: "workspaces",  name: "Workspaces",    desc: "niri workspace indicator — click a slot to switch",             icon: "󰇘",
+          settings: [
+            { key: "slotCount", label: "Number of slots", type: "spin", default: 5, min: 3, max: 9, step: 1 }
+          ] },
+        { id: "workspaceApps", name: "Workspace apps", desc: "App icons for this output's current workspace — click one to focus it", icon: "󰀻",
+          settings: [
+            { key: "width",    label: "Width",     type: "spin", default: 220, min: 60, max: 640, step: 10, suffix: " px" },
+            { key: "iconSize", label: "Icon size", type: "spin", default: 20,  min: 14, max: 28,  step: 2,  suffix: " px" }
+          ] },
+        { id: "systemStats", name: "System monitor", desc: "CPU / RAM / GPU ring gauges with tinted percentages",           icon: "󰾆",
+          settings: [
+            { key: "showCpu", label: "CPU gauge", type: "toggle", default: false },
+            { key: "showRam", label: "RAM gauge", type: "toggle", default: true },
+            { key: "showGpu", label: "GPU gauge", type: "toggle", default: false }
+          ] },
+        { id: "media",       name: "Media",         desc: "Now-playing title with a play / pause gauge",                   icon: "󰝚",
+          settings: [
+            { key: "layout", label: "Now-playing card layout", type: "mediaLayout", default: "regular" },
+            { key: "width",  label: "Title width", type: "spin", default: 240, min: 120, max: 420, step: 20, suffix: " px" }
+          ] },
+        { id: "clock",       name: "Clock",         desc: "Time and date",                                                 icon: "󰅐",
+          settings: [
+            { key: "showDate",    label: "Show the date", type: "toggle", default: true },
+            { key: "showSeconds", label: "Show seconds",  type: "toggle", default: false }
+          ] },
+        { id: "battery",     name: "Battery",       desc: "Charge %, time remaining, charging pulse",                       icon: "󰁽",
+          settings: [
+            { key: "showPercent", label: "Show the percentage", type: "toggle", default: true }
+          ] },
         { id: "volume",      name: "Volume",        desc: "Output level gauge — scroll to change, click to mute",           icon: "󰕾" },
-        { id: "connectivity", name: "Connectivity", desc: "Wi‑Fi, Bluetooth and sound glyphs; each opens its Settings page", icon: "󰤨" },
-        { id: "tray",        name: "System tray",   desc: "StatusNotifier icons from running apps",                        icon: "󰧜" }
+        { id: "connectivity", name: "Connectivity", desc: "Wi‑Fi, Bluetooth and sound glyphs; each opens its Settings page", icon: "󰤨",
+          settings: [
+            { key: "showWifi",      label: "Wi‑Fi glyph",     type: "toggle", default: true },
+            { key: "showBluetooth", label: "Bluetooth glyph", type: "toggle", default: true },
+            { key: "showSound",     label: "Sound glyph",     type: "toggle", default: true }
+          ] },
+        { id: "tray",        name: "System tray",   desc: "StatusNotifier icons from running apps",                        icon: "󰧜" },
+        { id: "spacer",      name: "Spacer",        desc: "A fixed gap you can drop between widgets",                      icon: "󰇜",
+          settings: [
+            { key: "size", label: "Width", type: "spin", default: 24, min: 4, max: 240, step: 4, suffix: " px" }
+          ] }
     ]
 
     function widget(id) {
@@ -410,7 +483,10 @@ Singleton {
             property var center: root.defaults.center
             property var right: root.defaults.right
             property var style: root.defaultStyle
-            property var popouts: root.defaultPopouts
+            // { <widgetId>: { <key>: value } } — see widgetSetting().
+            property var widgetSettings: ({})
+            // Legacy: kept only so an old bar.json's media layout still migrates.
+            property var popouts: ({})
         }
     }
 }

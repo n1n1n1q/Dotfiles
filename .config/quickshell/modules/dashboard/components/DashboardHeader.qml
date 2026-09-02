@@ -15,7 +15,7 @@ RowLayout {
     Text {
         text: root.title
         font.family: Theme.font.main
-        font.pointSize: Theme.fontSize.large
+        font.pointSize: Theme.dashboard.fontLarge
         font.bold: true
         color: Theme.colors.text
         Layout.fillWidth: true
@@ -24,7 +24,7 @@ RowLayout {
     Text {
         text: root.value
         font.family: Theme.font.main
-        font.pointSize: Theme.fontSize.medium
+        font.pointSize: Theme.dashboard.fontMedium
         color: Theme.colors.subtext0
     }
 }

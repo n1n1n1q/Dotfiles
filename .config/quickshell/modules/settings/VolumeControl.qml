@@ -24,10 +24,18 @@ Rectangle {
     signal muteToggled()
 
 
+    // Segmented rounding — set by the enclosing SettingsGroup.relayout().
+    property string blockPosition: "single"   // top | middle | bottom | single
+    readonly property int _outer: Theme.rounding.xhuge
+    readonly property int _inner: Theme.rounding.connJoin
+
     Layout.fillWidth: true
     implicitHeight: col.implicitHeight + Theme.spacing.normal * 2
-    radius: Theme.rounding.large
-    color: inGroup ? "transparent" : Theme.colors.surface
+    topLeftRadius: (blockPosition === "top" || blockPosition === "single") ? _outer : _inner
+    topRightRadius: topLeftRadius
+    bottomLeftRadius: (blockPosition === "bottom" || blockPosition === "single") ? _outer : _inner
+    bottomRightRadius: bottomLeftRadius
+    color: Theme.colors.surfaceVariant
 
     ColumnLayout {
         id: col
@@ -47,9 +55,9 @@ Rectangle {
                 implicitWidth: 34
                 implicitHeight: 34
                 radius: Theme.rounding.small
-                color: mute.containsMouse ? Theme.colors.surfaceVariant
+                color: mute.containsMouse ? Theme.colors.overlay0
                     : root.muted ? Qt.rgba(Theme.colors.error.r, Theme.colors.error.g, Theme.colors.error.b, 0.18)
-                    : Theme.colors.surfaceVariant
+                    : Theme.palette.surface2
 
                 Behavior on color { ColorAnimation { duration: Theme.animation.fast } }
 
@@ -121,7 +129,7 @@ Rectangle {
                 width: slider.availableWidth
                 height: 4
                 radius: 2
-                color: Theme.colors.surfaceVariant
+                color: Theme.palette.surface2
                 Rectangle {
                     width: slider.visualPosition * parent.width
                     height: parent.height

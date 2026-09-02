@@ -29,9 +29,8 @@ Rectangle {
 
     Behavior on color { ColorAnimation { duration: Theme.animation.fast } }
 
-    ToolTip.visible: root.tooltip.length > 0 && mouse.containsMouse
-    ToolTip.text: root.tooltip
-    ToolTip.delay: 400
+    // `tooltip` is kept as an inert compat prop — Settings no longer shows
+    // tooltips (the user found them more distracting than useful there).
 
     Text {
         anchors.centerIn: parent

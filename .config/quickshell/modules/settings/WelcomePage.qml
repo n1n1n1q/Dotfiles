@@ -22,7 +22,7 @@ SettingsPage {
 
         Repeater {
             model: [
-                { slug: "appearance", icon: "󰏘", title: "Appearance", desc: "Colour scheme, wallpaper and fonts" },
+                { slug: "general",    icon: "󰏘", title: "General",    desc: "Colour scheme, wallpaper, fonts, presets" },
                 { slug: "bar",        icon: "󰟀", title: "Bar",        desc: "Layout of the top bar" },
                 { slug: "wifi",       icon: "󰤨", title: "Wi‑Fi",      desc: "Wireless networking" },
                 { slug: "sound",      icon: "󰕾", title: "Sound",      desc: "Output and input levels" }

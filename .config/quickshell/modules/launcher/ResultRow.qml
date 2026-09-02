@@ -18,6 +18,9 @@ Rectangle {
     property bool selected: false
 
     signal activated()
+    // Right-click on an app row — carries the click point in window coords so
+    // the launcher can drop its little pin/hide menu there.
+    signal contextRequested(var windowPos)
 
     implicitHeight: Theme.launcher.rowHeight
     radius: Theme.rounding.large
@@ -40,8 +43,16 @@ Rectangle {
         id: mouse
         anchors.fill: parent
         hoverEnabled: true
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
         cursorShape: Qt.PointingHandCursor
-        onClicked: row.activated()
+        onClicked: mev => {
+            if (mev.button === Qt.RightButton) {
+                if (row.result.kind === "app")
+                    row.contextRequested(row.mapToItem(null, mev.x, mev.y));
+                return;
+            }
+            row.activated();
+        }
     }
 
     RowLayout {
@@ -58,9 +69,29 @@ Rectangle {
 
             IconImage {
                 anchors.fill: parent
-                visible: row.result.icon.length > 0
-                asynchronous: true
+                visible: row.result.icon.length > 0 && row.result.kind !== "wallpaper"
+                // Synchronous: themed icons go through Qt's SVG icon engine,
+                // which is not thread-safe (see Tray.qml).
+                asynchronous: false
                 source: row.result.icon
+            }
+
+            // Wallpaper rows show the image itself, cropped to the icon square.
+            Rectangle {
+                anchors.fill: parent
+                visible: row.result.kind === "wallpaper"
+                radius: Theme.rounding.small
+                color: Theme.colors.surfaceVariant
+                clip: true
+                Image {
+                    anchors.fill: parent
+                    source: row.result.kind === "wallpaper"
+                        ? ("file://" + row.result.icon) : ""
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    cache: false
+                    sourceSize.width: 96
+                }
             }
 
             Text {
@@ -70,6 +101,23 @@ Rectangle {
                 font.family: Theme.font.icon
                 font.pointSize: Theme.font.xlarge
                 color: row.selected ? Theme.colors.bg : Theme.colors.accent
+            }
+
+            // Colour-scheme rows carry a swatch strip in place of an icon.
+            Column {
+                anchors.centerIn: parent
+                visible: (row.result.swatch ?? []).length > 0
+                spacing: 3
+                Repeater {
+                    model: row.result.swatch ?? []
+                    delegate: Rectangle {
+                        required property var modelData
+                        width: 22
+                        height: 5
+                        radius: 2
+                        color: modelData
+                    }
+                }
             }
         }
 
@@ -97,6 +145,16 @@ Rectangle {
                 font.pointSize: Theme.font.small
                 color: row.inkDim
             }
+        }
+
+        // Pinned-to-favourites marker.
+        Text {
+            Layout.alignment: Qt.AlignVCenter
+            visible: row.result.favorite === true
+            text: "󰐃"
+            font.family: Theme.font.icon
+            font.pointSize: Theme.font.small
+            color: row.selected ? Theme.colors.bg : Theme.colors.accent
         }
 
         // --- what pressing Enter would do ----------------------------------

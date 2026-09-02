@@ -25,8 +25,9 @@ HoverPill {
         : Theme.colors.success
 
     Text {
+        visible: BarConfig.widgetSetting("battery", "showPercent")
         Layout.alignment: Qt.AlignVCenter
-        Layout.preferredWidth: powerMetrics.width
+        Layout.preferredWidth: visible ? powerMetrics.width : 0
         Layout.preferredHeight: Theme.widget.circularSize
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
@@ -70,14 +71,16 @@ HoverPill {
         }
     }
 
-    ToolTip.visible: root.hovered && Battery.isLaptopBattery
-    ToolTip.delay: 500
-    ToolTip.text: {
-        var info = Math.round(Battery.percentage * 100) + "%"
-        if (Battery.timeRemaining !== "")
-            info += "\n" + Battery.timeRemaining
-        if (Battery.energyRate > 0.01)
-            info += "\n" + Battery.energyRate.toFixed(2) + "W"
-        return info
+    AppTooltip {
+        visible: root.hovered && Battery.isLaptopBattery
+        delay: 500
+        text: {
+            var info = Math.round(Battery.percentage * 100) + "%"
+            if (Battery.timeRemaining !== "")
+                info += "\n" + Battery.timeRemaining
+            if (Battery.energyRate > 0.01)
+                info += "\n" + Battery.energyRate.toFixed(2) + "W"
+            return info
+        }
     }
 }

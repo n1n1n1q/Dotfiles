@@ -20,9 +20,19 @@ Singleton {
 
     // Everything that asks to be shown, deduped by id — a few packages ship
     // the same entry under two paths and the launcher shouldn't list it twice.
-    readonly property var list: Array.from(DesktopEntries.applications.values)
+    // Every application, deduped by id — hidden ones included. The Settings
+    // favourites / hidden editors pick from this; `list` is this minus hidden.
+    readonly property var catalogue: Array.from(DesktopEntries.applications.values)
         .filter(a => a && !a.noDisplay)
         .filter((a, i, self) => i === self.findIndex(b => b.id === a.id))
+        .sort((a, b) => String(a.name ?? "").localeCompare(String(b.name ?? "")))
+
+    function entryById(id) { return catalogue.find(a => a.id === id) ?? null; }
+
+    // Apps the user has hidden from the launcher (Settings, or right-click a
+    // row) drop out entirely — including as .desktop-action parents.
+    readonly property var list:
+        catalogue.filter(a => !LauncherConfig.isHidden(a.id))
 
     // The search corpus. Lowercasing once here rather than per keystroke is
     // most of why typing stays smooth with a few hundred entries installed.
@@ -161,7 +171,8 @@ Singleton {
 
             if (best > 0)
                 out.push({ entry: it.entry, action: null,
-                           score: best + root._frecency(it.id) });
+                           score: best + root._frecency(it.id)
+                                + (LauncherConfig.isFavorite(it.id) ? 0.05 : 0) });
         }
 
         out.sort((a, b) => b.score - a.score
@@ -173,17 +184,26 @@ Singleton {
     // has actually been used to open, most-used first, padded out with the
     // rest in name order.
     function _recent(cap) {
+        const favIds = LauncherConfig.favoriteIds;
+        const favs = [];
         const used = [];
         const rest = [];
-        for (const it of index)
-            (useCount(it.id) > 0 && LauncherConfig.frecency ? used : rest)
-                .push(it);
+        for (const it of index) {
+            if (favIds.indexOf(it.id) >= 0)
+                favs.push(it);
+            else if (useCount(it.id) > 0 && LauncherConfig.frecency)
+                used.push(it);
+            else
+                rest.push(it);
+        }
 
+        // Favourites keep the order they were pinned in.
+        favs.sort((a, b) => favIds.indexOf(a.id) - favIds.indexOf(b.id));
         used.sort((a, b) => (usage[b.id]?.n ?? 0) - (usage[a.id]?.n ?? 0)
             || (usage[b.id]?.t ?? 0) - (usage[a.id]?.t ?? 0));
         rest.sort((a, b) => a.lname.localeCompare(b.lname));
 
-        return used.concat(rest)
+        return favs.concat(used).concat(rest)
             .slice(0, cap)
             .map(it => ({ entry: it.entry, action: null, score: 0 }));
     }
@@ -229,6 +249,20 @@ Singleton {
         if (name.startsWith("/") || name.startsWith("file:"))
             return name;
         return Quickshell.iconPath(name, "application-x-executable");
+    }
+
+    // Theme icon for a window's `app_id` (Wayland app id / X11 WM class), for
+    // the bar's per-window widgets. Resolves the class to a .desktop entry
+    // heuristically, then falls back to trying the class itself as an icon
+    // name, then the generic binary glyph.
+    function iconForClass(appId) {
+        const cls = String(appId ?? "").trim();
+        if (cls.length === 0)
+            return Quickshell.iconPath("application-x-executable", "");
+        const de = DesktopEntries.heuristicLookup(cls) ?? DesktopEntries.byId(cls);
+        if (de)
+            return iconSource(de);
+        return Quickshell.iconPath(cls.toLowerCase(), "application-x-executable");
     }
 
     FileView {

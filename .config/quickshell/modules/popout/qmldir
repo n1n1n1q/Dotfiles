@@ -2,5 +2,11 @@ module qs.modules.popout
 singleton PopoutController 1.0 PopoutController.qml
 BarPopout 1.0 BarPopout.qml
 CalendarCard 1.0 CalendarCard.qml
+CalMonthPicker 1.0 CalMonthPicker.qml
+CalAgenda 1.0 CalAgenda.qml
+CalEventEditor 1.0 CalEventEditor.qml
+CalTasks 1.0 CalTasks.qml
 MediaCard 1.0 MediaCard.qml
 SystemMonitorCard 1.0 SystemMonitorCard.qml
+TrayMenuCard 1.0 TrayMenuCard.qml
+TrayMenuRow 1.0 TrayMenuRow.qml

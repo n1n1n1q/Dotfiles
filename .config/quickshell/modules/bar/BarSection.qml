@@ -5,6 +5,13 @@ import qs.config
 // `spacing.medium` gaps). If one group has `pin: true` it is anchored dead
 // centre of the bar and the other groups flank it — those before it end at the
 // pin's left edge, those after start at its right.
+//
+// Which anchor `beforeRow` uses depends on `align` and whether a group is
+// pinned. Binding one anchor to `undefined` and another to a real line in the
+// same evaluation left Qt with stale, conflicting anchors — the "pinning needs
+// a restart" bug. So the switch runs through `states` + `AnchorChanges`, the
+// Qt-sanctioned way to move an anchor: it clears the anchors a state doesn't
+// set.
 Item {
     id: root
 
@@ -40,7 +47,7 @@ Item {
         }
     }
 
-    // The pinned group, dead centre of the bar.
+    // The pinned group, dead centre of the bar (harmless when hidden).
     BarGroup {
         id: pinGroup
         visible: root.pinned
@@ -51,17 +58,14 @@ Item {
         screenName: root.screenName
     }
 
-    // Groups before the pin (or all groups, when nothing is pinned).
+    // Groups before the pin (or all groups, when nothing is pinned). Margins
+    // stay statically bound — an inactive anchor just ignores its margin — so
+    // only the anchor lines themselves are switched, by the states below.
     Row {
         id: beforeRow
         spacing: root.gap
         anchors.verticalCenter: parent.verticalCenter
-
-        anchors.left: (!root.pinned && root.align === "left") ? parent.left : undefined
         anchors.leftMargin: root.leftPad
-        anchors.horizontalCenter: (!root.pinned && root.align === "center") ? parent.horizontalCenter : undefined
-        anchors.right: root.pinned ? pinGroup.left
-            : (root.align === "right" ? parent.right : undefined)
         anchors.rightMargin: root.pinned ? root.gap : root.rightPad
 
         GroupRow { model: root.beforeGroups }
@@ -78,4 +82,28 @@ Item {
 
         GroupRow { model: root.afterGroups }
     }
+
+    state: root.pinned ? "pinned"
+        : root.align === "center" ? "center"
+        : root.align === "right" ? "right"
+        : "left"
+
+    states: [
+        State {
+            name: "left"
+            AnchorChanges { target: beforeRow; anchors.left: root.left }
+        },
+        State {
+            name: "center"
+            AnchorChanges { target: beforeRow; anchors.horizontalCenter: root.horizontalCenter }
+        },
+        State {
+            name: "right"
+            AnchorChanges { target: beforeRow; anchors.right: root.right }
+        },
+        State {
+            name: "pinned"
+            AnchorChanges { target: beforeRow; anchors.right: pinGroup.left }
+        }
+    ]
 }

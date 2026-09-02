@@ -54,13 +54,13 @@ ColumnLayout {
                 source: Notifications.iconSource(group.entries[0])
                 sourceSize.width: 32
                 sourceSize.height: 32
-                asynchronous: true
+                asynchronous: false   // themed-icon SVG engine is not thread-safe (see Tray.qml)
             }
 
             Text {
                 text: group.appName
                 font.family: Theme.font.main
-                font.pointSize: Theme.font.small
+                font.pointSize: Theme.dashboard.fontSmall
                 font.weight: Theme.font.semiBold
                 color: Theme.colors.textSecondary
             }
@@ -76,7 +76,7 @@ ColumnLayout {
                     anchors.centerIn: parent
                     text: group.count
                     font.family: Theme.font.main
-                    font.pointSize: Theme.font.tiny
+                    font.pointSize: Theme.dashboard.fontTiny
                     color: Theme.colors.textSecondary
                 }
             }
@@ -86,14 +86,14 @@ ColumnLayout {
             Text {
                 text: group.expanded ? "Show less" : "Show all"
                 font.family: Theme.font.main
-                font.pointSize: Theme.font.tiny
+                font.pointSize: Theme.dashboard.fontTiny
                 color: headMouse.containsMouse ? Theme.colors.accent : Theme.colors.textTertiary
             }
 
             Text {
                 text: group.expanded ? "󰅃" : "󰅀"
                 font.family: Theme.font.icon
-                font.pointSize: Theme.font.small
+                font.pointSize: Theme.dashboard.fontSmall
                 color: headMouse.containsMouse ? Theme.colors.accent : Theme.colors.textTertiary
             }
         }
@@ -139,8 +139,17 @@ ColumnLayout {
         NotificationCard {
             id: topCard
             width: parent.width
+            large: true
             entry: group.entries[0]
-            onActivated: group.activated(group.entries[0])
+            // Collapsed, the whole card is the drop-open handle — same as the
+            // header. Only once the run is open does a click go through to the
+            // app.
+            onActivated: {
+                if (group.stacked && !group.expanded)
+                    group.toggleRequested();
+                else
+                    group.activated(group.entries[0]);
+            }
             onDismissRequested: group.dismissRequested(group.entries[0])
         }
     }
@@ -158,6 +167,7 @@ ColumnLayout {
             delegate: NotificationCard {
                 required property var modelData
                 Layout.fillWidth: true
+                large: true
                 entry: modelData
                 onActivated: group.activated(modelData)
                 onDismissRequested: group.dismissRequested(modelData)

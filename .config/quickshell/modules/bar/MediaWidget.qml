@@ -53,7 +53,7 @@ HoverPill {
         // Fixed width so the whole widget never changes size as tracks
         // change - the bar layout around it stays put.
         Layout.alignment: Qt.AlignVCenter
-        Layout.preferredWidth: 240
+        Layout.preferredWidth: BarConfig.widgetSetting("media", "width")
         // Centre the label whenever it fits; only left-align once it must elide.
         horizontalAlignment: implicitWidth <= width ? Text.AlignHCenter : Text.AlignLeft
         elide: Text.ElideRight

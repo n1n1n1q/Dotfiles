@@ -15,20 +15,16 @@ import qs.config
 Singleton {
     id: root
 
-    // One of DashboardConfig.sliderStyles — the pill wears exactly what the
-    // panel's own slider rows do, so the two can be made to match. Read and
-    // write both go through the catalogue, so a typo in the JSON leaves a
-    // drawable pill rather than a bare track.
-    readonly property string sliderStyle:
-        DashboardConfig.sliderStyleEntry(adapter.sliderStyle).value
+    // The slider style is a single global now — Settings › Appearance ›
+    // Slider style, stored on `Appearance`. This alias is kept so the OSD and
+    // the old Notifications page still compile.
+    readonly property string sliderStyle: Appearance.sliderStyle
 
     readonly property var defaults: ({ "sliderStyle": "progress" })
 
-    function setSliderStyle(style) {
-        adapter.sliderStyle = DashboardConfig.sliderStyleEntry(style).value;
-    }
+    function setSliderStyle(style) { Appearance.setSliderStyle(style); }
 
-    function reset() { adapter.sliderStyle = root.defaults.sliderStyle; }
+    function reset() { Appearance.setSliderStyle("progress"); }
 
     // --- preset slice -------------------------------------------------------
     function snapshot() {

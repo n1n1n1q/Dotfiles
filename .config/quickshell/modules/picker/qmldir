@@ -1,0 +1,4 @@
+module qs.modules.picker
+singleton PickerController 1.0 PickerController.qml
+PickerLayer 1.0 PickerLayer.qml
+PickerWindow 1.0 PickerWindow.qml

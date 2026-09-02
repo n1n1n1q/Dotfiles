@@ -70,29 +70,31 @@ HoverPill {
         }
 
         HoverHandler { id: hover }
-        ToolTip.visible: hover.hovered
-        ToolTip.delay: 400
-        ToolTip.text: g.label + " " + Math.round(g.load * 100) + "%"
+        AppTooltip {
+            visible: hover.hovered
+            text: g.label + " " + Math.round(g.load * 100) + "%"
+        }
     }
 
-    // CPU / GPU gauges disabled for now - RAM only.
+    // Which gauges show is per the widget's settings (Settings › Bar).
     Gauge {
         load: SysResources.cpu
         label: "CPU"
         glyph: "󰻠"
-        visible: false
+        visible: BarConfig.widgetSetting("systemStats", "showCpu")
     }
 
     Gauge {
         load: SysResources.memory
         label: "RAM"
         glyph: "󰍛"
+        visible: BarConfig.widgetSetting("systemStats", "showRam")
     }
 
     Gauge {
         load: SysResources.gpu
         label: "GPU"
         glyph: "󰢮"
-        visible: false // && SysResources.gpuAvailable
+        visible: BarConfig.widgetSetting("systemStats", "showGpu")
     }
 }
