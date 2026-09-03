@@ -49,19 +49,39 @@ Singleton {
 
     property real cachedLength: 0
 
+    // Remember any positive length the player reports. `lengthSupported` is the
+    // strong signal (the track genuinely carries mpris:length), but some
+    // players never set it while still reporting a usable `length`, so a bare
+    // `length > 0` is enough to cache — the post-seek Firefox case (where
+    // `length` starts shadowing `position`) is still caught because by then we
+    // already have a real cachedLength from before the seek.
     function cacheLength() {
-        if (activePlayer && activePlayer.lengthSupported && activePlayer.length > 0)
+        if (!activePlayer)
+            return
+        if (activePlayer.lengthSupported && activePlayer.length > 0)
+            cachedLength = activePlayer.length
+        else if (cachedLength <= 0 && activePlayer.length > 0)
             cachedLength = activePlayer.length
     }
 
     onActivePlayerChanged: { cachedLength = 0; cacheLength() }
     onTrackKeyChanged: { cachedLength = 0; cacheLength() }
 
-    readonly property real length: (activePlayer && activePlayer.lengthSupported
-        && activePlayer.length > 0) ? activePlayer.length : cachedLength
+    readonly property real length: {
+        if (!activePlayer)
+            return 0
+        if (activePlayer.lengthSupported && activePlayer.length > 0)
+            return activePlayer.length
+        if (cachedLength > 0)
+            return cachedLength
+        return activePlayer.length > 0 ? activePlayer.length : 0
+    }
     readonly property real position: activePlayer?.position ?? 0
+    // For *display* we only need a length and a sane position; positionSupported
+    // is often false for a beat right after a track change and shouldn't blank
+    // the ring / bar. It still gates whether the seek bar is draggable.
     readonly property bool hasProgress: length > 0 && (activePlayer?.positionSupported ?? false)
-    readonly property real progress: hasProgress
+    readonly property real progress: length > 0
         ? Math.max(0, Math.min(1, position / length)) : 0
 
     Connections {
@@ -69,13 +89,23 @@ Singleton {
         ignoreUnknownSignals: true
         function onLengthChanged() { root.cacheLength() }
         function onLengthSupportedChanged() { root.cacheLength() }
+        function onMetadataChanged() { root.cacheLength() }
+        function onPositionSupportedChanged() { root.cacheLength() }
     }
 
+    // MPRIS never pushes smooth position updates — re-poke while playing so
+    // Quickshell re-interpolates — and keep trying to pick up a length that
+    // only lands a second or two after the track starts.
     Timer {
         interval: 1000
         repeat: true
-        running: root.isPlaying
-        onTriggered: root.activePlayer?.positionChanged()
+        running: root.activePlayer !== null
+        onTriggered: {
+            if (root.isPlaying)
+                root.activePlayer?.positionChanged()
+            if (root.cachedLength <= 0)
+                root.cacheLength()
+        }
     }
 
     readonly property bool canPlay: activePlayer?.canPlay ?? false
