@@ -35,6 +35,8 @@ Singleton {
     // The mode the query's opening character forced it into, or null for the
     // ordinary app search.
     readonly property var mode: LauncherConfig.modeFor(query)
+    // Pull a fresh clipboard list the moment the query enters that mode.
+    onModeChanged: if (mode && mode.id === "clipboard") Clipboard.refresh()
     readonly property string term:
         (mode ? query.slice(mode.prefix.length) : query).trim()
 
@@ -141,6 +143,30 @@ Singleton {
                     "swatch": ["red", "peach", "green", "blue", "mauve"]
                         .map(k => (Appearance.schemes[n] ?? {})[k] ?? "#888888"),
                     "run": () => Appearance.setScheme(n)
+                }));
+        }
+
+        if (id === "clipboard") {
+            if (!Clipboard.available)
+                return [{
+                    "kind": "info", "name": "Clipboard history needs cliphist",
+                    "sub": "Install cliphist + wl-clipboard, then reopen",
+                    "type": "Clipboard", "verb": "",
+                    "icon": "", "glyph": "󰅍", "mono": false,
+                    "run": () => {}
+                }];
+            return Clipboard.entries
+                .filter(e => needle.length === 0
+                    || e.preview.toLowerCase().includes(needle))
+                .slice(0, cap)
+                .map(e => ({
+                    "kind": "clipboard",
+                    "name": e.isImage ? "Image" : e.preview,
+                    "sub": e.isImage ? e.preview : "",
+                    "type": "Clipboard", "verb": "Copy",
+                    "icon": "", "glyph": e.isImage ? "󰋩" : "󰅍",
+                    "mono": !e.isImage,
+                    "run": () => Clipboard.copy(e)
                 }));
         }
 

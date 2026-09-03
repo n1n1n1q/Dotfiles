@@ -2,6 +2,7 @@ module qs.services
 singleton Apps 1.0 Apps.qml
 singleton Audio 1.0 Audio.qml
 singleton Caffeine 1.0 Caffeine.qml
+singleton Clipboard 1.0 Clipboard.qml
 singleton GoogleCalendar 1.0 GoogleCalendar.qml
 singleton Battery 1.0 Battery.qml
 singleton Bluetooth 1.0 Bluetooth.qml

@@ -141,7 +141,8 @@ Singleton {
         { sig: "scheme prev",             label: "Previous colour scheme", desc: "" },
         { sig: "lock lock",               label: "Lock the screen",        desc: "" },
         { sig: "caffeine toggle",         label: "Keep awake",             desc: "Hold off sleep, screen-blank and idle-lock" },
-        { sig: "display menu",            label: "Display mode menu",      desc: "Win+P-style extend / single-display switcher" }
+        { sig: "display menu",            label: "Display mode menu",      desc: "Win+P-style extend / single-display switcher" },
+        { sig: "launcher search ;v",      label: "Clipboard history",      desc: "Open the launcher in clipboard-history mode" }
     ]
 
     function _bodyForSig(sig) {
@@ -181,7 +182,8 @@ Singleton {
         { chord: "Mod+Shift+W", sig: "picker wallpaper" },
         { chord: "Mod+Shift+T", sig: "picker theme" },
         { chord: "Mod+Alt+L",   sig: "lock lock" },
-        { chord: "Mod+P",       sig: "display menu" }
+        { chord: "Mod+P",       sig: "display menu" },
+        { chord: "Mod+V",       sig: "launcher search ;v" }
     ]
     readonly property bool hasShellBinds: binds.some(b => b.category === "shell")
 

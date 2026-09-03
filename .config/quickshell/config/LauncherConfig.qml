@@ -102,6 +102,11 @@ Singleton {
             id: "theme", prefix: adapter.prefixes?.theme ?? ";t",
             name: "Theme", icon: "󰏘", verb: "Apply", list: true,
             desc: "Switch the colour scheme"
+        },
+        {
+            id: "clipboard", prefix: adapter.prefixes?.clipboard ?? ";v",
+            name: "Clipboard", icon: "󰅍", verb: "Copy", list: true,
+            desc: "Paste from clipboard history"
         }
     ]
 
@@ -143,7 +148,7 @@ Singleton {
         "terminal": "kitty",
         "webSearchUrl": "https://www.google.com/search?q=",
         "prefixes": { "command": ">", "math": "=", "web": "?",
-                      "wallpaper": ";w", "theme": ";t" },
+                      "wallpaper": ";w", "theme": ";t", "clipboard": ";v" },
         "favorites": [],
         "hidden": []
     })
