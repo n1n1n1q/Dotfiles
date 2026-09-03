@@ -15,6 +15,17 @@ ColumnLayout {
     property string listKeyOverride: ""
     readonly property string listKey: listKeyOverride || GoogleCalendar.effectiveTaskListKey
     readonly property var _tasks: GoogleCalendar.tasksFor(listKey)
+
+    // Keys the user just deleted — collapse the row now rather than waiting for
+    // the sync round-trip. A fresh task list (new sync) is the source of truth
+    // and clears these.
+    property var _hiddenKeys: []
+    on_TasksChanged: _hiddenKeys = []
+    function _hide(key) {
+        const h = _hiddenKeys.slice();
+        if (h.indexOf(key) < 0) h.push(key);
+        _hiddenKeys = h;
+    }
     readonly property int _open: GoogleCalendar.tasksFor(listKey).filter(
         t => (GoogleCalendar.pendingStatus(t.key) ?? t.status) !== "completed").length
 
@@ -207,15 +218,37 @@ ColumnLayout {
 
         Repeater {
             model: root._tasks
-            delegate: ColumnLayout {
+            delegate: Item {
                 id: taskItem
                 required property var modelData
                 Layout.fillWidth: true
-                spacing: 0
                 readonly property string st:
                     GoogleCalendar.pendingStatus(modelData.key) ?? modelData.status
                 readonly property bool done: st === "completed"
                 readonly property bool open: root.editKey === modelData.key
+                readonly property bool gone: root._hiddenKeys.indexOf(modelData.key) >= 0
+
+                clip: true
+                implicitHeight: gone ? 0 : taskCol.implicitHeight
+                opacity: gone ? 0 : appear
+                Behavior on implicitHeight {
+                    NumberAnimation { duration: Theme.animation.normal; easing.type: Easing.OutCubic }
+                }
+                Behavior on opacity { NumberAnimation { duration: Theme.animation.fast } }
+
+                // slide + fade in on mount
+                property real appear: 0
+                property real slide: 12
+                Component.onCompleted: { appear = 1; slide = 0; }
+                Behavior on slide {
+                    NumberAnimation { duration: Theme.animation.normal; easing.type: Easing.OutCubic }
+                }
+
+                ColumnLayout {
+                    id: taskCol
+                    width: parent.width
+                    x: taskItem.slide
+                    spacing: 0
 
                 Rectangle {
                     Layout.fillWidth: true
@@ -225,6 +258,7 @@ ColumnLayout {
                         ? Qt.rgba(Theme.colors.textPrimary.r, Theme.colors.textPrimary.g,
                                   Theme.colors.textPrimary.b, 0.06)
                         : "transparent"
+                    Behavior on color { ColorAnimation { duration: Theme.animation.fast } }
 
                     MouseArea {
                         id: tMouse
@@ -246,6 +280,8 @@ ColumnLayout {
                             color: taskItem.done ? Theme.colors.accent : "transparent"
                             border.width: 1.5
                             border.color: taskItem.done ? Theme.colors.accent : Theme.colors.textTertiary
+                            Behavior on color { ColorAnimation { duration: Theme.animation.fast } }
+                            Behavior on border.color { ColorAnimation { duration: Theme.animation.fast } }
                             Text {
                                 anchors.centerIn: parent
                                 visible: taskItem.done
@@ -253,6 +289,10 @@ ColumnLayout {
                                 font.family: Theme.font.icon
                                 font.pointSize: root.fMeta
                                 color: Theme.colors.bg
+                                scale: taskItem.done ? 1 : 0
+                                Behavior on scale {
+                                    NumberAnimation { duration: Theme.animation.fast; easing.type: Easing.OutBack }
+                                }
                             }
                             MouseArea {
                                 anchors.fill: parent
@@ -270,6 +310,7 @@ ColumnLayout {
                             font.pointSize: root.fRow
                             font.strikeout: taskItem.done
                             color: taskItem.done ? Theme.colors.textTertiary : Theme.colors.textPrimary
+                            Behavior on color { ColorAnimation { duration: Theme.animation.normal } }
                         }
 
                         Text {
@@ -287,11 +328,21 @@ ColumnLayout {
                     }
                 }
 
-                // inline editor
-                Loader {
+                // inline editor — slides open / shut
+                Item {
                     Layout.fillWidth: true
+                    clip: true
+                    implicitHeight: teLoader.active ? teLoader.implicitHeight : 0
+                    opacity: teLoader.active ? 1 : 0
+                    Behavior on implicitHeight {
+                        NumberAnimation { duration: Theme.animation.normal; easing.type: Easing.OutCubic }
+                    }
+                    Behavior on opacity { NumberAnimation { duration: Theme.animation.fast } }
+
+                Loader {
+                    id: teLoader
+                    width: parent.width
                     active: taskItem.open
-                    visible: active
                     sourceComponent: Rectangle {
                         implicitHeight: te.implicitHeight + Theme.spacing.small * 2
                         radius: Theme.rounding.small
@@ -361,12 +412,15 @@ ColumnLayout {
                                 glyph: "󰩹"
                                 danger: true
                                 onTap: {
-                                    GoogleCalendar.deleteTask(taskItem.modelData);
                                     root.editKey = "";
+                                    root._hide(taskItem.modelData.key);
+                                    GoogleCalendar.deleteTask(taskItem.modelData);
                                 }
                             }
                         }
                     }
+                }
+                }
                 }
             }
         }

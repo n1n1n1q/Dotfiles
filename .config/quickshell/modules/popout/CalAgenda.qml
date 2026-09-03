@@ -10,6 +10,8 @@ ColumnLayout {
     id: root
 
     property date day: new Date()
+    // How tall the event list is allowed to get before it scrolls.
+    property int listCap: 172
 
     readonly property var _events: GoogleCalendar.eventsOn(day)
     readonly property var _writable: GoogleCalendar.writableCalendars
@@ -70,15 +72,28 @@ ColumnLayout {
     }
 
     // --- editor -----------------------------------------------------
-    Loader {
+    // Wrapped so it can slide open / shut instead of snapping.
+    Item {
+        id: editorWrap
         Layout.fillWidth: true
-        active: root.editorOpen
-        visible: active
-        sourceComponent: CalEventEditor {
-            event: root.editorEvent
-            defaultDay: root.day
-            calendars: root._writable
-            onClosed: { root.editorOpen = false; root.editorEvent = null; }
+        clip: true
+        implicitHeight: editorLoader.active ? editorLoader.implicitHeight : 0
+        opacity: editorLoader.active ? 1 : 0
+        Behavior on implicitHeight {
+            NumberAnimation { duration: Theme.animation.normal; easing.type: Easing.OutCubic }
+        }
+        Behavior on opacity { NumberAnimation { duration: Theme.animation.fast } }
+
+        Loader {
+            id: editorLoader
+            width: parent.width
+            active: root.editorOpen
+            sourceComponent: CalEventEditor {
+                event: root.editorEvent
+                defaultDay: root.day
+                calendars: root._writable
+                onClosed: { root.editorOpen = false; root.editorEvent = null; }
+            }
         }
     }
 
@@ -87,7 +102,7 @@ ColumnLayout {
         id: list
         Layout.fillWidth: true
         visible: !root.editorOpen && root._events.length > 0
-        implicitHeight: Math.min(contentHeight, 172)
+        implicitHeight: Math.min(contentHeight, root.listCap)
         clip: true
         interactive: contentHeight > height
         boundsBehavior: Flickable.StopAtBounds
@@ -95,6 +110,17 @@ ColumnLayout {
         model: root._events
 
         ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+
+        add: Transition {
+            NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.animation.normal }
+            NumberAnimation { property: "x"; from: 16; to: 0; duration: Theme.animation.normal; easing.type: Easing.OutCubic }
+        }
+        displaced: Transition {
+            NumberAnimation { properties: "x,y"; duration: Theme.animation.normal; easing.type: Easing.OutCubic }
+        }
+        remove: Transition {
+            NumberAnimation { property: "opacity"; to: 0; duration: Theme.animation.fast }
+        }
 
         delegate: Rectangle {
             id: row

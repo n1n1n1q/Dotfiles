@@ -4,11 +4,11 @@ import QtQuick.Controls
 import qs.config
 import qs.services
 
-// Anchored dropdown calendar for the bar clock. A month grid (QtQuick.Controls
-// MonthGrid / DayOfWeekRow) with clickable days and a tap-to-open month/year
-// picker; below it the selected day's agenda and a Google Tasks to-do list.
-// Event dots + agenda + tasks come from services/GoogleCalendar once an
-// account is connected in Settings › Calendar — with none, it's just the grid.
+// Anchored dropdown calendar for the bar clock. Two whole tabs: Calendar (the
+// month grid with the selected day's agenda beside it) and To-do (the Google
+// Tasks list). The panes slide sideways and the host is a fixed height so the
+// card never jumps. Event dots + agenda + tasks come from
+// services/GoogleCalendar once an account is connected in Settings › Calendar.
 Rectangle {
     id: root
 
@@ -21,10 +21,12 @@ Rectangle {
     readonly property date today: new Date()
 
     property string view: "month"          // "month" | "picker"
-    property int footTab: 0                 // 0 = events · 1 = to-dos
+    property int tab: 0                     // 0 = Calendar · 1 = To-do
 
     readonly property var monthEvents:
         GoogleCalendar.eventDaysInMonth(shownMonth.getFullYear(), shownMonth.getMonth())
+
+    readonly property bool working: GoogleCalendar.busy || GoogleCalendar.syncing
 
     function step(delta) {
         shownMonth = new Date(shownMonth.getFullYear(), shownMonth.getMonth() + delta, 1);
@@ -46,7 +48,7 @@ Rectangle {
     readonly property int fDay: Theme.bar.fontSize - 2      // 11
     readonly property int fDate: Theme.bar.fontSize - 1     // 12
 
-    implicitWidth: 380
+    implicitWidth: 640
     implicitHeight: col.implicitHeight + Theme.popup.padding * 2
     radius: Theme.popup.radius
     color: Theme.popup.background
@@ -55,7 +57,7 @@ Rectangle {
 
     WheelHandler {
         acceptedModifiers: Qt.NoModifier
-        enabled: root.view === "month"
+        enabled: root.tab === 0 && root.view === "month"
         onWheel: event => root.step(event.angleDelta.y > 0 ? -1 : 1)
     }
 
@@ -65,220 +67,323 @@ Rectangle {
         anchors.margins: Theme.popup.padding
         spacing: Theme.spacing.small
 
-        // --- header -----------------------------------------------------
-        RowLayout {
+        // --- sliding panes -----------------------------------------
+        Item {
+            id: stack
             Layout.fillWidth: true
-            spacing: Theme.spacing.tiny
+            implicitHeight: 320
+            clip: true
 
-            component NavBtn: Rectangle {
-                id: nb
-                property string glyph: ""
-                signal triggered()
-                implicitWidth: 26
-                implicitHeight: 26
-                radius: Theme.rounding.small
-                color: nbMouse.containsMouse ? Theme.colors.surfaceVariant : "transparent"
-                Behavior on color { ColorAnimation { duration: Theme.animation.fast } }
-                Text {
-                    anchors.centerIn: parent
-                    text: nb.glyph
-                    font.family: Theme.font.icon
-                    font.pointSize: root.fTitle
-                    color: Theme.colors.textSecondary
-                }
-                MouseArea {
-                    id: nbMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: nb.triggered()
-                }
-            }
-
-            NavBtn {
-                glyph: "󰅁"
-                visible: root.view === "month"
-                onTriggered: root.step(-1)
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: 26
-                radius: Theme.rounding.small
-                color: titleMouse.containsMouse ? Theme.colors.surfaceVariant : "transparent"
-                Behavior on color { ColorAnimation { duration: Theme.animation.fast } }
-                Text {
-                    anchors.centerIn: parent
-                    text: root.view === "picker"
-                        ? "Pick a month"
-                        : root.shownMonth.toLocaleDateString(Qt.locale(), "MMMM yyyy")
-                    font.family: Theme.font.main
-                    font.pointSize: root.fTitle
-                    font.weight: Theme.font.semiBold
-                    color: Theme.colors.textPrimary
-                }
-                MouseArea {
-                    id: titleMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.view = root.view === "picker" ? "month" : "picker"
-                }
-            }
-
-            NavBtn {
-                glyph: "󰅂"
-                visible: root.view === "month"
-                onTriggered: root.step(1)
-            }
-
-            NavBtn {
-                glyph: "󰃰"
-                onTriggered: root.jumpToday()
-            }
-        }
-
-        // --- month / year picker -------------------------------------
-        CalMonthPicker {
-            Layout.fillWidth: true
-            visible: root.view === "picker"
-            year: root.shownMonth.getFullYear()
-            month: root.shownMonth.getMonth()
-            onPicked: (y, m) => {
-                root.shownMonth = new Date(y, m, 1);
-                root.view = "month";
-            }
-        }
-
-        // --- month grid --------------------------------------------
-        DayOfWeekRow {
-            Layout.fillWidth: true
-            visible: root.view === "month"
-            locale: grid.locale
-            delegate: Text {
-                required property var model
-                horizontalAlignment: Text.AlignHCenter
-                text: model.shortName
-                font.family: Theme.font.main
-                font.pointSize: root.fDay
-                font.weight: Theme.font.mediumWeight
-                color: (model.day === 0 || model.day === 6)
-                    ? Theme.colors.textTertiary : Theme.colors.textSecondary
-            }
-        }
-
-        MonthGrid {
-            id: grid
-            Layout.fillWidth: true
-            visible: root.view === "month"
-            month: root.shownMonth.getMonth()
-            year: root.shownMonth.getFullYear()
-            locale: Qt.locale()
-            spacing: 2
-
-            delegate: Item {
-                id: cell
-                required property var model
-                readonly property bool isToday: root._sameDay(model.date, root.today)
-                readonly property bool isSelected: root._sameDay(model.date, root.selectedDate)
-                readonly property bool inMonth: model.month === grid.month
-                readonly property int evCount: (inMonth && root.monthEvents[model.day]) || 0
-
-                implicitWidth: 40
-                implicitHeight: 40
-
-                Rectangle {
-                    anchors.centerIn: parent
-                    width: 28
-                    height: 28
-                    radius: height / 2
-                    visible: cell.isToday
-                    color: Theme.colors.accent
-                }
-                Rectangle {
-                    anchors.centerIn: parent
-                    width: 28
-                    height: 28
-                    radius: height / 2
-                    visible: cell.isSelected && !cell.isToday
-                    color: "transparent"
-                    border.width: 1.5
-                    border.color: Theme.colors.accent
-                }
-                Text {
-                    anchors.centerIn: parent
-                    anchors.verticalCenterOffset: -2
-                    text: grid.locale.toString(cell.model.day)
-                    font.family: Theme.font.main
-                    font.pointSize: root.fDate
-                    font.weight: cell.isToday ? Theme.font.semiBold : Theme.font.regular
-                    opacity: cell.inMonth ? 1 : 0.35
-                    color: cell.isToday
-                        ? Theme.colors.bg
-                        : ((cell.model.date.getDay() === 0 || cell.model.date.getDay() === 6)
-                            ? Theme.colors.textTertiary : Theme.colors.textPrimary)
+            Row {
+                width: stack.width * 2
+                height: stack.height
+                x: -root.tab * stack.width
+                Behavior on x {
+                    NumberAnimation { duration: Theme.animation.normal; easing.type: Easing.OutCubic }
                 }
 
-                // event dots
-                Row {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 5
-                    spacing: 2
-                    visible: cell.evCount > 0
-                    Repeater {
-                        model: Math.min(3, cell.evCount)
-                        delegate: Rectangle {
-                            width: 4; height: 4; radius: 2
-                            color: cell.isToday ? Theme.colors.bg : Theme.colors.accent
+                // ============ PANE 1 — Calendar ============
+                ColumnLayout {
+                    width: stack.width
+                    height: stack.height
+                    spacing: Theme.spacing.small
+
+                    // month nav
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: Theme.spacing.tiny
+
+                        // sync spinner — collapses out of the row when idle
+                        Text {
+                            Layout.preferredWidth: root.working ? implicitWidth : 0
+                            clip: true
+                            text: "󰑐"
+                            visible: root.working
+                            font.family: Theme.font.icon
+                            font.pointSize: root.fDay
+                            color: Theme.colors.accent
+                            RotationAnimation on rotation {
+                                running: root.working
+                                loops: Animation.Infinite
+                                from: 0; to: 360
+                                duration: 900
+                            }
+                        }
+
+                        component NavBtn: Rectangle {
+                            id: nb
+                            property string glyph: ""
+                            signal triggered()
+                            implicitWidth: 26
+                            implicitHeight: 26
+                            radius: Theme.rounding.small
+                            color: nbMouse.containsMouse ? Theme.colors.surfaceVariant : "transparent"
+                            Behavior on color { ColorAnimation { duration: Theme.animation.fast } }
+                            Text {
+                                anchors.centerIn: parent
+                                text: nb.glyph
+                                font.family: Theme.font.icon
+                                font.pointSize: root.fTitle
+                                color: Theme.colors.textSecondary
+                            }
+                            MouseArea {
+                                id: nbMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: nb.triggered()
+                            }
+                        }
+
+                        NavBtn {
+                            glyph: "󰅁"
+                            visible: root.view === "month"
+                            onTriggered: root.step(-1)
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            implicitHeight: 26
+                            radius: Theme.rounding.small
+                            color: titleMouse.containsMouse ? Theme.colors.surfaceVariant : "transparent"
+                            Behavior on color { ColorAnimation { duration: Theme.animation.fast } }
+                            Text {
+                                anchors.centerIn: parent
+                                text: root.view === "picker"
+                                    ? "Pick a month"
+                                    : root.shownMonth.toLocaleDateString(Qt.locale(), "MMMM yyyy")
+                                font.family: Theme.font.main
+                                font.pointSize: root.fTitle
+                                font.weight: Theme.font.semiBold
+                                color: Theme.colors.textPrimary
+                            }
+                            MouseArea {
+                                id: titleMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.view = root.view === "picker" ? "month" : "picker"
+                            }
+                        }
+
+                        NavBtn {
+                            glyph: "󰅂"
+                            visible: root.view === "month"
+                            onTriggered: root.step(1)
+                        }
+
+                        NavBtn {
+                            glyph: "󰃰"
+                            onTriggered: root.jumpToday()
+                        }
+                    }
+
+                    // month / year picker
+                    CalMonthPicker {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        visible: root.view === "picker"
+                        year: root.shownMonth.getFullYear()
+                        month: root.shownMonth.getMonth()
+                        onPicked: (y, m) => {
+                            root.shownMonth = new Date(y, m, 1);
+                            root.view = "month";
+                        }
+                    }
+
+                    // grid (left) + agenda (right)
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        visible: root.view === "month"
+                        spacing: Theme.spacing.medium
+
+                        ColumnLayout {
+                            Layout.preferredWidth: 296
+                            Layout.maximumWidth: 296
+                            Layout.fillWidth: false
+                            Layout.alignment: Qt.AlignTop
+                            spacing: 2
+
+                            DayOfWeekRow {
+                                Layout.fillWidth: true
+                                locale: grid.locale
+                                delegate: Text {
+                                    required property var model
+                                    horizontalAlignment: Text.AlignHCenter
+                                    text: model.shortName
+                                    font.family: Theme.font.main
+                                    font.pointSize: root.fDay
+                                    font.weight: Theme.font.mediumWeight
+                                    color: (model.day === 0 || model.day === 6)
+                                        ? Theme.colors.textTertiary : Theme.colors.textSecondary
+                                }
+                            }
+
+                            MonthGrid {
+                                id: grid
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 232
+                                month: root.shownMonth.getMonth()
+                                year: root.shownMonth.getFullYear()
+                                locale: Qt.locale()
+                                spacing: 2
+
+                                delegate: Item {
+                                    id: cell
+                                    required property var model
+                                    readonly property bool isToday: root._sameDay(model.date, root.today)
+                                    readonly property bool isSelected: root._sameDay(model.date, root.selectedDate)
+                                    readonly property bool inMonth: model.month === grid.month
+                                    readonly property int evCount: (inMonth && root.monthEvents[model.day]) || 0
+
+                                    implicitWidth: 40
+                                    implicitHeight: 38
+
+                                    Rectangle {
+                                        anchors.centerIn: parent
+                                        width: 28
+                                        height: 28
+                                        radius: height / 2
+                                        visible: cell.isToday
+                                        color: Theme.colors.accent
+                                    }
+                                    Rectangle {
+                                        anchors.centerIn: parent
+                                        width: 28
+                                        height: 28
+                                        radius: height / 2
+                                        visible: cell.isSelected && !cell.isToday
+                                        color: "transparent"
+                                        border.width: 1.5
+                                        border.color: Theme.colors.accent
+                                        scale: cell.isSelected ? 1 : 0.6
+                                        Behavior on scale {
+                                            NumberAnimation { duration: Theme.animation.fast; easing.type: Easing.OutBack }
+                                        }
+                                    }
+                                    Text {
+                                        anchors.centerIn: parent
+                                        anchors.verticalCenterOffset: -2
+                                        text: grid.locale.toString(cell.model.day)
+                                        font.family: Theme.font.main
+                                        font.pointSize: root.fDate
+                                        font.weight: cell.isToday ? Theme.font.semiBold : Theme.font.regular
+                                        opacity: cell.inMonth ? 1 : 0.35
+                                        color: cell.isToday
+                                            ? Theme.colors.bg
+                                            : ((cell.model.date.getDay() === 0 || cell.model.date.getDay() === 6)
+                                                ? Theme.colors.textTertiary : Theme.colors.textPrimary)
+                                    }
+
+                                    Row {
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        anchors.bottom: parent.bottom
+                                        anchors.bottomMargin: 4
+                                        spacing: 2
+                                        visible: cell.evCount > 0
+                                        Repeater {
+                                            model: Math.min(3, cell.evCount)
+                                            delegate: Rectangle {
+                                                width: 4; height: 4; radius: 2
+                                                color: cell.isToday ? Theme.colors.bg : Theme.colors.accent
+                                            }
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            root.selectedDate = cell.model.date;
+                                            if (!cell.inMonth)
+                                                root.shownMonth = new Date(cell.model.date.getFullYear(),
+                                                                           cell.model.date.getMonth(), 1);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            Layout.fillHeight: true
+                            Layout.topMargin: Theme.spacing.tiny
+                            Layout.bottomMargin: Theme.spacing.tiny
+                            implicitWidth: 1
+                            color: Theme.colors.borderSubtle
+                            opacity: 0.5
+                        }
+
+                        // selected-day agenda
+                        Item {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+
+                            Text {
+                                anchors.centerIn: parent
+                                width: parent.width - Theme.spacing.large
+                                horizontalAlignment: Text.AlignHCenter
+                                wrapMode: Text.WordWrap
+                                visible: !GoogleCalendar.connected
+                                text: "Connect a Google account in Settings › Calendar to see your events."
+                                font.family: Theme.font.main
+                                font.pointSize: root.fDate
+                                color: Theme.colors.textTertiary
+                            }
+
+                            ScrollView {
+                                anchors.fill: parent
+                                visible: GoogleCalendar.connected
+                                clip: true
+                                contentWidth: availableWidth
+                                ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+
+                                CalAgenda {
+                                    width: parent.width
+                                    day: root.selectedDate
+                                    listCap: 240
+                                }
+                            }
                         }
                     }
                 }
 
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        root.selectedDate = cell.model.date;
-                        if (!cell.inMonth)
-                            root.shownMonth = new Date(cell.model.date.getFullYear(),
-                                                       cell.model.date.getMonth(), 1);
+                // ============ PANE 2 — To-do ============
+                Item {
+                    width: stack.width
+                    height: stack.height
+
+                    ScrollView {
+                        anchors.fill: parent
+                        clip: true
+                        contentWidth: availableWidth
+                        ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+
+                        CalTasks {
+                            width: parent.width
+                        }
                     }
                 }
             }
         }
 
-        // --- tabbed footer: events / to-dos --------------------------
-        // Two equal-width tabs below the grid; the pane slides sideways when
-        // you switch, and the container is a fixed height so the card doesn't
-        // jump as you move between a long agenda and a long task list.
-
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.topMargin: Theme.spacing.tiny
-            visible: root.view === "month"
-            implicitHeight: 1
-            color: Theme.colors.borderSubtle
-            opacity: 0.5
-        }
-
+        // --- whole-view tabs, along the bottom ----------------------
         Rectangle {
             id: tabBar
             Layout.fillWidth: true
-            visible: root.view === "month"
-            implicitHeight: 30
+            Layout.topMargin: Theme.spacing.tiny
+            implicitHeight: 34
             radius: Theme.rounding.control
             color: Qt.rgba(Theme.colors.surfaceVariant.r, Theme.colors.surfaceVariant.g,
                            Theme.colors.surfaceVariant.b, 0.5)
 
             readonly property real segW: (width - 6) / 2
 
-            // Sliding selection pill.
             Rectangle {
                 width: tabBar.segW
                 height: parent.height - 6
                 y: 3
-                x: 3 + root.footTab * tabBar.segW
+                x: 3 + root.tab * tabBar.segW
                 radius: Theme.rounding.control - 3
                 color: Theme.colors.surfaceVariant
                 Behavior on x {
@@ -294,108 +399,42 @@ Rectangle {
                         { label: "To-do",    glyph: "󰄬" }
                     ]
                     delegate: Item {
-                        id: tab
+                        id: tabItem
                         required property int index
                         required property var modelData
                         width: tabBar.segW + 3
                         height: tabBar.height
-                        readonly property bool on: root.footTab === index
+                        readonly property bool on: root.tab === index
 
                         Row {
                             anchors.centerIn: parent
                             spacing: Theme.spacing.tiny
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
-                                text: tab.modelData.glyph
+                                text: tabItem.modelData.glyph
                                 font.family: Theme.font.icon
                                 font.pointSize: root.fDate
-                                color: tab.on ? Theme.colors.textPrimary : Theme.colors.textTertiary
+                                color: tabItem.on ? Theme.colors.textPrimary : Theme.colors.textTertiary
                             }
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
-                                text: tab.modelData.label
+                                text: tabItem.modelData.label
                                 font.family: Theme.font.main
                                 font.pointSize: root.fDate
-                                font.weight: tab.on ? Theme.font.semiBold : Theme.font.regular
-                                color: tab.on ? Theme.colors.textPrimary : Theme.colors.textTertiary
+                                font.weight: tabItem.on ? Theme.font.semiBold : Theme.font.regular
+                                color: tabItem.on ? Theme.colors.textPrimary : Theme.colors.textTertiary
                             }
                         }
 
                         MouseArea {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: root.footTab = tab.index
+                            onClicked: root.tab = tabItem.index
                         }
                     }
                 }
             }
-        }
 
-        // Fixed-height sliding pane host.
-        Item {
-            id: footStack
-            Layout.fillWidth: true
-            Layout.topMargin: Theme.spacing.small
-            visible: root.view === "month"
-            implicitHeight: 248
-            clip: true
-
-            Row {
-                width: footStack.width * 2
-                height: footStack.height
-                x: -root.footTab * footStack.width
-                Behavior on x {
-                    NumberAnimation { duration: Theme.animation.normal; easing.type: Easing.OutCubic }
-                }
-
-                // pane 1 — the selected day's events
-                Item {
-                    width: footStack.width
-                    height: footStack.height
-
-                    Text {
-                        anchors.centerIn: parent
-                        width: parent.width - Theme.spacing.large * 2
-                        horizontalAlignment: Text.AlignHCenter
-                        wrapMode: Text.WordWrap
-                        visible: !GoogleCalendar.connected
-                        text: "Connect a Google account in Settings › Calendar to see your events here."
-                        font.family: Theme.font.main
-                        font.pointSize: root.fDate
-                        color: Theme.colors.textTertiary
-                    }
-
-                    ScrollView {
-                        anchors.fill: parent
-                        visible: GoogleCalendar.connected
-                        clip: true
-                        contentWidth: availableWidth
-                        ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-
-                        CalAgenda {
-                            width: footStack.width
-                            day: root.selectedDate
-                        }
-                    }
-                }
-
-                // pane 2 — the to-do list
-                Item {
-                    width: footStack.width
-                    height: footStack.height
-
-                    ScrollView {
-                        anchors.fill: parent
-                        clip: true
-                        contentWidth: availableWidth
-                        ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-
-                        CalTasks {
-                            width: footStack.width
-                        }
-                    }
-                }
-            }
         }
     }
 }
