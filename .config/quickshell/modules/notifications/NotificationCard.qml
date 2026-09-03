@@ -75,7 +75,7 @@ Item {
             _locked.lock(card);
     }
     onEntryChanged: card._relock()
-    Component.onCompleted: card._relock()
+    Component.onCompleted: { card._relock(); card.shown = 1; }
     Component.onDestruction: if (card._locked) card._locked.unlock(card)
 
     Timer {
@@ -91,7 +91,11 @@ Item {
     implicitHeight: deleting ? 0 : fullHeight
     clip: deleting
 
-    opacity: deleting ? 0 : 1
+    // Eases in on mount (0 → 1 the frame after creation), out on delete. Only
+    // the centre / stack cards do this — toasts have the ListView's own add
+    // transition and a second opacity writer would fight it.
+    property real shown: 0
+    opacity: deleting ? 0 : (card.large ? shown : 1)
     Behavior on opacity { NumberAnimation { duration: Theme.animation.normal } }
     Behavior on implicitHeight { NumberAnimation { duration: Theme.animation.normal; easing.type: Easing.OutCubic } }
 
@@ -135,12 +139,16 @@ Item {
             ColorAnimation { duration: Theme.animation.normal; easing.type: Easing.InOutQuad }
         }
 
-        // Slide out to the right as it collapses — reads as a swipe-away rather
-        // than a straight vanish.
+        // Slides in from a touch above on mount, and out to the right as it
+        // collapses on delete — both read as motion rather than a blink.
         transform: Translate {
             x: card.deleting ? 44 : 0
+            y: (card.large && card.shown < 1) ? -10 : 0
             Behavior on x {
                 NumberAnimation { duration: Theme.animation.normal; easing.type: Easing.InCubic }
+            }
+            Behavior on y {
+                NumberAnimation { duration: Theme.animation.normal; easing.type: Easing.OutCubic }
             }
         }
 

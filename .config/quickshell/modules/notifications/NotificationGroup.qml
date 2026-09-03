@@ -162,25 +162,42 @@ ColumnLayout {
         }
     }
 
-    // The rest of the run, revealed by the header.
-    ColumnLayout {
+    // The rest of the run, revealed by the header — the wrapper animates its
+    // height 0 ↔ content so the drawer slides open and shut.
+    Item {
         Layout.fillWidth: true
         Layout.leftMargin: Theme.spacing.normal
-        spacing: 0
-        visible: group.expanded && group.stacked
+        clip: true
 
-        Repeater {
-            model: ScriptModel {
-                values: group.expanded ? group.entries.slice(1) : []
-            }
+        readonly property bool shown: group.expanded && group.stacked
+        implicitHeight: shown ? expandCol.implicitHeight : 0
+        opacity: shown ? 1 : 0
 
-            delegate: NotificationCard {
-                required property var modelData
-                Layout.fillWidth: true
-                large: true
-                entry: modelData
-                onActivated: group.activated(modelData)
-                onDismissRequested: group.dismissRequested(modelData)
+        Behavior on implicitHeight {
+            NumberAnimation { duration: Theme.animation.normal; easing.type: Easing.OutCubic }
+        }
+        Behavior on opacity {
+            NumberAnimation { duration: Theme.animation.fast }
+        }
+
+        ColumnLayout {
+            id: expandCol
+            width: parent.width
+            spacing: 0
+
+            Repeater {
+                model: ScriptModel {
+                    values: group.expanded ? group.entries.slice(1) : []
+                }
+
+                delegate: NotificationCard {
+                    required property var modelData
+                    Layout.fillWidth: true
+                    large: true
+                    entry: modelData
+                    onActivated: group.activated(modelData)
+                    onDismissRequested: group.dismissRequested(modelData)
+                }
             }
         }
     }

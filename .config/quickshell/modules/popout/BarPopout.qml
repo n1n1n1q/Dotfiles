@@ -107,15 +107,22 @@ Scope {
                 height: cardLoader.item ? cardLoader.item.implicitHeight : 0
 
                 x: Math.max(edge, Math.min(desiredX, win.width - width - edge))
-                y: win.active ? Theme.popup.margin : -height - 24
+                // A short hop from just above where it lands — a full slide off
+                // the top of the screen reads as sluggish however fast it runs.
+                y: win.active ? Theme.popup.margin : Theme.popup.margin - 14
                 opacity: win.active ? 1 : 0
+                scale: win.active ? 1 : 0.97
+                transformOrigin: Item.Top
                 visible: opacity > 0.01
 
                 Behavior on y {
-                    NumberAnimation { duration: Theme.animation.normal; easing.type: Easing.OutCubic }
+                    NumberAnimation { duration: Theme.animation.fast; easing.type: Easing.OutCubic }
                 }
                 Behavior on opacity {
-                    NumberAnimation { duration: Theme.animation.normal; easing.type: Easing.OutCubic }
+                    NumberAnimation { duration: Theme.animation.fast; easing.type: Easing.OutCubic }
+                }
+                Behavior on scale {
+                    NumberAnimation { duration: Theme.animation.fast; easing.type: Easing.OutCubic }
                 }
 
                 SoftShadow { radius: Theme.popup.radius }
