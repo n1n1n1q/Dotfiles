@@ -94,15 +94,15 @@ Singleton {
     }
 
     // MPRIS never pushes smooth position updates — re-poke while playing so
-    // Quickshell re-interpolates — and keep trying to pick up a length that
-    // only lands a second or two after the track starts.
+    // Quickshell re-interpolates. Only runs while actually playing (paused
+    // position is static), like end-4's — and it self-stops chasing a late
+    // length once one is cached, so a playing track costs one poke a second.
     Timer {
         interval: 1000
         repeat: true
-        running: root.activePlayer !== null
+        running: root.isPlaying
         onTriggered: {
-            if (root.isPlaying)
-                root.activePlayer?.positionChanged()
+            root.activePlayer?.positionChanged()
             if (root.cachedLength <= 0)
                 root.cacheLength()
         }

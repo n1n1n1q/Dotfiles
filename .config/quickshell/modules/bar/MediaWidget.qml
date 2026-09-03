@@ -36,6 +36,9 @@ HoverPill {
         size: Theme.widget.circularSize
         value: Media.progress
         progressColor: Theme.colors.accent
+        // The wedge steps once a second off Media's poll timer — no tween, or
+        // it repaints ~18 frames every tick on each monitor while playing.
+        animate: false
 
         iconText: "󰝚" // nf-md-music (the wedge shows track position; click toggles play)
 

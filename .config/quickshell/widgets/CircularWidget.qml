@@ -36,6 +36,11 @@ Item {
     property real fillInset: Math.max(2, size * 0.12)
     property real ringWidth: Theme.widget.circularRingWidth
     property real animationDuration: Theme.animation.slow
+    // Tween `value` changes. Off for gauges that update every second off a
+    // timer (the media position wedge) — an 18-frame Canvas repaint burst per
+    // tick, times each monitor, is most of the shell's idle cost while
+    // something is playing. end-4's bar media widget does the same.
+    property bool animate: true
 
     // Kept for source compatibility with older call sites - unused.
     property color backgroundColor
@@ -53,6 +58,7 @@ Item {
 
     property real animatedValue: Math.max(0, Math.min(1, isFinite(value) ? value : 0))
     Behavior on animatedValue {
+        enabled: root.animate
         NumberAnimation { duration: root.animationDuration; easing.type: Easing.OutCubic }
     }
 
