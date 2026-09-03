@@ -41,7 +41,10 @@ ColumnLayout {
         Layout.leftMargin: Theme.spacing.tiny
         Layout.rightMargin: Theme.spacing.tiny
         implicitHeight: headerRow.implicitHeight
-        visible: group.stacked
+        // Shown for the whole life of the group — even once it's down to its
+        // last card — so deleting the second-to-last notification doesn't make
+        // the run stop looking like a group.
+        visible: true
 
         RowLayout {
             id: headerRow
@@ -67,6 +70,7 @@ ColumnLayout {
             }
 
             Rectangle {
+                visible: group.stacked
                 implicitWidth: countText.implicitWidth + Theme.spacing.small
                 implicitHeight: 16
                 radius: 8
@@ -85,6 +89,7 @@ ColumnLayout {
             Item { Layout.fillWidth: true }
 
             Text {
+                visible: group.stacked
                 text: group.expanded ? "Show less" : "Show all"
                 font.family: Theme.font.main
                 font.pointSize: Theme.dashboard.fontTiny
@@ -92,6 +97,7 @@ ColumnLayout {
             }
 
             Text {
+                visible: group.stacked
                 text: group.expanded ? "󰅃" : "󰅀"
                 font.family: Theme.font.icon
                 font.pointSize: Theme.dashboard.fontSmall
@@ -103,6 +109,7 @@ ColumnLayout {
             id: headMouse
             anchors.fill: parent
             hoverEnabled: true
+            enabled: group.stacked
             cursorShape: Qt.PointingHandCursor
             onClicked: group.toggleRequested()
         }

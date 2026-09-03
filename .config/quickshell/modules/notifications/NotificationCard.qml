@@ -50,6 +50,10 @@ Item {
     readonly property int fMeta: large ? Theme.dashboard.fontTiny : Theme.popup.fontTiny
     readonly property int fIconLetter: large ? Theme.dashboard.fontLarge : Theme.popup.fontMedium
 
+    // Pointer resting on the swipe-to-delete strip — the whole card washes a
+    // step toward red so it reads as "this is what you're about to remove".
+    readonly property bool delHover: card.large && card.showClose && delMouse.containsMouse
+
     // `entry.closed` is set by entry.close() the moment it is dismissed, but
     // the entry itself stays in the list — this card holds a lock on it — until
     // the collapse below finishes and `exitTimer` releases that lock. Only then
@@ -112,19 +116,33 @@ Item {
         radius: card.flat ? Theme.rounding.control : Theme.rounding.card
         color: card.deleting
             ? Theme.colors.error
-            : card.flat
-              ? (hover.hovered ? Qt.rgba(Theme.colors.surfaceVariant.r,
-                                         Theme.colors.surfaceVariant.g,
-                                         Theme.colors.surfaceVariant.b, 0.4)
-                               : "transparent")
-              : (hover.hovered ? Theme.colors.surfaceVariant : Theme.colors.surface)
+            : card.delHover
+              ? Theme.mix(card.flat ? Theme.colors.surface : Theme.colors.surfaceVariant,
+                          Theme.colors.error, 0.24)
+              : card.flat
+                ? (hover.hovered ? Qt.rgba(Theme.colors.surfaceVariant.r,
+                                           Theme.colors.surfaceVariant.g,
+                                           Theme.colors.surfaceVariant.b, 0.4)
+                                 : "transparent")
+                : (hover.hovered ? Theme.colors.surfaceVariant : Theme.colors.surface)
         // A solid card gets a hairline so it reads as lifted off the panel /
         // desktop behind it — the fill step alone vanishes on flat dark
         // schemes. A critical one keeps its error outline instead.
         border.width: (card.entry?.critical ?? false) ? 1 : (card.flat || card.deleting ? 0 : 1)
         border.color: (card.entry?.critical ?? false) ? Theme.colors.error : Theme.colors.hairline
 
-        Behavior on color { ColorAnimation { duration: Theme.animation.fast } }
+        Behavior on color {
+            ColorAnimation { duration: Theme.animation.normal; easing.type: Easing.InOutQuad }
+        }
+
+        // Slide out to the right as it collapses — reads as a swipe-away rather
+        // than a straight vanish.
+        transform: Translate {
+            x: card.deleting ? 44 : 0
+            Behavior on x {
+                NumberAnimation { duration: Theme.animation.normal; easing.type: Easing.InCubic }
+            }
+        }
 
         // Separates one flat row from the next; the last row leaves it off.
         Rectangle {

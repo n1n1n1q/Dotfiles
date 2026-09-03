@@ -173,30 +173,15 @@ PanelWindow {
 
             clip: true
 
-            ScrollView {
-                id: dashScroll
+            // No outer scroll: the top block (user row, quick settings,
+            // sliders) is fixed and the notification centre fills the rest and
+            // scrolls within itself. A burst of notifications never stretches
+            // the panel.
+            ColumnLayout {
+                id: dashCol
                 anchors.fill: parent
                 anchors.margins: Theme.padding.xlarge
-                clip: true
-                contentWidth: availableWidth
-                // Reserve the scrollbar's width *unconditionally*. It keeps an
-                // interactive hit-strip even at 0 opacity (which was eating the
-                // notification cards' swipe-to-delete once a list overflowed),
-                // and — now that the panel height tracks its content — a
-                // show/hide-on-demand scrollbar would change `availableWidth`,
-                // rewrap the text, change the content height, and flip the
-                // scrollbar again: a layout loop right at the fit/overflow line.
-                rightPadding: dashVBar.width + Theme.spacing.tiny
-                ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-                ScrollBar.vertical: ScrollBar {
-                    id: dashVBar
-                    policy: ScrollBar.AsNeeded
-                }
-
-                ColumnLayout {
-                    id: dashCol
-                    width: dashScroll.availableWidth
-                    spacing: Theme.spacing.large
+                spacing: Theme.spacing.large
 
                     RowLayout {
                         Layout.fillWidth: true
@@ -310,37 +295,6 @@ PanelWindow {
                             }
                         }
 
-                        // Edit the panel's layout in place — hidden while a
-                        // session is already running (the dock has its own
-                        // Done / Cancel).
-                        Rectangle {
-                            Layout.alignment: Qt.AlignVCenter
-                            visible: !root.editing
-                            implicitWidth: 32
-                            implicitHeight: 32
-                            radius: height / 2
-                            color: editPenMouse.containsMouse
-                                ? Theme.colors.surfaceVariant : "transparent"
-
-                            Behavior on color { ColorAnimation { duration: Theme.animation.fast } }
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: "󰏫"
-                                font.family: Theme.font.icon
-                                font.pointSize: Theme.dashboard.fontMedium
-                                color: editPenMouse.containsMouse
-                                    ? Theme.colors.accent : Theme.colors.textSecondary
-                            }
-
-                            MouseArea {
-                                id: editPenMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: DashboardConfig.beginEdit()
-                            }
-                        }
                     }
 
                     // Quick settings — a configurable grid of one- and two-cell
@@ -358,9 +312,11 @@ PanelWindow {
                         ghost: dragGhost
                     }
 
-                    // Notification centre - full history, newest first.
+                    // Notification centre - full history, newest first. Fills
+                    // the panel's remaining height and scrolls internally.
                     NotificationCenter {
                         Layout.fillWidth: true
+                        Layout.fillHeight: true
                         visible: !root.editing
                         onCloseRequested: root.hide()
                     }
@@ -371,11 +327,50 @@ PanelWindow {
                         ghost: dragGhost
                     }
 
+                    // Holds the edit dock up at the top instead of letting it
+                    // stretch or float centred.
                     Item {
                         Layout.fillWidth: true
-                        height: Theme.spacing.normal
+                        Layout.fillHeight: true
+                        visible: root.editing
                     }
                 }
+        }
+
+        // Edit the panel's layout in place — a floating button in the panel's
+        // top-right corner, hidden while a session is already running (the dock
+        // has its own Done / Cancel).
+        Rectangle {
+            id: editPen
+            visible: !root.editing && root.open
+            parent: dashboard
+            anchors.top: parent.top
+            anchors.right: parent.right
+            anchors.topMargin: Theme.padding.large
+            anchors.rightMargin: Theme.padding.large
+            implicitWidth: 32
+            implicitHeight: 32
+            radius: height / 2
+            color: editPenMouse.containsMouse
+                ? Theme.colors.surfaceVariant : "transparent"
+
+            Behavior on color { ColorAnimation { duration: Theme.animation.fast } }
+
+            Text {
+                anchors.centerIn: parent
+                text: "󰏫"
+                font.family: Theme.font.icon
+                font.pointSize: Theme.dashboard.fontMedium
+                color: editPenMouse.containsMouse
+                    ? Theme.colors.accent : Theme.colors.textSecondary
+            }
+
+            MouseArea {
+                id: editPenMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: DashboardConfig.beginEdit()
             }
         }
 
