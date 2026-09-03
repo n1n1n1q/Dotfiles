@@ -21,6 +21,7 @@ Rectangle {
     readonly property date today: new Date()
 
     property string view: "month"          // "month" | "picker"
+    property int footTab: 0                 // 0 = events · 1 = to-dos
 
     readonly property var monthEvents:
         GoogleCalendar.eventDaysInMonth(shownMonth.getFullYear(), shownMonth.getMonth())
@@ -247,32 +248,154 @@ Rectangle {
             }
         }
 
-        // --- selected-day agenda -----------------------------------
+        // --- tabbed footer: events / to-dos --------------------------
+        // Two equal-width tabs below the grid; the pane slides sideways when
+        // you switch, and the container is a fixed height so the card doesn't
+        // jump as you move between a long agenda and a long task list.
+
         Rectangle {
             Layout.fillWidth: true
             Layout.topMargin: Theme.spacing.tiny
-            visible: root.view === "month" && GoogleCalendar.connected
+            visible: root.view === "month"
             implicitHeight: 1
             color: Theme.colors.borderSubtle
             opacity: 0.5
         }
 
-        CalAgenda {
-            Layout.fillWidth: true
-            visible: root.view === "month" && GoogleCalendar.connected
-            day: root.selectedDate
-        }
-
-        // --- tasks ------------------------------------------------
         Rectangle {
+            id: tabBar
             Layout.fillWidth: true
-            implicitHeight: 1
-            color: Theme.colors.borderSubtle
-            opacity: 0.5
+            visible: root.view === "month"
+            implicitHeight: 30
+            radius: Theme.rounding.control
+            color: Qt.rgba(Theme.colors.surfaceVariant.r, Theme.colors.surfaceVariant.g,
+                           Theme.colors.surfaceVariant.b, 0.5)
+
+            readonly property real segW: (width - 6) / 2
+
+            // Sliding selection pill.
+            Rectangle {
+                width: tabBar.segW
+                height: parent.height - 6
+                y: 3
+                x: 3 + root.footTab * tabBar.segW
+                radius: Theme.rounding.control - 3
+                color: Theme.colors.surfaceVariant
+                Behavior on x {
+                    NumberAnimation { duration: Theme.animation.fast; easing.type: Easing.OutCubic }
+                }
+            }
+
+            Row {
+                anchors.fill: parent
+                Repeater {
+                    model: [
+                        { label: "Calendar", glyph: "󰃭" },
+                        { label: "To-do",    glyph: "󰄬" }
+                    ]
+                    delegate: Item {
+                        id: tab
+                        required property int index
+                        required property var modelData
+                        width: tabBar.segW + 3
+                        height: tabBar.height
+                        readonly property bool on: root.footTab === index
+
+                        Row {
+                            anchors.centerIn: parent
+                            spacing: Theme.spacing.tiny
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: tab.modelData.glyph
+                                font.family: Theme.font.icon
+                                font.pointSize: root.fDate
+                                color: tab.on ? Theme.colors.textPrimary : Theme.colors.textTertiary
+                            }
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: tab.modelData.label
+                                font.family: Theme.font.main
+                                font.pointSize: root.fDate
+                                font.weight: tab.on ? Theme.font.semiBold : Theme.font.regular
+                                color: tab.on ? Theme.colors.textPrimary : Theme.colors.textTertiary
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.footTab = tab.index
+                        }
+                    }
+                }
+            }
         }
 
-        CalTasks {
+        // Fixed-height sliding pane host.
+        Item {
+            id: footStack
             Layout.fillWidth: true
+            Layout.topMargin: Theme.spacing.small
+            visible: root.view === "month"
+            implicitHeight: 248
+            clip: true
+
+            Row {
+                width: footStack.width * 2
+                height: footStack.height
+                x: -root.footTab * footStack.width
+                Behavior on x {
+                    NumberAnimation { duration: Theme.animation.normal; easing.type: Easing.OutCubic }
+                }
+
+                // pane 1 — the selected day's events
+                Item {
+                    width: footStack.width
+                    height: footStack.height
+
+                    Text {
+                        anchors.centerIn: parent
+                        width: parent.width - Theme.spacing.large * 2
+                        horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.WordWrap
+                        visible: !GoogleCalendar.connected
+                        text: "Connect a Google account in Settings › Calendar to see your events here."
+                        font.family: Theme.font.main
+                        font.pointSize: root.fDate
+                        color: Theme.colors.textTertiary
+                    }
+
+                    ScrollView {
+                        anchors.fill: parent
+                        visible: GoogleCalendar.connected
+                        clip: true
+                        contentWidth: availableWidth
+                        ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+
+                        CalAgenda {
+                            width: footStack.width
+                            day: root.selectedDate
+                        }
+                    }
+                }
+
+                // pane 2 — the to-do list
+                Item {
+                    width: footStack.width
+                    height: footStack.height
+
+                    ScrollView {
+                        anchors.fill: parent
+                        clip: true
+                        contentWidth: availableWidth
+                        ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+
+                        CalTasks {
+                            width: footStack.width
+                        }
+                    }
+                }
+            }
         }
     }
 }
