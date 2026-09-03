@@ -82,16 +82,11 @@ Scope {
                 DisplayController.hide();
             }
 
-            Rectangle {
+            // No backdrop — it just floats over the desktop like the launcher;
+            // a click anywhere off the card dismisses.
+            MouseArea {
                 anchors.fill: parent
-                color: Theme.colors.bg
-                opacity: win.open ? 0.3 : 0
-                Behavior on opacity { NumberAnimation { duration: Theme.animation.normal } }
-
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: DisplayController.hide()
-                }
+                onClicked: DisplayController.hide()
             }
 
             FocusScope {
@@ -124,9 +119,12 @@ Scope {
                     id: card
                     anchors.horizontalCenter: parent.horizontalCenter
                     y: (parent.height - height) / 2 + (win.open ? 0 : 16)
-                    Behavior on y { NumberAnimation { duration: Theme.animation.normal; easing.type: Easing.OutCubic } }
+                    Behavior on y { NumberAnimation { duration: Theme.animation.fast; easing.type: Easing.OutCubic } }
                     opacity: win.open ? 1 : 0
                     Behavior on opacity { NumberAnimation { duration: Theme.animation.fast } }
+                    scale: win.open ? 1 : 0.97
+                    transformOrigin: Item.Center
+                    Behavior on scale { NumberAnimation { duration: Theme.animation.fast; easing.type: Easing.OutCubic } }
 
                     implicitWidth: inner.implicitWidth + Theme.popup.padding * 2
                     implicitHeight: inner.implicitHeight + Theme.popup.padding * 2

@@ -8,10 +8,10 @@ import qs.config
 import qs.services
 import qs.widgets
 
-// Full-screen wallpaper / colour-scheme picker for one output: a dim backdrop
-// and a centred carousel you step through with the arrow keys (or the wheel, or
-// the on-screen chevrons). Every step applies live; Enter keeps it, Escape puts
-// back what was there before.
+// Wallpaper / colour-scheme picker for one output: a centred carousel you step
+// through with the arrow keys (or the wheel, or the on-screen chevrons). No
+// backdrop — it just floats over the desktop the way the launcher does. Every
+// step applies live; Enter keeps it, Escape puts back what was there before.
 //
 // Always mapped, never toggling `visible` — the Osd.qml / LauncherWindow safety
 // pattern. What opens and closes is the input mask and the keyboard grab.
@@ -46,20 +46,13 @@ PanelWindow {
 
     onOpenChanged: if (open) keyCatcher.forceActiveFocus()
 
-    // Light backdrop wash — the scheme's own ground, barely there, the same way
-    // the launcher / dashboard just float over the desktop rather than dimming
-    // it. A click anywhere off the card cancels.
-    Rectangle {
+    // No backdrop — a click anywhere off the card cancels, the wheel steps the
+    // carousel. niri has no focus grab, so this full-output MouseArea is what a
+    // click outside the card actually hits.
+    MouseArea {
         anchors.fill: parent
-        color: Theme.colors.bg
-        opacity: win.open ? 0.3 : 0
-        Behavior on opacity { NumberAnimation { duration: Theme.animation.normal } }
-
-        MouseArea {
-            anchors.fill: parent
-            onClicked: PickerController.cancel()
-            onWheel: wheel => PickerController.step(wheel.angleDelta.y > 0 ? -1 : 1)
-        }
+        onClicked: PickerController.cancel()
+        onWheel: wheel => PickerController.step(wheel.angleDelta.y > 0 ? -1 : 1)
     }
 
     FocusScope {
@@ -97,10 +90,15 @@ PanelWindow {
             height: headerRow.height + carousel.height + footerCol.height
                 + Theme.spacing.large * 2 + pad * 2
             opacity: win.open ? 1 : 0
+            scale: win.open ? 1 : 0.97
+            transformOrigin: Item.Center
 
-            Behavior on opacity { NumberAnimation { duration: Theme.animation.normal } }
+            Behavior on opacity { NumberAnimation { duration: Theme.animation.fast } }
+            Behavior on scale {
+                NumberAnimation { duration: Theme.animation.fast; easing.type: Easing.OutCubic }
+            }
             Behavior on y {
-                NumberAnimation { duration: Theme.animation.normal; easing.type: Easing.OutCubic }
+                NumberAnimation { duration: Theme.animation.fast; easing.type: Easing.OutCubic }
             }
 
             Rectangle {
