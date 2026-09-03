@@ -84,15 +84,15 @@ Scope {
 
                     onActivated: {
                         Notifications.activate(modelData)
-                        Notifications.dismissPopup(modelData)
+                        modelData.dropPopup()
                     }
-                    onDismissRequested: Notifications.dismissPopup(modelData)
-                    onActionInvoked: Notifications.dismissPopup(modelData)
+                    onDismissRequested: modelData.dropPopup()
+                    onActionInvoked: modelData.dropPopup()
 
                     Timer {
                         running: !toast.modelData.critical
                         interval: Theme.popup.notifTimeout
-                        onTriggered: Notifications.dismissPopup(toast.modelData)
+                        onTriggered: toast.modelData.dropPopup()
                     }
                 }
 

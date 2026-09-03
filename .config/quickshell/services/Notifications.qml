@@ -5,63 +5,38 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Notifications
 import qs.config
+import qs.services
 import qs.services.niri
 
 // Notification daemon + store.
 //
-// Wraps Quickshell's NotificationServer (the real org.freedesktop.Notifications
-// D-Bus service - having this instantiated is what makes the shell *the*
-// notification daemon) and keeps two views on top of it:
+// Instantiating NotificationServer here is what makes the shell *the*
+// org.freedesktop.Notifications D-Bus service — no other daemon (dunst / mako /
+// swaync) may be running or the name grab fails silently.
 //
-//   * `list`   - every notification we've kept, newest first. This is what the
-//                dashboard's notification centre renders. Persisted to
-//                Quickshell.dataPath so it survives a shell restart, though
-//                entries restored from disk lose their live actions
-//                (`entry.notification` is null for those).
-//   * `popups` - the transient subset currently sliding in at the top-right.
-//                NotificationPopups times these out; dismissing a popup leaves
-//                the entry in `list`.
-//
-// `doNotDisturb` suppresses popups only - the centre still records everything.
+// Every notification is a `NotifItem` object (see NotifItem.qml), not a plain
+// record. The views bind to those object instances through a ScriptModel, so
+// adding or removing one never rebuilds the delegates around it — which is
+// what makes the swipe-out animations reliable. `list` is the whole history
+// (newest first, capped at 100); `popups` is the toast subset.
 Singleton {
     id: root
 
-    // Entry shape: { key, notification|null, appName, summary, body, appIcon,
-    //                image, critical, low, time }
+    // NotifItem objects, newest first. Includes entries that are `closed` but
+    // still animating out — a card holds a lock until its exit finishes.
     property var list: []
-    property var popups: []
+
+    readonly property var popups: root.list.filter(n => n.popup && !n.closed)
+    readonly property int count: root.list.filter(n => !n.closed).length
     property bool doNotDisturb: false
     property int _seq: 1
 
-    // Entries the centre is currently playing its swipe-out on. The real removal
-    // is deferred and batched here rather than on a per-card Timer: the centre's
-    // Repeater rebuilds every delegate whenever `list` changes, so a timer owned
-    // by the card gets torn down (and the delete lost) the moment any *other*
-    // card is dismissed or a new notification lands. This list is reactive, the
-    // entry refs are stable, and `list` itself doesn't move until the flush — so
-    // the flashing cards survive.
-    property var _deleting: []
+    Component { id: itemComp; NotifItem {} }
 
-    readonly property int count: list.length
-
-    function isDeleting(entry) { return root._deleting.indexOf(entry) >= 0 }
-
-    Timer {
-        id: flushDelete
-        interval: Theme.animation.normal
-        onTriggered: {
-            const gone = root._deleting
-            root._deleting = []
-            for (const e of gone) {
-                if (e.notification) {
-                    e.notification.tracked = false
-                    e.notification.dismiss()
-                }
-            }
-            root.list = root.list.filter(e => gone.indexOf(e) < 0)
-            root.popups = root.popups.filter(e => gone.indexOf(e) < 0)
-            root._save()
-        }
+    // Called by a NotifItem's own close() once its locks clear.
+    function _remove(item) {
+        root.list = root.list.filter(n => n !== item);
+        _save();
     }
 
     NotificationServer {
@@ -79,120 +54,71 @@ Singleton {
         onNotification: notification => {
             notification.tracked = true
 
-            const entry = {
-                key: root._seq++,
+            const item = itemComp.createObject(root, {
                 notification: notification,
-                appName: notification.appName || "Notification",
-                desktopEntry: notification.desktopEntry || "",
-                summary: notification.summary,
-                body: notification.body,
-                appIcon: notification.appIcon,
-                image: notification.image,
-                critical: notification.urgency === NotificationUrgency.Critical,
-                low: notification.urgency === NotificationUrgency.Low,
-                time: Date.now()
-            }
+                key: root._seq++,
+                popup: !root.doNotDisturb,
+                time: new Date()
+            })
 
-            // Cap the centre at 100; untrack anything that falls off the end so
-            // the server doesn't hold pixmaps forever.
-            const full = [entry, ...root.list]
-            for (const e of full.slice(100))
-                if (e.notification) e.notification.tracked = false
-            root.list = full.slice(0, 100)
-            root._save()
-
-            if (!root.doNotDisturb)
-                root.popups = [entry, ...root.popups]
-
-            notification.closed.connect(() => root._forget(entry))
+            root.list = [item, ...root.list]
+            // Cap the history — close out anything past 100 (close() respects a
+            // card that might still be holding it).
+            const overflow = root.list.slice(100)
+            root.list = root.list.slice(0, 100)
+            for (const e of overflow)
+                e.close()
+            _save()
         }
     }
 
-    // The app (or the server) closed this notification out from under us.
-    function _forget(entry) {
-        root.popups = root.popups.filter(e => e !== entry)
-        root.list = root.list.filter(e => e !== entry)
-        root._deleting = root._deleting.filter(e => e !== entry)
-        root._save()
+    // Clicked the body: focus the app that sent it. Returns whether a window
+    // was found.
+    function activate(item) {
+        return NiriService.focusApp(item.desktopEntry)
+            || NiriService.focusApp(item.appName)
     }
 
-    // Popup timed out / was swiped away - stop the toast, keep it in the centre.
-    function dismissPopup(entry) {
-        root.popups = root.popups.filter(e => e !== entry)
-    }
-
-    // Clicked the notification body: jump to the app that sent it. Returns
-    // whether a window was found to focus.
-    function activate(entry) {
-        return NiriService.focusApp(entry.desktopEntry)
-            || NiriService.focusApp(entry.appName)
-    }
-
-    // Removed from the centre. Marks the entry for removal and lets the card
-    // play its swipe-out; `flushDelete` does the actual drop (and tells the app
-    // we're done) a beat later, batching anything else dismissed in the gap.
-    function dismiss(entry) {
-        if (root._deleting.indexOf(entry) >= 0)
-            return
-        root._deleting = [...root._deleting, entry]
-        flushDelete.restart()
-    }
-
-    function clear() {
-        for (const e of root.list) {
-            if (e.notification) {
-                e.notification.tracked = false
-                e.notification.dismiss()
-            }
-        }
-        root.list = []
-        root.popups = []
-        root._deleting = []
-        root._save()
+    function clearAll() {
+        for (const item of root.list.slice())
+            if (!item.closed)
+                item.close()
     }
 
     function toggleDnd() {
         root.doNotDisturb = !root.doNotDisturb
-        if (root.doNotDisturb) root.popups = []
+        if (root.doNotDisturb)
+            for (const item of root.list)
+                item.popup = false
     }
 
-    // `qs ipc call notifications dnd|dndOn|dndOff` — handy for a niri keybind.
     IpcHandler {
         target: "notifications"
         function dnd(): void { root.toggleDnd() }
-        function dndOn(): void { root.doNotDisturb = true; root.popups = [] }
+        function dndOn(): void { root.doNotDisturb = true; for (const i of root.list) i.popup = false }
         function dndOff(): void { root.doNotDisturb = false }
-        function clear(): void { root.clear() }
+        function clear(): void { root.clearAll() }
     }
 
-    // --- helpers used by the card ---------------------------------------
+    // --- helpers used by the card --------------------------------------
 
-    function iconSource(entry) {
-        // `image` (raw pixmap hint) and path-shaped `appIcon`s are usable as an
-        // Image source as-is; a bare name goes through the icon theme.
-        if (entry.image) return entry.image
-        if (!entry.appIcon) return ""
-        if (entry.appIcon.startsWith("/") || entry.appIcon.startsWith("file:"))
-            return entry.appIcon
-        return Quickshell.iconPath(entry.appIcon, "")
+    function iconSource(item) {
+        if (!item) return ""
+        if (item.image) return item.image
+        if (!item.appIcon) return ""
+        if (item.appIcon.startsWith("/") || item.appIcon.startsWith("file:"))
+            return item.appIcon
+        return Quickshell.iconPath(item.appIcon, "")
     }
 
-    function timeText(ts) {
-        const d = Math.floor((Date.now() - ts) / 1000)
-        if (d < 60) return "now"
-        if (d < 3600) return Math.floor(d / 60) + "m ago"
-        if (d < 86400) return Math.floor(d / 3600) + "h ago"
-        return Math.floor(d / 86400) + "d ago"
-    }
-
-    // --- persistence ---------------------------------------------------
+    // --- persistence -------------------------------------------------
 
     function _save() {
-        const plain = root.list.map(e => ({
-            appName: e.appName, desktopEntry: e.desktopEntry,
-            summary: e.summary, body: e.body,
-            appIcon: e.appIcon, image: e.image,
-            critical: e.critical, low: e.low, time: e.time
+        const plain = root.list.filter(n => !n.closed).map(n => ({
+            appName: n.appName, desktopEntry: n.desktopEntry,
+            summary: n.summary, body: n.body,
+            appIcon: n.appIcon, image: n.image,
+            critical: n.critical, low: n.low, time: n.time.getTime()
         }))
         store.setText(JSON.stringify(plain))
     }
@@ -206,9 +132,10 @@ Singleton {
             try {
                 const saved = JSON.parse(store.text())
                 if (!Array.isArray(saved) || saved.length === 0) return
-                const restored = saved.map(e => ({
-                    key: root._seq++,
+                const restored = saved.map(e => itemComp.createObject(root, {
                     notification: null,
+                    key: root._seq++,
+                    popup: false,
                     appName: e.appName || "Notification",
                     desktopEntry: e.desktopEntry || "",
                     summary: e.summary || "",
@@ -217,12 +144,12 @@ Singleton {
                     image: e.image || "",
                     critical: !!e.critical,
                     low: !!e.low,
-                    time: e.time || Date.now()
+                    time: new Date(e.time || Date.now())
                 }))
-                // Live notifications that already arrived win the top slots.
+                // Live notifications that already arrived keep the top slots.
                 root.list = [...root.list, ...restored].slice(0, 100)
             } catch (err) {
-                // Corrupt or empty store - start clean.
+                // Corrupt or empty store — start clean.
             }
         }
     }

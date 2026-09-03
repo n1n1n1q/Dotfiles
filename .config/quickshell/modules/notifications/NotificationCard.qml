@@ -50,10 +50,36 @@ Item {
     readonly property int fMeta: large ? Theme.dashboard.fontTiny : Theme.popup.fontTiny
     readonly property int fIconLetter: large ? Theme.dashboard.fontLarge : Theme.popup.fontMedium
 
-    // Flashes red and collapses while its swipe-out plays. Owned by the service
-    // (see Notifications._deleting) so a Repeater rebuild from an unrelated
-    // dismiss can't strand a half-deleted card.
-    readonly property bool deleting: Notifications.isDeleting(card.entry)
+    // `entry.closed` is set by entry.close() the moment it is dismissed, but
+    // the entry itself stays in the list — this card holds a lock on it — until
+    // the collapse below finishes and `exitTimer` releases that lock. Only then
+    // does the entry actually leave the list. So the card is never yanked out
+    // from under its own animation.
+    readonly property bool deleting: card.entry?.closed ?? false
+
+    // Hold a lock on whatever entry we're showing. If the binding is ever
+    // repointed (a grouped stack's top card follows the newest entry), release
+    // the old one so it isn't stranded in the list forever.
+    property var _locked: null
+    function _relock() {
+        if (_locked === card.entry)
+            return;
+        if (_locked)
+            _locked.unlock(card);
+        _locked = card.entry;
+        if (_locked)
+            _locked.lock(card);
+    }
+    onEntryChanged: card._relock()
+    Component.onCompleted: card._relock()
+    Component.onDestruction: if (card._locked) card._locked.unlock(card)
+
+    Timer {
+        id: exitTimer
+        interval: Theme.animation.normal
+        running: card.deleting
+        onTriggered: if (card._locked) card._locked.unlock(card)
+    }
 
     readonly property int fullHeight: layout.implicitHeight + Theme.padding.large * 2 + hang
     // Collapse to nothing as it fades so the rows below slide up into the gap
@@ -95,8 +121,8 @@ Item {
         // A solid card gets a hairline so it reads as lifted off the panel /
         // desktop behind it — the fill step alone vanishes on flat dark
         // schemes. A critical one keeps its error outline instead.
-        border.width: card.entry.critical ? 1 : (card.flat || card.deleting ? 0 : 1)
-        border.color: card.entry.critical ? Theme.colors.error : Theme.colors.hairline
+        border.width: (card.entry?.critical ?? false) ? 1 : (card.flat || card.deleting ? 0 : 1)
+        border.color: (card.entry?.critical ?? false) ? Theme.colors.error : Theme.colors.hairline
 
         Behavior on color { ColorAnimation { duration: Theme.animation.fast } }
 
@@ -145,7 +171,7 @@ Item {
                 Text {
                     anchors.centerIn: parent
                     visible: icon.status !== Image.Ready
-                    text: (card.entry.appName || "?").charAt(0).toUpperCase()
+                    text: (card.entry?.appName || "?").charAt(0).toUpperCase()
                     font.family: Theme.font.main
                     font.pointSize: card.fIconLetter
                     font.weight: Theme.font.mediumWeight
@@ -177,8 +203,8 @@ Item {
 
                     Text {
                         Layout.fillWidth: true
-                        text: card.entry.summary && card.entry.summary.length > 0
-                            ? card.entry.summary : card.entry.appName
+                        text: card.entry?.summary && card.entry.summary.length > 0
+                            ? card.entry.summary : (card.entry?.appName ?? "")
                         elide: Text.ElideRight
                         font.family: Theme.font.main
                         font.pointSize: card.fSummary
@@ -187,7 +213,7 @@ Item {
                     }
 
                     Text {
-                        text: Notifications.timeText(card.entry.time)
+                        text: card.entry?.timeStr ?? ""
                         font.family: Theme.font.main
                         font.pointSize: card.fBody
                         color: Theme.colors.textTertiary
@@ -197,7 +223,7 @@ Item {
                 Text {
                     Layout.fillWidth: true
                     visible: text.length > 0
-                    text: card.entry.body || ""
+                    text: card.entry?.body || ""
                     textFormat: Text.StyledText  // freedesktop body markup is an HTML subset
                     wrapMode: Text.WordWrap
                     maximumLineCount: 8
@@ -209,8 +235,8 @@ Item {
                 }
 
                 Text {
-                    visible: card.entry.appName.length > 0
-                    text: card.entry.appName
+                    visible: (card.entry?.appName ?? "").length > 0
+                    text: card.entry?.appName ?? ""
                     font.family: Theme.font.main
                     font.pointSize: card.fMeta
                     color: Theme.colors.textTertiary
@@ -224,7 +250,7 @@ Item {
 
                     Repeater {
                         id: actions
-                        model: card.entry.notification ? card.entry.notification.actions : []
+                        model: card.entry?.actions ?? []
 
                         delegate: Rectangle {
                             id: actionBtn

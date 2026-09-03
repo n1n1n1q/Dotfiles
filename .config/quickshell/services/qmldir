@@ -9,6 +9,7 @@ singleton Brightness 1.0 Brightness.qml
 singleton Time 1.0 Time.qml
 singleton Media 1.0 Media.qml
 singleton Notifications 1.0 Notifications.qml
+NotifItem 1.0 NotifItem.qml
 singleton Processes 1.0 Processes.qml
 singleton System 1.0 System.qml
 singleton SysResources 1.0 SysResources.qml

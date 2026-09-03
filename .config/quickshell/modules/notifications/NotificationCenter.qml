@@ -1,33 +1,38 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import qs.config
 import qs.services
 import qs.widgets
 
 // Notification centre for the dashboard: the full `Notifications.list` history,
 // newest first. With DashboardConfig.notifGrouping off that's one card per
-// notification; set to "source" it's one collapsed stack per app, each opening
-// into its own run. Sits inside the dashboard's own ScrollView, so it just
-// grows - no nested scrolling.
+// notification (the default); "source" collapses each app into its own stack.
+// Sits inside the dashboard's own ScrollView, so it just grows.
+//
+// The flat list is a ScriptModel over the live NotifItem objects — adding or
+// removing one is an incremental update, so a card that is mid-swipe-out is
+// never rebuilt out from under its animation.
 ColumnLayout {
     id: root
     spacing: Theme.spacing.tiny
 
-    // Emitted when a notification is clicked through to its app - the
-    // dashboard should get out of the way.
+    // Emitted when a notification is clicked through to its app — the dashboard
+    // should get out of the way.
     signal closeRequested()
 
     readonly property bool grouped: DashboardConfig.notifGrouped
 
-    // [{ appName, entries }] in the order each source last spoke - so a group
-    // rises to the top when it gets something new, and the list still reads
-    // newest-first.
+    // [{ appName, entries }] in the order each source last spoke, closed
+    // entries filtered out.
     readonly property var groups: {
         if (!grouped)
             return [];
         const byApp = {};
         const out = [];
         for (const e of Notifications.list) {
+            if (e.closed)
+                continue;
             const key = e.appName || "Notification";
             if (byApp[key] === undefined) {
                 byApp[key] = { appName: key, entries: [] };
@@ -38,9 +43,6 @@ ColumnLayout {
         return out;
     }
 
-    // Which sources are dropped open, by app name. Kept here rather than in the
-    // group delegates because the Repeater below rebuilds all of them whenever
-    // a notification arrives or is dismissed.
     property var expandedSources: ({})
 
     function toggleSource(appName) {
@@ -54,66 +56,39 @@ ColumnLayout {
         root.closeRequested();
     }
 
-    SectionHeader {
-        title: "Notifications"
-        icon: "󰎟"
+    // --- header ---------------------------------------------------------
+    RowLayout {
+        Layout.fillWidth: true
+        Layout.bottomMargin: Theme.spacing.tiny
+        spacing: Theme.spacing.small
 
-        // Count pill.
-        Rectangle {
-            visible: Notifications.count > 0
-            implicitWidth: Math.max(20, countText.implicitWidth + Theme.spacing.small)
-            implicitHeight: 20
-            radius: height / 2
-            color: Qt.rgba(Theme.colors.accent.r, Theme.colors.accent.g,
-                           Theme.colors.accent.b, 0.22)
-
-            Text {
-                id: countText
-                anchors.centerIn: parent
-                text: Notifications.count
-                font.family: Theme.font.main
-                font.pointSize: Theme.dashboard.fontSmall
-                color: Theme.colors.accent
-            }
+        Text {
+            text: "󰎟"
+            font.family: Theme.font.icon
+            font.pointSize: Theme.dashboard.fontMedium
+            color: Theme.colors.textSecondary
         }
 
-        // Do Not Disturb.
-        Rectangle {
-            implicitWidth: 28
-            implicitHeight: 28
-            radius: height / 2
-            color: Notifications.doNotDisturb ? Theme.colors.accent
-                : dndMouse.containsMouse ? Theme.colors.surfaceVariant
-                : "transparent"
-
-            Behavior on color { ColorAnimation { duration: Theme.animation.fast } }
-
-            Text {
-                anchors.centerIn: parent
-                text: Notifications.doNotDisturb ? "󰂛" : "󰂚"
-                font.family: Theme.font.icon
-                font.pointSize: Theme.dashboard.fontMedium
-                color: Notifications.doNotDisturb ? Theme.colors.bg : Theme.colors.textSecondary
-            }
-
-            MouseArea {
-                id: dndMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: Notifications.toggleDnd()
-            }
+        Text {
+            text: "Notifications"
+            font.family: Theme.font.main
+            font.pointSize: Theme.dashboard.fontMedium
+            font.weight: Theme.font.semiBold
+            color: Theme.colors.textSecondary
         }
 
-        // Clear all.
+        Item { Layout.fillWidth: true }
+
+        // The only control in the header now — dimmed and inert when there is
+        // nothing to clear.
         Rectangle {
-            visible: Notifications.count > 0
+            readonly property bool on: Notifications.count > 0
             implicitWidth: clearText.implicitWidth + Theme.spacing.normal * 2
             implicitHeight: 28
             radius: height / 2
-            color: clearMouse.containsMouse ? Theme.colors.surfaceVariant
-                : Qt.rgba(Theme.colors.surfaceVariant.r, Theme.colors.surfaceVariant.g,
-                          Theme.colors.surfaceVariant.b, 0.5)
+            color: !on ? "transparent"
+                : clearMouse.containsMouse ? Theme.colors.accentTintStrong
+                : Theme.colors.accentTint
 
             Behavior on color { ColorAnimation { duration: Theme.animation.fast } }
 
@@ -124,20 +99,21 @@ ColumnLayout {
                 font.family: Theme.font.main
                 font.pointSize: Theme.dashboard.fontSmall
                 font.weight: Theme.font.mediumWeight
-                color: Theme.colors.textPrimary
+                color: parent.on ? Theme.colors.accent : Theme.colors.textTertiary
             }
 
             MouseArea {
                 id: clearMouse
                 anchors.fill: parent
+                enabled: parent.on
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: Notifications.clear()
+                onClicked: Notifications.clearAll()
             }
         }
     }
 
-    // Empty state — no ground of its own, just the line.
+    // --- empty state ---------------------------------------------------
     Item {
         Layout.fillWidth: true
         Layout.preferredHeight: 64
@@ -152,9 +128,11 @@ ColumnLayout {
         }
     }
 
-    // Flat history.
+    // --- flat history ------------------------------------------------
     Repeater {
-        model: root.grouped ? [] : Notifications.list
+        model: ScriptModel {
+            values: root.grouped ? [] : Notifications.list
+        }
 
         delegate: NotificationCard {
             required property var modelData
@@ -163,13 +141,13 @@ ColumnLayout {
             entry: modelData
             flat: true
             large: true
-            showDivider: index < Notifications.list.length - 1
-            onDismissRequested: Notifications.dismiss(modelData)
+            showDivider: index < Notifications.count - 1
+            onDismissRequested: modelData.close()
             onActivated: root.open(modelData)
         }
     }
 
-    // One stack per source.
+    // --- one stack per source --------------------------------------
     Repeater {
         model: root.grouped ? root.groups : []
 
@@ -179,7 +157,7 @@ ColumnLayout {
             entries: modelData.entries
             expanded: root.expandedSources[modelData.appName] === true
             onToggleRequested: root.toggleSource(modelData.appName)
-            onDismissRequested: entry => Notifications.dismiss(entry)
+            onDismissRequested: entry => entry.close()
             onActivated: entry => root.open(entry)
         }
     }

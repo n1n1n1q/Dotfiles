@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import qs.config
 import qs.services
 
@@ -162,7 +163,9 @@ ColumnLayout {
         visible: group.expanded && group.stacked
 
         Repeater {
-            model: group.expanded ? group.entries.slice(1) : []
+            model: ScriptModel {
+                values: group.expanded ? group.entries.slice(1) : []
+            }
 
             delegate: NotificationCard {
                 required property var modelData
