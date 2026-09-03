@@ -144,17 +144,15 @@ PanelWindow {
             // the bar, so `openY` is measured straight down from there.
             readonly property real openY: Theme.popup.margin
 
-            // Height follows the content — a short panel (a couple of
-            // notifications) is a short card, not a full-screen column of dead
-            // space — but is capped at the room between the bar and the bottom
-            // frame, past which the list scrolls.
+            // A fixed, generous height — the notification centre scrolls within
+            // it — clamped to the room between the bar and the bottom frame on
+            // a short screen.
             readonly property real maxH: root.height - openY - Theme.frame.thickness - Theme.popup.margin
-            readonly property real fitH: dashCol.implicitHeight + Theme.padding.xlarge * 2
 
             x: Theme.frame.thickness + Theme.popup.margin
             y: root.open ? openY : -height
             width: Theme.sizes.dashboardWidth
-            height: Math.min(maxH, fitH)
+            height: Math.min(maxH, Theme.sizes.dashboardHeight)
 
             color: Theme.popup.background
             radius: Theme.popup.radius
@@ -166,9 +164,6 @@ PanelWindow {
                     duration: 200  // Faster, smoother animation
                     easing.type: Easing.OutCubic
                 }
-            }
-            Behavior on height {
-                NumberAnimation { duration: Theme.animation.normal; easing.type: Easing.OutCubic }
             }
 
             // Swallows clicks so they don't fall through to the scrim behind.

@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Shapes
+import QtQuick.Effects
 import Quickshell
 import Quickshell.Wayland
 import qs.config
@@ -302,90 +303,78 @@ Scope {
     }
 
     // A soft shadow cast inward onto the content, when BarConfig.style.shadow
-    // is on. The bar and the frame are treated as one object: each edge casts
-    // one strip — from `barHeight` in along the bar's edge, from `edgeThickness`
-    // in along each framed edge — and every strip stops short of the corners by
-    // the same `endMargin` the frame's own border strips use. That keeps the
-    // strips from stacking on top of each other (the corner was pooling into a
-    // dark blob) and off the corner decoration (whose colour it was tinting).
-    // With the frame off, only the bar edge casts. Purely decorative: an
-    // always-mapped, click-through overlay window, ignored by the exclusive
-    // zone.
-    component InnerShadow: PanelWindow {
-        id: sh
+    // is on. One window per screen owns the whole shape: the bar, the frame
+    // border and the rounded corner joint are treated as one object, and the
+    // shadow is a soft band hugging the *inside* of the content well's edge —
+    // corners included, since the well is a single rounded rect. It never
+    // reaches the frame decoration itself (the band is clipped to the well),
+    // so nothing tints the corner. Purely decorative: always-mapped,
+    // click-through, ignored by the exclusive zone.
+    component ContentShadow: PanelWindow {
+        id: cs
         required property ShellScreen targetScreen
-        required property string side   // top | bottom | left | right
 
-        readonly property bool isVertical: side === "left" || side === "right"
-        readonly property bool isBarSide: !barFloating && side === barEdge
-        readonly property int originInset: isBarSide ? barHeight
-            : (frameOn ? edgeThickness : 0)
-        readonly property int depth: 22
-        readonly property bool darkAtStart: side === "top" || side === "left"
-        readonly property color shadowColor: Qt.rgba(0, 0, 0, 0.28)
+        readonly property color shadowColor: Qt.rgba(0, 0, 0, 0.4)
+        readonly property int depth: 26
 
-        // The two corners at this strip's ends, and the perpendicular sides
-        // they sit on — same mapping EdgeStrip uses. `endMargin` then folds in
-        // the corner-joint radius, the black-accent radius, and the bar's own
-        // length (via sideInset), so a frame strip perpendicular to the bar
-        // already yields that whole stretch to the bar's strip.
-        readonly property int endCornerA: side === "top" ? 0 : side === "bottom" ? 2
-            : side === "left" ? 0 : 1
-        readonly property int endCornerB: side === "top" ? 1 : side === "bottom" ? 3
-            : side === "left" ? 2 : 3
-        readonly property string endSideA: isVertical ? "top" : "left"
-        readonly property string endSideB: isVertical ? "bottom" : "right"
-        readonly property int endA: endMargin(endSideA, endCornerA)
-        readonly property int endB: endMargin(endSideB, endCornerB)
+        // Content-well insets: the bar's height on its docked edge, the border
+        // thickness on every framed edge, nothing on a bare edge.
+        function wellInset(side) {
+            if (barFloating) return 0;
+            if (side === barEdge) return barHeight;
+            return frameOn ? edgeThickness : 0;
+        }
+        readonly property int insetT: wellInset("top")
+        readonly property int insetB: wellInset("bottom")
+        readonly property int insetL: wellInset("left")
+        readonly property int insetR: wellInset("right")
+        readonly property int wellRadius: frameOn && roundedOn ? contentCornerRadius : 0
+
+        readonly property int layers: 16
 
         screen: targetScreen
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.namespace: "quickshell:frame-shadow"
+        WlrLayershell.namespace: "quickshell:content-shadow"
         color: "transparent"
         mask: Region {}
-        visible: BarConfig.shadowEnabled && (isBarSide || frameOn)
+        visible: BarConfig.shadowEnabled && !barFloating
+            && (frameOn || insetT || insetB || insetL || insetR)
             && !isFrameHidden(targetScreen)
+        anchors { top: true; bottom: true; left: true; right: true }
 
-        anchors {
-            top: side !== "bottom"
-            bottom: side !== "top"
-            left: side !== "right"
-            right: side !== "left"
-        }
-        margins {
-            top: side === "top" ? originInset : (isVertical ? endA : 0)
-            bottom: side === "bottom" ? originInset : (isVertical ? endB : 0)
-            left: side === "left" ? originInset : (!isVertical ? endA : 0)
-            right: side === "right" ? originInset : (!isVertical ? endB : 0)
-        }
-        implicitWidth: isVertical ? depth : 1
-        implicitHeight: isVertical ? 1 : depth
+        // A stack of hollow rounded-rect frames, inset progressively into the
+        // content well with a decaying alpha — the same idea as widgets/
+        // SoftShadow, turned inward. Every frame sits inside the well, so the
+        // shadow is only ever on the content, follows the rounded corner, and
+        // never touches the frame decoration.
+        Repeater {
+            model: cs.layers
 
-        Rectangle {
-            anchors.fill: parent
-            gradient: Gradient {
-                orientation: sh.isVertical ? Gradient.Horizontal : Gradient.Vertical
-                GradientStop {
-                    position: 0.0
-                    color: sh.darkAtStart ? sh.shadowColor : "transparent"
-                }
-                GradientStop {
-                    position: 1.0
-                    color: sh.darkAtStart ? "transparent" : sh.shadowColor
-                }
+            Rectangle {
+                required property int index
+                readonly property real t: index / (cs.layers - 1)   // 0 → 1 inward
+                readonly property real off: t * cs.depth
+
+                x: cs.insetL + off
+                y: cs.insetT + off
+                width: cs.width - cs.insetL - cs.insetR - off * 2
+                height: cs.height - cs.insetT - cs.insetB - off * 2
+                radius: Math.max(0, cs.wellRadius - off)
+                antialiasing: true
+                color: "transparent"
+                // Each stroke is ~3× the step between layers, so every point is
+                // painted by several overlapping strokes — that overlap is what
+                // smooths the falloff into a gradient instead of visible rings.
+                border.width: cs.depth / cs.layers * 3.2
+                border.color: Qt.rgba(cs.shadowColor.r, cs.shadowColor.g, cs.shadowColor.b,
+                                      cs.shadowColor.a * (1 - t) / cs.layers * 1.6)
             }
         }
     }
 
     Variants { model: Quickshell.screens
-        InnerShadow { required property ShellScreen modelData; targetScreen: modelData; side: "top" } }
-    Variants { model: Quickshell.screens
-        InnerShadow { required property ShellScreen modelData; targetScreen: modelData; side: "bottom" } }
-    Variants { model: Quickshell.screens
-        InnerShadow { required property ShellScreen modelData; targetScreen: modelData; side: "left" } }
-    Variants { model: Quickshell.screens
-        InnerShadow { required property ShellScreen modelData; targetScreen: modelData; side: "right" } }
+        ContentShadow { required property ShellScreen modelData; targetScreen: modelData } }
 
     Variants { model: Quickshell.screens
         CornerWindow { required property ShellScreen modelData; targetScreen: modelData; corner: 0 } }

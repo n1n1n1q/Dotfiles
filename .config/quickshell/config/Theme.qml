@@ -324,7 +324,7 @@ Singleton {
     
     readonly property QtObject dashboard: QtObject {
         readonly property int width: 460
-        readonly property int height: 700
+        readonly property int height: 860
         readonly property int margin: spacing.medium
         readonly property int padding: spacing.large
         readonly property int itemSpacing: spacing.medium

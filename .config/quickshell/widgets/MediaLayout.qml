@@ -4,6 +4,7 @@ import QtQuick.Controls
 import QtQuick.Effects
 import qs.config
 import qs.services
+import qs.widgets
 
 // The now-playing body shared by the bar's media popout and the desktop media
 // widget, in the four layouts offered in Settings:
@@ -59,6 +60,8 @@ Item {
 
     // --- transport button -------------------------------------------------
     // Inline components can't see the file's ids, so every metric is a property.
+    // `primary` (play/pause) reads as the lead action through size and a quiet
+    // resting fill — no accent slab.
     component TBtn: Rectangle {
         id: tb
         property string glyph: ""
@@ -71,8 +74,10 @@ Item {
         implicitWidth: size
         implicitHeight: size
         radius: height / 2
-        color: primary ? Theme.colors.accent
-            : (tbMouse.containsMouse ? Theme.colors.surfaceVariant : "transparent")
+        color: tbMouse.containsMouse ? Theme.colors.surfaceVariant
+            : (primary ? Qt.rgba(Theme.colors.surfaceVariant.r, Theme.colors.surfaceVariant.g,
+                                 Theme.colors.surfaceVariant.b, 0.5)
+                       : "transparent")
         opacity: can ? 1 : 0.35
 
         Behavior on color { ColorAnimation { duration: Theme.animation.fast } }
@@ -82,7 +87,7 @@ Item {
             text: tb.glyph
             font.family: Theme.font.icon
             font.pointSize: tb.glyphSize
-            color: tb.primary ? Theme.colors.bg : Theme.colors.textPrimary
+            color: Theme.colors.textPrimary
         }
         MouseArea {
             id: tbMouse
@@ -253,7 +258,7 @@ Item {
                 Slider {
                     id: seek
                     Layout.fillWidth: true
-                    Layout.preferredHeight: Math.round(16 * root.sc)
+                    Layout.preferredHeight: Math.max(seekBar.implicitHeight, Math.round(16 * root.sc))
                     padding: 0
                     enabled: Media.hasProgress
                     from: 0
@@ -264,27 +269,21 @@ Item {
                             Media.seek(value * Media.length);
                     }
 
-                    background: Rectangle {
+                    // Same shared level bar the dashboard sliders and the OSD
+                    // use, so the seek bar matches whichever style is set in
+                    // Settings › Appearance › Sliders.
+                    background: LevelBar {
+                        id: seekBar
                         x: seek.leftPadding
                         y: seek.topPadding + seek.availableHeight / 2 - height / 2
                         width: seek.availableWidth
-                        height: Math.max(3, Math.round(4 * root.sc))
-                        radius: height / 2
-                        color: Theme.colors.borderSubtle
-                        Rectangle {
-                            width: seek.visualPosition * parent.width
-                            height: parent.height
-                            radius: parent.radius
-                            color: Theme.colors.accent
-                        }
+                        value: seek.visualPosition
+                        style: Appearance.sliderStyle
+                        fillColor: Theme.colors.accent
                     }
-                    handle: Rectangle {
-                        x: seek.leftPadding + seek.visualPosition * (seek.availableWidth - width)
-                        y: seek.topPadding + seek.availableHeight / 2 - height / 2
-                        width: Math.round(11 * root.sc)
-                        height: width
-                        radius: width / 2
-                        color: Theme.colors.accent
+                    handle: Item {
+                        implicitWidth: Theme.sizes.levelHandle
+                        implicitHeight: Theme.sizes.levelHandle
                     }
                 }
 
@@ -320,23 +319,23 @@ Item {
 
                 TBtn {
                     glyph: "󰒮"
-                    size: Math.round((root.compact ? 26 : 30) * root.sc)
-                    glyphSize: Math.round(Theme.font.medium * root.sc)
+                    size: Math.round((root.compact ? 32 : 38) * root.sc)
+                    glyphSize: Math.round((root.compact ? Theme.font.large : Theme.font.xlarge) * root.sc)
                     can: Media.canGoPrevious
                     onTriggered: Media.previous()
                 }
                 TBtn {
                     glyph: Media.isPlaying ? "󰏤" : "󰐊"
-                    size: Math.round((root.compact ? 32 : 36) * root.sc)
-                    glyphSize: Math.round(Theme.font.large * root.sc)
+                    size: Math.round((root.compact ? 40 : 46) * root.sc)
+                    glyphSize: Math.round((root.compact ? Theme.font.xlarge : Theme.font.huge) * root.sc)
                     primary: true
                     can: root.has
                     onTriggered: Media.togglePlayPause()
                 }
                 TBtn {
                     glyph: "󰒭"
-                    size: Math.round((root.compact ? 26 : 30) * root.sc)
-                    glyphSize: Math.round(Theme.font.medium * root.sc)
+                    size: Math.round((root.compact ? 32 : 38) * root.sc)
+                    glyphSize: Math.round((root.compact ? Theme.font.large : Theme.font.xlarge) * root.sc)
                     can: Media.canGoNext
                     onTriggered: Media.next()
                 }
