@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import qs.config
+import qs.widgets
 
 // The little right-click menu on an app row: pin to / unpin from favourites,
 // and hide the app from the launcher entirely. Rolled by hand — the shell
@@ -41,18 +42,12 @@ Item {
 
         implicitWidth: 210
         implicitHeight: col.implicitHeight + Theme.spacing.small * 2
-        radius: Theme.rounding.medium
+        radius: Theme.rounding.control
         color: Theme.popup.background
         border.width: 1
-        border.color: Theme.colors.border
+        border.color: Theme.colors.hairline
 
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: -4
-            radius: parent.radius + 4
-            color: Theme.popup.shadow
-            z: -1
-        }
+        SoftShadow { spread: 16 }
 
         Column {
             id: col

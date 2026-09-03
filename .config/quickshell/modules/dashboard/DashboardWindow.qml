@@ -141,15 +141,20 @@ PanelWindow {
 
             // Sits Theme.popup.margin off the frame on every side: the bar's
             // exclusive zone already drops this window's origin to just below
-            // the bar, so `openY` is measured straight down from there, and
-            // the height fills the rest of the screen minus the bottom
-            // border + the same margin.
+            // the bar, so `openY` is measured straight down from there.
             readonly property real openY: Theme.popup.margin
+
+            // Height follows the content — a short panel (a couple of
+            // notifications) is a short card, not a full-screen column of dead
+            // space — but is capped at the room between the bar and the bottom
+            // frame, past which the list scrolls.
+            readonly property real maxH: root.height - openY - Theme.frame.thickness - Theme.popup.margin
+            readonly property real fitH: dashCol.implicitHeight + Theme.padding.xlarge * 2
 
             x: Theme.frame.thickness + Theme.popup.margin
             y: root.open ? openY : -height
             width: Theme.sizes.dashboardWidth
-            height: root.height - openY - Theme.frame.thickness - Theme.popup.margin
+            height: Math.min(maxH, fitH)
 
             color: Theme.popup.background
             radius: Theme.popup.radius
@@ -161,6 +166,9 @@ PanelWindow {
                     duration: 200  // Faster, smoother animation
                     easing.type: Easing.OutCubic
                 }
+            }
+            Behavior on height {
+                NumberAnimation { duration: Theme.animation.normal; easing.type: Easing.OutCubic }
             }
 
             // Swallows clicks so they don't fall through to the scrim behind.
@@ -176,12 +184,14 @@ PanelWindow {
                 anchors.margins: Theme.padding.xlarge
                 clip: true
                 contentWidth: availableWidth
-                // Reserve real width for the vertical scrollbar instead of
-                // letting it overlay the content — the Basic style's scrollbar
-                // keeps an interactive hit-strip even at 0 opacity, which was
-                // swallowing the notification cards' right-edge swipe-to-delete
-                // the moment an expanded group made the list overflow.
-                rightPadding: dashVBar.visible ? dashVBar.width + Theme.spacing.tiny : 0
+                // Reserve the scrollbar's width *unconditionally*. It keeps an
+                // interactive hit-strip even at 0 opacity (which was eating the
+                // notification cards' swipe-to-delete once a list overflowed),
+                // and — now that the panel height tracks its content — a
+                // show/hide-on-demand scrollbar would change `availableWidth`,
+                // rewrap the text, change the content height, and flip the
+                // scrollbar again: a layout loop right at the fit/overflow line.
+                rightPadding: dashVBar.width + Theme.spacing.tiny
                 ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
                 ScrollBar.vertical: ScrollBar {
                     id: dashVBar
@@ -189,6 +199,7 @@ PanelWindow {
                 }
 
                 ColumnLayout {
+                    id: dashCol
                     width: dashScroll.availableWidth
                     spacing: Theme.spacing.large
 

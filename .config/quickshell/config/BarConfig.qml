@@ -30,7 +30,8 @@ Singleton {
         "floatRounded": true,   // rounded corners on the floating pill
         "frame": true,          // draw the ScreenFrame border
         "rounded": true,        // rounded corner transitions (frame or bare)
-        "blackCorners": true    // the black screen-rounder accents
+        "blackCorners": true,   // the black screen-rounder accents
+        "shadow": false         // soft shadow cast from the bar / frame inward
     })
     readonly property string edge: adapter.style?.edge ?? "top"
     readonly property bool floating: adapter.style?.floating ?? false
@@ -39,6 +40,10 @@ Singleton {
     readonly property bool frameEnabled: !floating && (adapter.style?.frame ?? true)
     readonly property bool frameRounded: adapter.style?.rounded ?? true
     readonly property bool blackCorners: adapter.style?.blackCorners ?? true
+    // Soft shadow cast inward from the bar's inner edge (and, when the frame is
+    // on, its other edges) onto the content below. A floating pill always keeps
+    // its own lift regardless.
+    readonly property bool shadowEnabled: adapter.style?.shadow ?? false
     readonly property bool vertical: edge === "left" || edge === "right"
 
     // --- per-widget settings ------------------------------------------

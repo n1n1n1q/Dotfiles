@@ -83,7 +83,7 @@ Item {
         anchors.topMargin: card.hang
         anchors.rightMargin: card.hang
 
-        radius: card.flat ? Theme.rounding.large : Theme.rounding.huge
+        radius: card.flat ? Theme.rounding.control : Theme.rounding.card
         color: card.deleting
             ? Theme.colors.error
             : card.flat
@@ -92,8 +92,11 @@ Item {
                                          Theme.colors.surfaceVariant.b, 0.4)
                                : "transparent")
               : (hover.hovered ? Theme.colors.surfaceVariant : Theme.colors.surface)
-        border.width: card.entry.critical ? 1 : 0
-        border.color: Theme.colors.error
+        // A solid card gets a hairline so it reads as lifted off the panel /
+        // desktop behind it — the fill step alone vanishes on flat dark
+        // schemes. A critical one keeps its error outline instead.
+        border.width: card.entry.critical ? 1 : (card.flat || card.deleting ? 0 : 1)
+        border.color: card.entry.critical ? Theme.colors.error : Theme.colors.hairline
 
         Behavior on color { ColorAnimation { duration: Theme.animation.fast } }
 
@@ -106,8 +109,7 @@ Item {
             anchors.rightMargin: Theme.padding.large
             height: 1
             visible: card.flat && card.showDivider
-            color: Qt.rgba(Theme.colors.borderSubtle.r, Theme.colors.borderSubtle.g,
-                           Theme.colors.borderSubtle.b, 0.4)
+            color: Theme.colors.hairline
         }
 
         // Sits under the content: clicks that don't land on an action button or
@@ -136,9 +138,8 @@ Item {
                 Layout.alignment: Qt.AlignTop
                 Layout.preferredWidth: card.large ? 40 : 34
                 Layout.preferredHeight: card.large ? 40 : 34
-                radius: Theme.rounding.medium
-                color: Qt.rgba(Theme.colors.surfaceVariant.r, Theme.colors.surfaceVariant.g,
-                               Theme.colors.surfaceVariant.b, 0.5)
+                radius: Theme.rounding.control
+                color: Theme.palette.surface2
                 clip: true
 
                 Text {

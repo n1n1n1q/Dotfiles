@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Templates as T
 import qs.config
+import qs.widgets
 
 // Themed replacement for the QtQuick.Controls attached `ToolTip.*` property.
 // The Basic style's default tooltip is a plain yellow-on-white box that
@@ -55,18 +56,11 @@ T.ToolTip {
     }
 
     background: Rectangle {
-        radius: Theme.rounding.normal
+        radius: Theme.rounding.control
         color: Theme.colors.surface
         border.width: 1
-        border.color: Theme.colors.borderSubtle
+        border.color: Theme.colors.hairline
 
-        // Same soft-shadow-companion-rect idiom as the dashboard/OSD cards.
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: -4
-            radius: parent.radius + 4
-            color: Theme.popup.shadow
-            z: -1
-        }
+        SoftShadow { spread: 14; strength: 0.4 }
     }
 }

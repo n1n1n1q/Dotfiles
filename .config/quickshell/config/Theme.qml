@@ -172,27 +172,31 @@ Singleton {
     }
 
     readonly property QtObject rounding: QtObject {
+        // The whole shell rounds at one of four radii, nothing in between:
+        //   small (6)  micro elements — swatches, tags, a tiny inner rect
+        //   control    an interactive thing you press — button, chip, toggle,
+        //              list row, input, menu item
+        //   card       a surface that holds content — a panel section, a tile
+        //   panel      a whole floating surface — dashboard, launcher, OSD, popout
+        // plus `full` for the genuinely circular and the Settings grouped-list
+        // pair (`xhuge` outer / `connJoin` join). The old t-shirt names below
+        // are kept as aliases so call sites don't all need touching — `normal`
+        // and `medium` now resolve to `control` rather than their own values.
         readonly property int none: 0
         readonly property int small: 6
-        readonly property int normal: 8
-        readonly property int medium: 10
-        readonly property int large: 12
-        readonly property int xlarge: 16
-        readonly property int huge: 20
-        // Material-3 "expressive" grouped-list radii — big outer corners on a
-        // run of connected rects, tiny ones where they meet.
+        readonly property int control: 12
+        readonly property int card: 16
+        readonly property int panel: 20
         readonly property int xhuge: 28
         readonly property int connJoin: 5
         readonly property int full: 9999
 
-        // Semantic set — prefer these. Three tiers, nothing in between:
-        //   control  an interactive thing you press (button, chip, toggle, row)
-        //   card     a surface that holds content (a panel section, a tile)
-        //   panel    a whole floating surface (dashboard, launcher, OSD, popout)
-        // `full` for the genuinely circular, `connJoin`/`xhuge` for Settings runs.
-        readonly property int control: 12
-        readonly property int card: 16
-        readonly property int panel: 20
+        // Legacy aliases.
+        readonly property int normal: control    // was 8
+        readonly property int medium: control    // was 10
+        readonly property int large: control     // 12 — unchanged
+        readonly property int xlarge: card       // 16 — unchanged
+        readonly property int huge: panel        // 20 — unchanged
     }
 
     readonly property QtObject animation: QtObject {

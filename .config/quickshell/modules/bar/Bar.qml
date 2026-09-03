@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import qs.config
+import qs.widgets
 
 // The top bar. Content is entirely data-driven from BarConfig (three anchored
 // sections of groups). `BarConfig.style` moves the whole window to any screen
@@ -54,14 +55,13 @@ Scope {
                     height: barWindow.vertical ? barWindow.thickness : content.height
                     rotation: barWindow.vertical ? 90 : 0
 
-                    // soft lift for the floating pill
-                    Rectangle {
+                    // soft lift for the floating pill (a detached pill always
+                    // gets it; the docked bar's inward shadow is the frame
+                    // decoration's InnerShadow, driven by BarConfig.style.shadow)
+                    SoftShadow {
+                        target: barStrip
+                        radius: barStrip.radius
                         visible: barWindow.floating
-                        anchors.fill: barStrip
-                        anchors.margins: -5
-                        radius: barStrip.radius + 5
-                        color: Theme.popup.shadow
-                        z: -1
                     }
 
                     Rectangle {

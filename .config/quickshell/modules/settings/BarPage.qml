@@ -199,6 +199,18 @@ SettingsPage {
                 onToggled: v => BarConfig.setStyle("blackCorners", v)
             }
         }
+        SettingsRow {
+            icon: "󰅶"
+            title: "Shadow"
+            subtitle: BarConfig.floating
+                ? "A floating pill always casts its own shadow"
+                : "Cast a soft shadow inward from the bar" +
+                  (BarConfig.frameEnabled ? " and the frame" : "")
+            SettingsToggle {
+                checked: BarConfig.shadowEnabled
+                onToggled: v => BarConfig.setStyle("shadow", v)
+            }
+        }
     }
 
     // ------------------------------------------------------------------

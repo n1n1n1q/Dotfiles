@@ -301,6 +301,92 @@ Scope {
         implicitHeight: isVertical ? 1 : edgeThickness
     }
 
+    // A soft shadow cast inward onto the content, when BarConfig.style.shadow
+    // is on. The bar and the frame are treated as one object: each edge casts
+    // one strip — from `barHeight` in along the bar's edge, from `edgeThickness`
+    // in along each framed edge — and every strip stops short of the corners by
+    // the same `endMargin` the frame's own border strips use. That keeps the
+    // strips from stacking on top of each other (the corner was pooling into a
+    // dark blob) and off the corner decoration (whose colour it was tinting).
+    // With the frame off, only the bar edge casts. Purely decorative: an
+    // always-mapped, click-through overlay window, ignored by the exclusive
+    // zone.
+    component InnerShadow: PanelWindow {
+        id: sh
+        required property ShellScreen targetScreen
+        required property string side   // top | bottom | left | right
+
+        readonly property bool isVertical: side === "left" || side === "right"
+        readonly property bool isBarSide: !barFloating && side === barEdge
+        readonly property int originInset: isBarSide ? barHeight
+            : (frameOn ? edgeThickness : 0)
+        readonly property int depth: 22
+        readonly property bool darkAtStart: side === "top" || side === "left"
+        readonly property color shadowColor: Qt.rgba(0, 0, 0, 0.28)
+
+        // The two corners at this strip's ends, and the perpendicular sides
+        // they sit on — same mapping EdgeStrip uses. `endMargin` then folds in
+        // the corner-joint radius, the black-accent radius, and the bar's own
+        // length (via sideInset), so a frame strip perpendicular to the bar
+        // already yields that whole stretch to the bar's strip.
+        readonly property int endCornerA: side === "top" ? 0 : side === "bottom" ? 2
+            : side === "left" ? 0 : 1
+        readonly property int endCornerB: side === "top" ? 1 : side === "bottom" ? 3
+            : side === "left" ? 2 : 3
+        readonly property string endSideA: isVertical ? "top" : "left"
+        readonly property string endSideB: isVertical ? "bottom" : "right"
+        readonly property int endA: endMargin(endSideA, endCornerA)
+        readonly property int endB: endMargin(endSideB, endCornerB)
+
+        screen: targetScreen
+        exclusionMode: ExclusionMode.Ignore
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.namespace: "quickshell:frame-shadow"
+        color: "transparent"
+        mask: Region {}
+        visible: BarConfig.shadowEnabled && (isBarSide || frameOn)
+            && !isFrameHidden(targetScreen)
+
+        anchors {
+            top: side !== "bottom"
+            bottom: side !== "top"
+            left: side !== "right"
+            right: side !== "left"
+        }
+        margins {
+            top: side === "top" ? originInset : (isVertical ? endA : 0)
+            bottom: side === "bottom" ? originInset : (isVertical ? endB : 0)
+            left: side === "left" ? originInset : (!isVertical ? endA : 0)
+            right: side === "right" ? originInset : (!isVertical ? endB : 0)
+        }
+        implicitWidth: isVertical ? depth : 1
+        implicitHeight: isVertical ? 1 : depth
+
+        Rectangle {
+            anchors.fill: parent
+            gradient: Gradient {
+                orientation: sh.isVertical ? Gradient.Horizontal : Gradient.Vertical
+                GradientStop {
+                    position: 0.0
+                    color: sh.darkAtStart ? sh.shadowColor : "transparent"
+                }
+                GradientStop {
+                    position: 1.0
+                    color: sh.darkAtStart ? "transparent" : sh.shadowColor
+                }
+            }
+        }
+    }
+
+    Variants { model: Quickshell.screens
+        InnerShadow { required property ShellScreen modelData; targetScreen: modelData; side: "top" } }
+    Variants { model: Quickshell.screens
+        InnerShadow { required property ShellScreen modelData; targetScreen: modelData; side: "bottom" } }
+    Variants { model: Quickshell.screens
+        InnerShadow { required property ShellScreen modelData; targetScreen: modelData; side: "left" } }
+    Variants { model: Quickshell.screens
+        InnerShadow { required property ShellScreen modelData; targetScreen: modelData; side: "right" } }
+
     Variants { model: Quickshell.screens
         CornerWindow { required property ShellScreen modelData; targetScreen: modelData; corner: 0 } }
     Variants { model: Quickshell.screens
