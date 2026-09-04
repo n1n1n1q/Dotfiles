@@ -5,19 +5,23 @@ import Quickshell
 import Quickshell.Wayland
 import qs.config
 import qs.services
+import qs.modules.bar
 
-// One always-mapped, click-through overlay window per screen that hosts the
-// screen-edge frame decoration, the OSD pill and the notification toasts — all
-// of which are purely decorative / never take keyboard focus, so they can
-// share a single Wayland surface + GL context instead of three.
+// One click-through surface per screen that hosts everything screen-wide and
+// non-focus-stealing: the bar strip, the screen-edge frame decoration, the OSD
+// pill and the notification toasts. All of them are keyboard-focus-free and
+// share a single Wayland surface + GL context instead of one each.
 //
-// (The bar and the desktop-widget layer stay separate: the bar reserves an
-// exclusive zone and the desktop sits on a lower layer.)
+// The window covers the whole screen (frame / OSD / toasts need that) but is
+// anchored to only three edges, leaving the one opposite the bar free, so it
+// can still reserve the bar's strip from tiled windows as an exclusive zone.
+//
+// (The desktop-widget layer stays separate — it sits on a lower layer.)
 Scope {
     id: scope
 
     // Which outputs currently have a fullscreen window — the frame border and
-    // shadow hide there (the black corner accents stay).
+    // the bar hide there (the black corner accents stay).
     readonly property var fullscreenScreens: {
         const s = new Set()
         for (const t of ToplevelManager.toplevels.values) {
@@ -39,26 +43,48 @@ Scope {
             screen: modelData
 
             readonly property bool frameHidden: scope.fullscreenScreens.has(modelData)
+            readonly property string barEdge: BarConfig.edge
+            readonly property real barZone: Theme.bar.height + (BarConfig.floating ? Theme.bar.margin : 0)
 
+            // Overlay (not Top) so the black corner accents, toasts and OSD
+            // still sit over a fullscreen window — the bar and the frame border
+            // hide themselves there via `frameHidden`, matching the old split.
             WlrLayershell.layer: WlrLayer.Overlay
             WlrLayershell.namespace: "quickshell:drawers"
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-            exclusionMode: ExclusionMode.Ignore
             color: "transparent"
             visible: true
 
-            anchors { top: true; bottom: true; left: true; right: true }
+            anchors {
+                top: win.barEdge !== "bottom"
+                bottom: win.barEdge !== "top"
+                left: win.barEdge !== "right"
+                right: win.barEdge !== "left"
+            }
+            implicitWidth: modelData.width
+            implicitHeight: modelData.height
+            exclusionMode: ExclusionMode.Normal
+            exclusiveZone: win.barZone
 
-            // Frame + OSD are fully click-through; only the live toast stack
-            // catches input (same as the old per-window masks).
-            mask: Region { item: notifView.listContent }
+            // Frame + OSD are fully click-through; only the live toast stack and
+            // the bar strip catch input.
+            mask: Region {
+                Region { item: notifView.listContent }
+                Region { item: bar }
+            }
 
-            // Keep-awake rides on this always-mapped surface instead of a
-            // dedicated window (see Caffeine.qml). One inhibitor per screen —
-            // the compositor OR-s them, so it's harmless redundancy.
             IdleInhibitor {
                 window: win
                 enabled: Caffeine.active
+            }
+
+            // Declared before FrameView so the frame's corner accents / fillets
+            // paint over the bar's corners (they were a higher window before).
+            Bar {
+                id: bar
+                modelData: win.modelData
+                panelWindow: win
+                hidden: win.frameHidden
             }
 
             FrameView { screenHidden: win.frameHidden }

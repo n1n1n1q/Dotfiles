@@ -24,7 +24,7 @@ import qs.services
 
 ShellRoot {
     DesktopLayer {}
-    Bar {}
+    // The bar strip now lives inside Drawers {} (one surface per screen).
     BarEditOverlay {}
     DashboardLayer {}
     LauncherLayer {}
