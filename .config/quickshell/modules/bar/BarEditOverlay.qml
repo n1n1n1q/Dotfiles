@@ -22,6 +22,18 @@ Scope {
 
             readonly property bool editing: BarConfig.editMode
 
+            // Only hold a Wayland surface + render context while editing (plus a
+            // short linger so BarEditStage's fade-out finishes). `shown` lags
+            // `editing` by a frame so the stage's enter fade runs off a real
+            // 0 -> 1 opacity change instead of being born at 1.
+            property bool shown: false
+            Timer { id: showTick; interval: 16; onTriggered: win.shown = true }
+            Timer { id: closeLinger; interval: Theme.animation.fast + 80 }
+            onEditingChanged: {
+                if (editing) showTick.restart();
+                else { showTick.stop(); shown = false; closeLinger.restart(); }
+            }
+
             WlrLayershell.layer: WlrLayer.Overlay
             WlrLayershell.namespace: "quickshell:baredit"
             WlrLayershell.keyboardFocus: editing
@@ -31,7 +43,7 @@ Scope {
             // instead of being pushed below it.
             exclusiveZone: -1
             color: "transparent"
-            visible: true
+            visible: editing || closeLinger.running
 
             anchors { top: true; left: true; right: true; bottom: true }
 
@@ -52,7 +64,7 @@ Scope {
 
             BarEditStage {
                 anchors.fill: parent
-                active: win.editing
+                active: win.shown
                 panelWindow: win
                 screenName: win.modelData.name
             }

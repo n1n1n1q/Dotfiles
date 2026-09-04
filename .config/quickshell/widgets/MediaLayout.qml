@@ -151,6 +151,10 @@ Item {
                     anchors.fill: parent
                     source: Media.artUrl
                     fillMode: Image.PreserveAspectCrop
+                    // Cover art can arrive at 1000px+; nothing here renders it
+                    // above ~120px, so cap the decode well below native size.
+                    sourceSize.width: 240
+                    sourceSize.height: 240
                     cache: false
                     asynchronous: true
                     visible: false

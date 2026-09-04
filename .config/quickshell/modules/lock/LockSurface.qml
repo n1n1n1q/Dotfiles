@@ -64,6 +64,11 @@ FocusScope {
         anchors.fill: parent
         source: Wallpaper.current.length > 0 ? ("file://" + Wallpaper.current) : ""
         fillMode: Image.PreserveAspectCrop
+        // Decode at screen size, not the file's native resolution — a 4K
+        // wallpaper is 33 MB decoded per screen and this only ever feeds a
+        // heavy blur. Caps it regardless of which wallpaper is set.
+        sourceSize.width: Screen.width
+        sourceSize.height: Screen.height
         cache: false
         asynchronous: true
         visible: false
@@ -201,6 +206,8 @@ FocusScope {
                     source: System.userIconPath.length > 0
                         ? ("file://" + System.userIconPath) : ""
                     fillMode: Image.PreserveAspectCrop
+                    sourceSize.width: 256
+                    sourceSize.height: 256
                     asynchronous: true
                     visible: false
                 }

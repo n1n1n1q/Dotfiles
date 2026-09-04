@@ -35,7 +35,14 @@ PanelWindow {
 
     exclusiveZone: 0
     color: "transparent"
-    visible: true
+
+    // Only hold a Wayland surface + render context while the picker is up (plus
+    // a short linger so the close animation finishes). `shown` lags `open` by a
+    // frame on open so the card's enter transition runs off a real 0 -> 1 change.
+    property bool shown: false
+    visible: open || closeLinger.running
+    Timer { id: showTick; interval: 16; onTriggered: { win.shown = true; keyCatcher.forceActiveFocus(); } }
+    Timer { id: closeLinger; interval: Theme.animation.fast + 80 }
 
     anchors { top: true; left: true; right: true; bottom: true }
 
@@ -44,7 +51,10 @@ PanelWindow {
         height: win.open ? win.height : 0
     }
 
-    onOpenChanged: if (open) keyCatcher.forceActiveFocus()
+    onOpenChanged: {
+        if (open) showTick.restart();
+        else { showTick.stop(); shown = false; closeLinger.restart(); }
+    }
 
     // No backdrop — a click anywhere off the card cancels, the wheel steps the
     // carousel. niri has no focus grab, so this full-output MouseArea is what a
@@ -84,13 +94,13 @@ PanelWindow {
             readonly property int pad: Theme.popup.padding
 
             anchors.horizontalCenter: parent.horizontalCenter
-            y: win.open ? Math.round((parent.height - height) / 2)
+            y: win.shown ? Math.round((parent.height - height) / 2)
                         : Math.round((parent.height - height) / 2) + Theme.spacing.large
             width: Math.min(parent.width - Theme.spacing.huge * 2, 1160)
             height: headerRow.height + carousel.height + footerCol.height
                 + Theme.spacing.large * 2 + pad * 2
-            opacity: win.open ? 1 : 0
-            scale: win.open ? 1 : 0.97
+            opacity: win.shown ? 1 : 0
+            scale: win.shown ? 1 : 0.97
             transformOrigin: Item.Center
 
             Behavior on opacity { NumberAnimation { duration: Theme.animation.fast } }

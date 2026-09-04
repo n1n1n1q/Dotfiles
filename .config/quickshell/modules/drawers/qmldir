@@ -1,0 +1,6 @@
+module qs.modules.drawers
+Drawers 1.0 Drawers.qml
+FrameView 1.0 FrameView.qml
+OsdLogic 1.0 OsdLogic.qml
+OsdView 1.0 OsdView.qml
+NotifView 1.0 NotifView.qml

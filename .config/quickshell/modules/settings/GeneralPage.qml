@@ -63,6 +63,8 @@ SettingsPage {
                     source: Appearance.avatar.length > 0 ? ("file://" + Appearance.avatar) : ""
                     fillMode: Image.PreserveAspectCrop
                     visible: status === Image.Ready
+                    sourceSize.width: 96
+                    sourceSize.height: 96
                     cache: false
                 }
                 Text {

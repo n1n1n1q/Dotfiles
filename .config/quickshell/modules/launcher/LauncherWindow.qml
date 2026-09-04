@@ -29,7 +29,15 @@ PanelWindow {
     // measuring from just below the bar the way the dashboard does.
     exclusiveZone: 0
     color: "transparent"
-    visible: true
+
+    // Only hold a Wayland surface + render context while the launcher is up
+    // (plus a short linger so the card's exit animation finishes). `shown` lags
+    // `open` by a frame on open so the drop-in transition runs off a real
+    // 0 -> 1 change rather than being born at its final value.
+    property bool shown: false
+    visible: open || closeLinger.running
+    Timer { id: showTick; interval: 16; onTriggered: { win.shown = true; search.takeFocus(); } }
+    Timer { id: closeLinger; interval: Theme.animation.instant + 80 }
 
     anchors { top: true; left: true; right: true; bottom: true }
 
@@ -41,7 +49,10 @@ PanelWindow {
         height: win.open ? win.height : 0
     }
 
-    onOpenChanged: if (open) search.takeFocus()
+    onOpenChanged: {
+        if (open) showTick.restart();
+        else { showTick.stop(); shown = false; closeLinger.restart(); }
+    }
 
     // Click anywhere off the card to dismiss. niri has no equivalent of
     // Hyprland's focus grab, so this MouseArea over the whole output is what a
@@ -58,7 +69,7 @@ PanelWindow {
         // Closed, it sits a short hop above where it lands rather than all the
         // way off the top of the screen: a long slide reads as slow however
         // quick the animation is set to.
-        y: win.open ? Theme.launcher.topMargin
+        y: win.shown ? Theme.launcher.topMargin
                     : Theme.launcher.topMargin - Theme.spacing.large
         width: Math.min(Theme.launcher.width,
                         parent.width - Theme.frame.thickness * 2 - Theme.popup.margin * 2)
@@ -69,7 +80,7 @@ PanelWindow {
         radius: Theme.popup.radius
         border.color: Theme.popup.border
         border.width: Theme.popup.borderWidth
-        opacity: win.open ? 1 : 0
+        opacity: win.shown ? 1 : 0
 
         Behavior on y {
             NumberAnimation {

@@ -62,7 +62,26 @@ Scope {
                 ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
             exclusiveZone: 0
             color: "transparent"
-            visible: true
+
+            // Only hold a Wayland surface + render context while a card is up
+            // (plus a linger so the slide-out finishes). `shown` lags `active`
+            // by a frame on open so the card's enter transition runs off a real
+            // 0 -> 1 change instead of being born at its final value.
+            property bool shown: false
+            visible: active || closeLinger.running
+            onActiveChanged: {
+                if (active) { closeLinger.stop(); showTick.restart(); }
+                else { showTick.stop(); shown = false; closeLinger.restart(); }
+            }
+            Timer { id: showTick; interval: 16; onTriggered: win.shown = true }
+            // Once the slide-out has finished and the surface unmaps, drop the
+            // card too — a CalendarCard / SystemMonitorCard left instantiated
+            // for the rest of the session is a chunk of idle object tree.
+            Timer {
+                id: closeLinger
+                interval: Theme.animation.fast + 100
+                onTriggered: { win.shownName = ""; win.shownPayload = null; }
+            }
 
             // Full screen below the bar (the bar's exclusive zone drops the
             // origin), so a click anywhere outside the card can dismiss it.
@@ -109,9 +128,9 @@ Scope {
                 x: Math.max(edge, Math.min(desiredX, win.width - width - edge))
                 // A short hop from just above where it lands — a full slide off
                 // the top of the screen reads as sluggish however fast it runs.
-                y: win.active ? Theme.popup.margin : Theme.popup.margin - 14
-                opacity: win.active ? 1 : 0
-                scale: win.active ? 1 : 0.97
+                y: win.shown ? Theme.popup.margin : Theme.popup.margin - 14
+                opacity: win.shown ? 1 : 0
+                scale: win.shown ? 1 : 0.97
                 transformOrigin: Item.Top
                 visible: opacity > 0.01
 

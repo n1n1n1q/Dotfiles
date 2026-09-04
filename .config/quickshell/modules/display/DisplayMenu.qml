@@ -42,6 +42,15 @@ Scope {
 
             readonly property bool open: DisplayController.openOn === (screen?.name ?? "")
 
+            // Only hold a Wayland surface + render context while the menu is up
+            // (or briefly after, so the close animation finishes). `shown` lags
+            // `open` by a frame on open so the card's enter transition runs off
+            // a real 0 -> 1 change instead of being born at its final value.
+            property bool shown: false
+            visible: open || closeLinger.running
+            Timer { id: showTick; interval: 16; onTriggered: { win.shown = true; keyCatcher.forceActiveFocus(); } }
+            Timer { id: closeLinger; interval: Theme.animation.fast + 80 }
+
             WlrLayershell.layer: WlrLayer.Overlay
             WlrLayershell.namespace: "quickshell:display-menu"
             WlrLayershell.keyboardFocus: open
@@ -49,7 +58,6 @@ Scope {
 
             exclusiveZone: 0
             color: "transparent"
-            visible: true
             anchors { top: true; left: true; right: true; bottom: true }
 
             mask: Region {
@@ -60,12 +68,16 @@ Scope {
             // The current mode's index, used as the initial selection.
             property int sel: 0
             onOpenChanged: {
-                if (!open)
-                    return;
-                const cur = DisplayController.currentMode;
-                let i = scope.modes.findIndex(m => m.id === cur);
-                win.sel = i >= 0 ? i : 1;
-                keyCatcher.forceActiveFocus();
+                if (open) {
+                    const cur = DisplayController.currentMode;
+                    let i = scope.modes.findIndex(m => m.id === cur);
+                    win.sel = i >= 0 ? i : 1;
+                    showTick.restart();
+                } else {
+                    showTick.stop();
+                    shown = false;
+                    closeLinger.restart();
+                }
             }
 
             function step(d) {
@@ -118,11 +130,11 @@ Scope {
                 Rectangle {
                     id: card
                     anchors.horizontalCenter: parent.horizontalCenter
-                    y: (parent.height - height) / 2 + (win.open ? 0 : 16)
+                    y: (parent.height - height) / 2 + (win.shown ? 0 : 16)
                     Behavior on y { NumberAnimation { duration: Theme.animation.fast; easing.type: Easing.OutCubic } }
-                    opacity: win.open ? 1 : 0
+                    opacity: win.shown ? 1 : 0
                     Behavior on opacity { NumberAnimation { duration: Theme.animation.fast } }
-                    scale: win.open ? 1 : 0.97
+                    scale: win.shown ? 1 : 0.97
                     transformOrigin: Item.Center
                     Behavior on scale { NumberAnimation { duration: Theme.animation.fast; easing.type: Easing.OutCubic } }
 
