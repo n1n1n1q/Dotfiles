@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import qs.config
+import qs.services
 
 // One always-mapped, click-through overlay window per screen that hosts the
 // screen-edge frame decoration, the OSD pill and the notification toasts — all
@@ -51,6 +52,14 @@ Scope {
             // Frame + OSD are fully click-through; only the live toast stack
             // catches input (same as the old per-window masks).
             mask: Region { item: notifView.listContent }
+
+            // Keep-awake rides on this always-mapped surface instead of a
+            // dedicated window (see Caffeine.qml). One inhibitor per screen —
+            // the compositor OR-s them, so it's harmless redundancy.
+            IdleInhibitor {
+                window: win
+                enabled: Caffeine.active
+            }
 
             FrameView { screenHidden: win.frameHidden }
 
